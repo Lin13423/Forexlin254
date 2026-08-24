@@ -98,7 +98,6 @@ input:disabled { background: #e0e0e0; opacity: 0.5; color: #666 !important; }
     <div class="modal-box">
         <h3 id="modalTitle" style="margin:0 0 10px 0; color:var(--saxo-red);">SECURITY CLEARANCE</h3>
         <p id="modalDesc" style="font-size:11px; opacity:0.8; margin-bottom:20px;">Verification Required</p>
-        <input type="password" id="adminPass" placeholder="Admin Key" style="margin-bottom:15px; text-align:center;">
         <div class="grid-2">
             <button id="modalConfirmBtn" class="btn-red">CONFIRM</button>
             <button onclick="window.closeAdmin()" style="background:#444;">CANCEL</button>
@@ -316,7 +315,7 @@ window.openAdminModal = (t, d, cb) => {
         else { window.sendPush("Denied"); }
     };
 };
-window.closeAdmin = () => { document.getElementById('adminModal').style.display='none'; document.getElementById('adminPass').value=''; };
+window.closeAdmin = () => { document.getElementById('adminModal').style.display='none'; };
 
 // --- MAIN LISTENER ---
 onValue(carRef, snap => {

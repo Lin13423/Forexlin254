@@ -809,7 +809,6 @@ input,select{
     <div class="modal-box">
         <h3 id="modalTitle" style="margin:0 0 10px;color:var(--red);">SECURITY CLEARANCE</h3>
         <p id="modalDesc" style="font-size:10px;opacity:.75;">Verification Required</p>
-        <input type="password" id="adminPass" placeholder="Admin Key" style="margin:15px 0;text-align:center;">
         <div class="grid-2">
             <button id="modalConfirmBtn" class="btn-red">CONFIRM</button>
             <button onclick="window.closeAdmin()" style="background:#444;">CANCEL</button>
@@ -3700,9 +3699,6 @@ window.closeAdmin=()=>{
         "none";
 
 
-    document.getElementById(
-        "adminPass"
-    ).value="";
 };
 
 

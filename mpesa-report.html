@@ -64,8 +64,7 @@
         <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">Secure Admin Access Only.</p>
         <input type="text" id="edit-cust-name" class="edit-input" placeholder="Customer Name">
         <input type="text" id="edit-cust-phone" class="edit-input" placeholder="M-Pesa Number">
-        <input type="password" id="authPin" class="pin-field" maxlength="4" placeholder="••••" oninput="validatePin()">
-        <div id="auth-btns" style="display: none;">
+        <div id="auth-btns">
             <button id="btn-save-changes" class="btn btn-save">APPLY CHANGES</button>
             <button onclick="openConfirmModal()" class="btn btn-del">DELETE TRANSACTION</button>
         </div>
@@ -205,18 +204,12 @@ window.renderSales = () => {
     document.getElementById('footer-bar').classList.toggle('active', gross > 0);
 };
 
-window.validatePin = async () => {
-    const pin = document.getElementById('authPin').value;
-    document.getElementById('auth-btns').style.display = (await window.AGPageAccess.authorize("mpesa-report")) ? 'block' : 'none';
-};
-
-window.openManager = id => {
+window.openManager = async id => {
+    if (!(await window.AGPageAccess.authorize("mpesa-report"))) return;
     activeId = id;
     const s = combinedStore.find(x => x.id === id);
     document.getElementById('edit-cust-name').value = s.customer;
     document.getElementById('edit-cust-phone').value = s.mpesa || "";
-    document.getElementById('authPin').value = "";
-    validatePin();
     document.getElementById('manageModal').style.display = 'flex';
 };
 

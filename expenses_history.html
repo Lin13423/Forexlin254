@@ -120,8 +120,7 @@
 <div class="container" id="appContent">
     <h2>Expense & Debt Ledger</h2>
     <div class="security-bar" id="lockBar">
-        <span style="color:white; font-size:11px; font-weight:800; letter-spacing: 0.5px;" id="lockLabel">LOCKED (ADMIN)</span>
-        <input type="password" id="masterPin" class="pin-input" maxlength="4" placeholder="••••" oninput="handleSecurity()">
+        <span style="color:white; font-size:11px; font-weight:800; letter-spacing: 0.5px;" id="lockLabel">AUTHORIZED SESSION</span>
     </div>
 
     <div class="card">
@@ -215,7 +214,6 @@
     startSync();      
 
     window.handleSecurity = async () => {
-        const pin = document.getElementById('masterPin').value;
         const body = document.getElementById('mainBody');
         const bar = document.getElementById('lockBar');
         const label = document.getElementById('lockLabel');

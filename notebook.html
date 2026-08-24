@@ -51,7 +51,7 @@
 
     <div class="security-bar" id="lockBar">
         <span style="color:white; font-size:10px; font-weight:800; letter-spacing:1px;" id="lockLabel">LOCKED</span>
-        <input type="password" id="masterPin" class="pin-input" maxlength="4" placeholder="••••" oninput="checkLock()">
+        <span>AUTHORIZED SESSION</span>
     </div>
 
     <div class="input-card">
@@ -110,7 +110,6 @@
     };
 
     window.checkLock = async () => {
-        const pin = document.getElementById('masterPin').value;
         const body = document.getElementById('appBody');
         const label = document.getElementById('lockLabel');
         const bar = document.getElementById('lockBar');

@@ -264,15 +264,12 @@
         }
     }, error => AGErrors.report("inventory live data", error, (message) => notify(`Live inventory data could not be loaded: ${message}`)));
 
-    let pinBuffer = "";
-    window.pressNum = (n) => {
-        if(n === 'C') pinBuffer = ""; else if(n === '⌫') pinBuffer = pinBuffer.slice(0, -1); else if(pinBuffer.length < 4) pinBuffer += n;
-        document.querySelectorAll('.pin-dot').forEach((d, i) => { d.style.background = i < pinBuffer.length ? "var(--accent)" : "transparent"; });
-        if(pinBuffer.length === 4) { window.AGPageAccess.authorize("stock").then(authorized => { if(authorized) switchView('view-admin'); else { notify("Access denied", "error"); pinBuffer = ""; document.querySelectorAll('.pin-dot').forEach(d => d.style.background = "transparent"); } }); }
-    };
+    window.pressNum = () => window.AGPageAccess.authorize("stock").then(authorized => {
+        if(authorized) switchView('view-admin'); else notify("Access denied", "error");
+    });
     
     window.switchView = (id) => { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); };
-    window.openAdmin = () => { pinBuffer = ""; document.querySelectorAll('.pin-dot').forEach(d => d.style.background = "transparent"); switchView('view-pin'); };
+    window.openAdmin = () => window.pressNum();
     window.fillForm = (k) => { 
         const i = inventoryCache[k]; 
         document.getElementById('itemName').value = i.name; 

@@ -320,15 +320,6 @@
     </div>
 </div>
 
-<div id="pinModal" class="overlay">
-    <div class="modal" style="text-align: center;">
-        <h3 style="margin:0 0 10px 0; color: var(--primary);">Admin Override</h3>
-        <p style="font-size:11px; color:var(--text-muted); margin-bottom:16px;">Input security configuration pin</p>
-        <input type="password" id="adminPin" class="pin-input" placeholder="••••" maxlength="4" oninput="verifyPin()">
-        <button style="border:none; background:none; color:var(--text-muted); font-weight:700; cursor:pointer;" onclick="closeModals()">CANCEL</button>
-    </div>
-</div>
-
 <div id="detailsModal" class="overlay" onclick="closeDetailsModal(event)">
     <div class="modal" onclick="event.stopPropagation()">
         <h3 style="margin:0 0 6px 0; color:var(--primary);" id="det-title">Transaction Details</h3>
@@ -669,10 +660,7 @@
             isAdmin = false; 
             document.getElementById('lock-icon-svg').innerHTML = '<path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-5V9c0-3.31-2.69-6-6-6S6 5.69 6 9v3c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7c0-1.1-.9-2-2-2zm-3.1 0H9.1V9c0-1.6 1.3-2.9 2.9-2.9 1.6 0 2.9 1.3 2.9 2.9v3z"/>';
             filterAndRender(); 
-        } else { 
-            document.getElementById('pinModal').style.display = 'flex'; 
-            document.getElementById('adminPin').focus(); 
-        }
+        else window.verifyPin();
     };
     
     window.verifyPin = async () => {
@@ -683,7 +671,7 @@
         }
     };
     
-    window.closeModals = () => { document.getElementById('pinModal').style.display = 'none'; document.getElementById('adminPin').value = ''; };
+    window.closeModals = () => {};
     window.deleteEntry = async (path) => {
         if (!confirm("Permanently remove this cash record?")) return;
         try {

@@ -690,17 +690,6 @@
     </div>
 </div>
 
-<div id="pinModal" class="modal" style="z-index: 5000;">
-    <div class="modal-content" style="max-width: 300px; text-align: center; background: white;">
-        <h3 style="margin: 0 0 10px 0; font-size: 16px; color: var(--dark);">Secure Access</h3>
-        <p style="font-size: 11px; color: var(--muted); margin-bottom: 20px;">Enter Admin PIN to manage record</p>
-        <input type="password" id="pinInput" placeholder="Enter 4-Digit PIN" maxlength="4" pattern="[0-9]*" inputmode="numeric" style="margin-bottom: 10px; text-align: center; border: 1px solid #e2e8f0;">
-        <div id="pinError" style="color: var(--danger); font-size: 10px; font-weight: 700; margin-bottom: 10px; display: none;">Incorrect PIN. Please try again.</div>
-        <button class="btn btn-dark" onclick="verifyPin()">Unlock</button>
-        <button class="btn" style="background:transparent; color:var(--muted); margin-top:10px; font-size: 11px;" onclick="closePinModal()">Cancel</button>
-    </div>
-</div>
-
 <script type="module">
 import { getDb } from "./ag-firebase.js";
 import { ref, onValue, push, set, runTransaction, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
@@ -735,7 +724,6 @@ let userProfile = AGUtils.readJSON(AGUtils.uidKey("ag_profile_cache", currentUID
     businessName: "Business Name", 
     tagline: "Your Business Tagline", 
     logoUrl: "", 
-    adminPin: "0000",
     salesConfigSkipped: false,
     daraja: {
         backendUrl: "https://weathered-glade-c60b.assetguardinfo.workers.dev",
@@ -747,7 +735,6 @@ let userProfile = AGUtils.readJSON(AGUtils.uidKey("ag_profile_cache", currentUID
     }
 });
 
-if(!userProfile.adminPin) { userProfile.adminPin = "0000"; }
 if(userProfile.salesConfigSkipped === undefined) { userProfile.salesConfigSkipped = false; }
 if(!userProfile.daraja) {
     userProfile.daraja = { backendUrl: "https://weathered-glade-c60b.assetguardinfo.workers.dev", accountType: "Paybill", shortcode: "", passkey: "", consumerKey: "", consumerSecret: "" };
@@ -769,49 +756,21 @@ window.closeCustomAlert = () => {
     }
 };
 
-window.promptPin = (action, id = null) => {
+window.promptPin = async (action, id = null) => {
     pinAction = action;
     pinTargetId = id;
-    document.getElementById('pinInput').value = "";
-    document.getElementById('pinError').style.display = "none";
-    
-    const title = document.querySelector('#pinModal h3');
-    const desc = document.querySelector('#pinModal p');
-    if (action === 'settings') {
-        title.innerText = "Settings Access";
-        desc.innerText = "Enter Admin PIN to edit Business Profile";
+    if (await window.AGPageAccess.authorize("sales")) {
+        if (action === 'settings') openSettingsDirectly();
+        else openManager(pinTargetId);
     } else {
-        title.innerText = "Secure Access";
-        desc.innerText = "Enter Admin PIN to manage record";
+        showAlertModal("Access denied", "Your account is not authorized for this action.");
     }
-    
-    document.getElementById('pinModal').style.display = "flex";
 };
 
 window.closePinModal = () => {
     document.getElementById('pinModal').style.display = "none";
     pinTargetId = null;
     pinAction = null;
-};
-
-window.verifyPin = () => {
-    const input = document.getElementById('pinInput').value;
-    const activePin = userProfile.adminPin || "0000";
-    if (input === activePin) {
-        document.getElementById('pinModal').style.display = "none";
-        setTimeout(() => {
-            if (pinAction === 'settings') {
-                openSettingsDirectly();
-            } else {
-                openManager(pinTargetId);
-            }
-        }, 100);
-    } else {
-        const err = document.getElementById('pinError');
-        err.style.display = "block";
-        err.innerText = "Incorrect PIN. Please try again.";
-        document.getElementById('pinInput').value = "";
-    }
 };
 
 window.openSettingsDirectly = () => {

@@ -89,14 +89,6 @@
     <p>Please log in to view the Cash Audit.</p>
 </div>
 
-<div id="pinModal" class="overlay">
-    <div class="modal">
-        <h3 style="margin:0 0 10px 0;">Admin Access</h3>
-        <input type="password" id="adminPin" class="pin-input" placeholder="••••" maxlength="4" oninput="verifyPin()">
-        <button style="border:none; background:none; color:#94a3b8; font-weight:600;" onclick="closeModals()">CANCEL</button>
-    </div>
-</div>
-
 <script type="module">
     import { getDb } from "./ag-firebase.js";
     import { ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
@@ -210,7 +202,7 @@
     // --- SECURITY ---
     window.toggleAdmin = () => {
         if(isAdmin) { isAdmin = false; document.getElementById('lock-icon').innerText = "🔒"; filterAndRender(); }
-        else { document.getElementById('pinModal').style.display = 'flex'; document.getElementById('adminPin').focus(); }
+        else window.verifyPin();
     };
     window.verifyPin = async () => {
         if(await window.AGPageAccess.authorize("cash-report")) {
@@ -218,7 +210,7 @@
             closeModals(); filterAndRender();
         }
     };
-    window.closeModals = () => { document.getElementById('pinModal').style.display = 'none'; document.getElementById('adminPin').value = ''; };
+    window.closeModals = () => {};
     window.deleteEntry = async (path) => { if(confirm("Permanently remove this cash record?")) { await remove(ref(db, path)); } };
 
     // Init Filters
