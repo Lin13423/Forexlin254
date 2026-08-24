@@ -3,6 +3,11 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
 <meta charset="utf-8">
 <title>AssetGuard Pro - Unified Purchase Terminal & Analytics</title>
@@ -331,8 +336,6 @@
         const db = getDb();
         const currentUID = AGUtils.getActiveUID({ fallback: "global_user" });
         const cloudPath = AGUtils.userPath(currentUID, "purchases");
-        const ADMIN_PASS = "0000";
-
         let localPurchases = [];
 
         const idbRequest = indexedDB.open(`AssetGuard_Purchases_${currentUID}`, 1);
@@ -498,7 +501,7 @@
             document.getElementById('delBtn').onclick = () => {
                 document.getElementById('pinModal').style.display = 'flex';
                 window.submitPin = async () => {
-                    if(document.getElementById('pinInput').value === ADMIN_PASS) {
+                    if(await window.AGPageAccess.authorize("purchases")) {
                         closePinModal();
 
                         item.deleted = true;
@@ -524,8 +527,8 @@
             
             document.getElementById('editBtn').onclick = () => {
                 document.getElementById('pinModal').style.display = 'flex';
-                window.submitPin = () => {
-                    if(document.getElementById('pinInput').value === ADMIN_PASS) {
+                window.submitPin = async () => {
+                    if(await window.AGPageAccess.authorize("purchases")) {
                         document.getElementById('editId').value = id;
                         document.getElementById('item_name').value = item.item_name;
                         document.getElementById('supplier').value = item.supplier;

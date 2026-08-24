@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Master Tracker Pro | Enterprise Telemetry V7.0</title>
 
+<script src="ag-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -3669,13 +3674,9 @@ window.openAdminModal=(
 
     document.getElementById(
         "modalConfirmBtn"
-    ).onclick=()=>{
+    ).onclick=async()=>{
 
-        if(
-            document.getElementById(
-                "adminPass"
-            ).value==="nakuru1"
-        ){
+        if(await window.AGPageAccess.authorize("live-tracking")){
 
             callback();
 

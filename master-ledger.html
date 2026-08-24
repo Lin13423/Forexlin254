@@ -3,6 +3,11 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>Accounts Audit Pro - AssetGuard Ultimate</title>
@@ -670,8 +675,8 @@
         }
     };
     
-    window.verifyPin = () => {
-        if(document.getElementById('adminPin').value === "1234") {
+    window.verifyPin = async () => {
+        if(await window.AGPageAccess.authorize("master-ledger")) {
             isAdmin = true; 
             document.getElementById('lock-icon-svg').innerHTML = '<path d="M12 13c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6-1V9c0-3.31-2.69-6-6-6S6 5.69 6 9v3H4v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9h-2zm-2 0H8V9c0-2.21 1.79-4 4-4s4 1.79 4 4v3z"/>';
             closeModals(); filterAndRender();

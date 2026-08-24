@@ -3,6 +3,11 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>Cash Audit - AssetGuard Pro</title>
@@ -207,8 +212,8 @@
         if(isAdmin) { isAdmin = false; document.getElementById('lock-icon').innerText = "🔒"; filterAndRender(); }
         else { document.getElementById('pinModal').style.display = 'flex'; document.getElementById('adminPin').focus(); }
     };
-    window.verifyPin = () => {
-        if(document.getElementById('adminPin').value === "1234") {
+    window.verifyPin = async () => {
+        if(await window.AGPageAccess.authorize("cash-report")) {
             isAdmin = true; document.getElementById('lock-icon').innerText = "🔓";
             closeModals(); filterAndRender();
         }

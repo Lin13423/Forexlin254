@@ -3,6 +3,11 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>AssetGuard Pro - Unified Expense Terminal & Analytics</title>
@@ -1312,8 +1317,8 @@
             }
         };
 
-        window.handleSecurity = () => {
-            const isUnlocked = (document.getElementById('masterPin').value === "0000" || document.getElementById('masterPin').value === "1234");
+        window.handleSecurity = async () => {
+            const isUnlocked = await window.AGPageAccess.authorize("expenses");
             document.getElementById('mainBody').classList.toggle('unlocked', isUnlocked);
             document.getElementById('lockLabel').innerText = isUnlocked ? "UNLOCKED" : "LOCKED ADMIN";
             document.getElementById('lockBar').style.background = isUnlocked ? "var(--success)" : "var(--dark)";

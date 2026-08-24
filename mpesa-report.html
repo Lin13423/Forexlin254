@@ -3,6 +3,11 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>M-Pesa Revenue - AssetGuard</title>
@@ -122,7 +127,6 @@ const salesPath = AGUtils.userPath(currentUID, "sales");
 const queueKey = AGUtils.uidKey("ag_sales_queue", currentUID);
 const cacheKey = AGUtils.uidKey("ag_mpesa_cache", currentUID);
 
-const ADMIN_PASS = "1234";
 let cloudRecords = [];
 let combinedStore = [];
 let activeId = null;
@@ -201,9 +205,9 @@ window.renderSales = () => {
     document.getElementById('footer-bar').classList.toggle('active', gross > 0);
 };
 
-window.validatePin = () => {
+window.validatePin = async () => {
     const pin = document.getElementById('authPin').value;
-    document.getElementById('auth-btns').style.display = (pin === ADMIN_PASS) ? 'block' : 'none';
+    document.getElementById('auth-btns').style.display = (await window.AGPageAccess.authorize("mpesa-report")) ? 'block' : 'none';
 };
 
 window.openManager = id => {

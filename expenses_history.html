@@ -3,6 +3,11 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>Expense & Debt Ledger - AssetGuard Mirror</title>
@@ -209,13 +214,13 @@
     await refreshUI(); 
     startSync();      
 
-    window.handleSecurity = () => {
+    window.handleSecurity = async () => {
         const pin = document.getElementById('masterPin').value;
         const body = document.getElementById('mainBody');
         const bar = document.getElementById('lockBar');
         const label = document.getElementById('lockLabel');
 
-        if(pin === "1234") {
+        if(await window.AGPageAccess.authorize("expenses_history")) {
             body.classList.add('unlocked');
             bar.style.background = "var(--success)";
             label.innerText = "UNLOCKED (ADMIN)";
