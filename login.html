@@ -395,13 +395,27 @@ async function doSignup() {
 }
 
 async function doReset() {
-  const email = document.getElementById("f_email").value.trim();
+  const email = document.getElementById("f_email").value.trim().toLowerCase();
   if (!email) return msg("Enter email first");
+  const button = document.querySelector("#forgotModal .action-btn");
+  const expiresAt = Date.now() + (30 * 60 * 1000);
+  const resetUrl = new URL("reset-password.html", window.location.href);
+  resetUrl.searchParams.set("expires", String(expiresAt));
   try {
-    await auth.sendPasswordResetEmail(email);
-    msg("Reset link sent!", "#10b981");
+    button.disabled = true;
+    button.innerText = "Sending...";
+    await auth.sendPasswordResetEmail(email, {
+      url: resetUrl.href,
+      handleCodeInApp: false
+    });
+    msg("Reset link sent. It expires in 30 minutes.", "#10b981");
     closeForgotModal();
-  } catch (e) { msg(e.message); }
+  } catch (e) {
+    msg(e.code === "auth/user-not-found" ? "No account is registered with that email." : e.message);
+  } finally {
+    button.disabled = false;
+    button.innerText = "Send Reset Link";
+  }
 }
 </script>
 </body>
