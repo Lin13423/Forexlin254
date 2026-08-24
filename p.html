@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AssetGuard — GitHub Password & PIN Scanner</title>
+
+<style>
+:root{
+  --bg:#07111f;
+  --card:#0d1b2e;
+  --card2:#091727;
+  --line:#20334d;
+  --text:#eaf2ff;
+  --muted:#91a4bd;
+  --green:#35d07f;
+  --yellow:#ffbd4a;
+  --red:#ff6678;
+  --blue:#4da3ff;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:linear-gradient(145deg,#06101d,#0a1728);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+.wrap{
+  max-width:1100px;
+  margin:auto;
+  padding:18px;
+}
+
+header{
+  padding:15px 3px 20px;
+}
+
+h1{
+  margin:0 0 8px;
+  font-size:25px;
+}
+
+.subtitle{
+  color:var(--muted);
+  line-height:1.5;
+  font-size:13px;
+}
+
+.panel{
+  background:rgba(13,27,46,.97);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:16px;
+  margin:12px 0;
+  box-shadow:0 12px 35px #0004;
+}
+
+.repo{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.repo input{
+  flex:1;
+  min-width:240px;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#081423;
+  color:white;
+  outline:none;
+}
+
+button{
+  border:0;
+  border-radius:10px;
+  padding:12px 16px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.scan{
+  background:var(--green);
+  color:#04130b;
+}
+
+.stop{
+  background:var(--yellow);
+  color:#241700;
+}
+
+.export{
+  background:#183252;
+  color:white;
+}
+
+.clear{
+  background:#6e2330;
+  color:white;
+}
+
+button:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+
+.progress{
+  height:9px;
+  margin-top:14px;
+  background:#06101c;
+  border-radius:20px;
+  overflow:hidden;
+}
+
+.bar{
+  height:100%;
+  width:0%;
+  background:var(--green);
+  transition:.2s;
+}
+
+.status{
+  margin-top:9px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:9px;
+}
+
+.stat{
+  background:#091626;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:13px;
+}
+
+.stat b{
+  display:block;
+  font-size:22px;
+  margin-bottom:4px;
+}
+
+.stat span{
+  color:var(--muted);
+  font-size:11px;
+}
+
+.search{
+  width:100%;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#081423;
+  color:white;
+  outline:none;
+}
+
+.result{
+  background:var(--card2);
+  border:1px solid var(--line);
+  border-radius:13px;
+  margin:10px 0;
+  overflow:hidden;
+}
+
+.filehead{
+  padding:13px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  background:#0c1b2d;
+}
+
+.filename{
+  font-weight:800;
+  word-break:break-all;
+}
+
+.filesize{
+  color:var(--muted);
+  font-size:11px;
+  margin-top:4px;
+}
+
+.badge{
+  padding:5px 9px;
+  border-radius:20px;
+  font-size:10px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.found{
+  background:#143c2a;
+  color:#6ff0a5;
+}
+
+.clean{
+  background:#263449;
+  color:#aab8ca;
+}
+
+.error{
+  background:#4a2028;
+  color:#ff9aa6;
+}
+
+.secret{
+  padding:12px;
+  border-top:1px solid var(--line);
+}
+
+.secretType{
+  color:var(--green);
+  font-weight:900;
+  font-size:11px;
+  text-transform:uppercase;
+}
+
+.secretValue{
+  margin-top:6px;
+  padding:10px;
+  background:#050d17;
+  border-radius:8px;
+  font-family:monospace;
+  word-break:break-all;
+  color:#fff;
+}
+
+.location{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:11px;
+}
+
+.empty{
+  text-align:center;
+  color:var(--muted);
+  padding:30px;
+}
+
+.warning{
+  color:#ffd27a;
+  font-size:12px;
+  line-height:1.6;
+}
+
+@media(max-width:700px){
+  .stats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  h1{
+    font-size:21px;
+  }
+
+  .repo{
+    flex-direction:column;
+  }
+
+  .repo input{
+    min-width:0;
+    width:100%;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<header>
+  <h1>🔐 AssetGuard GitHub Security Scanner</h1>
+  <div class="subtitle">
+    Automatically scans the entire public GitHub repository for
+    hard-coded passwords, PINs, API keys, tokens, secrets and
+    credential comparisons.
+  </div>
+</header>
+
+
+<!-- REPOSITORY -->
+<div class="panel">
+
+  <div class="repo">
+
+    <input
+      id="repoInput"
+      value="https://github.com/assetguard-lin/use-assetguard-web1"
+      placeholder="https://github.com/OWNER/REPOSITORY">
+
+    <button
+      id="scanBtn"
+      class="scan">
+      🔎 SCAN GITHUB
+    </button>
+
+    <button
+      id="stopBtn"
+      class="stop"
+      disabled>
+      ■ STOP
+    </button>
+
+  </div>
+
+
+  <div class="progress">
+    <div
+      id="progressBar"
+      class="bar">
+    </div>
+  </div>
+
+
+  <div
+    id="status"
+    class="status">
+    Ready to scan.
+  </div>
+
+</div>
+
+
+<!-- STATISTICS -->
+<div class="panel">
+
+  <div class="stats">
+
+    <div class="stat">
+      <b id="totalFiles">0</b>
+      <span>Repository Files</span>
+    </div>
+
+    <div class="stat">
+      <b id="scannedFiles">0</b>
+      <span>Files Scanned</span>
+    </div>
+
+    <div class="stat">
+      <b id="foundFiles">0</b>
+      <span>Files With Findings</span>
+    </div>
+
+    <div class="stat">
+      <b id="findingCount">0</b>
+      <span>Total Findings</span>
+    </div>
+
+    <div class="stat">
+      <b id="errorCount">0</b>
+      <span>Errors</span>
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- SEARCH -->
+<div class="panel">
+
+  <input
+    id="search"
+    class="search"
+    placeholder="Search file, password, PIN, API key, token...">
+
+</div>
+
+
+<!-- RESULTS -->
+<div class="panel">
+
+  <div id="results">
+
+    <div class="empty">
+      Enter a repository and press SCAN GITHUB.
+    </div>
+
+  </div>
+
+</div>
+
+
+<div class="panel warning">
+
+  <b>Security:</b>
+  This scanner is intended for repositories you own or are authorized
+  to inspect. The detected values are shown because they are present
+  in the repository source. After finding a real credential, rotate or
+  revoke it rather than relying only on removing it from the current file.
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CONFIGURATION
+========================================================= */
+
+const DEFAULT_REPO =
+  "https://github.com/assetguard-lin/use-assetguard-web1";
+
+
+const TEXT_EXTENSIONS =
+  /\.(html?|js|jsx|ts|tsx|css|json|xml|txt|md|csv|php|py|java|kt|dart|vue|svelte|sql|yaml|yml|env|ini|conf|config|log|sh|bat|ps1)$/i;
+
+
+const SKIP_EXTENSIONS =
+  /\.(png|jpg|jpeg|gif|webp|bmp|ico|svg|mp3|mp4|avi|mov|mkv|zip|rar|7z|gz|pdf|exe|apk|woff|woff2|ttf|otf|bin|lock)$/i;
+
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
+const repoInput =
+  document.getElementById("repoInput");
+
+const scanBtn =
+  document.getElementById("scanBtn");
+
+const stopBtn =
+  document.getElementById("stopBtn");
+
+const progressBar =
+  document.getElementById("progressBar");
+
+const statusEl =
+  document.getElementById("status");
+
+const resultsEl =
+  document.getElementById("results");
+
+const searchEl =
+  document.getElementById("search");
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let scanning = false;
+let stopRequested = false;
+let results = [];
+let repositoryFiles = [];
+
+
+/* =========================================================
+   HTML ESCAPE
+========================================================= */
+
+function escapeHtml(value){
+
+  return String(value)
+    .replace(/[&<>"']/g, function(char){
+
+      return {
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+      }[char];
+
+    });
+
+}
+
+
+/* =========================================================
+   REPOSITORY URL PARSER
+========================================================= */
+
+function parseRepository(url){
+
+  url = url.trim();
+
+  url = url.replace(/\/+$/,"");
+
+  url = url.replace(/\.git$/i,"");
+
+  const match =
+    url.match(
+      /github\.com\/([^\/]+)\/([^\/#?]+)/
+    );
+
+  if(!match){
+
+    throw new Error(
+      "Invalid GitHub repository URL."
+    );
+
+  }
+
+  return {
+
+    owner:match[1],
+
+    repo:match[2]
+
+  };
+
+}
+
+
+/* =========================================================
+   GITHUB API
+========================================================= */
+
+async function githubRequest(url){
+
+  const response =
+    await fetch(url,{
+
+      headers:{
+        "Accept":
+          "application/vnd.github+json"
+      }
+
+    });
+
+
+  if(!response.ok){
+
+    let message =
+      `GitHub returned HTTP ${response.status}.`;
+
+    try{
+
+      const data =
+        await response.json();
+
+      if(data.message)
+        message += " " + data.message;
+
+    }catch(e){}
+
+    throw new Error(message);
+
+  }
+
+
+  return response.json();
+
+}
+
+
+/* =========================================================
+   GET COMPLETE REPOSITORY TREE
+========================================================= */
+
+async function getRepositoryTree(owner,repo){
+
+  statusEl.textContent =
+    "Reading complete GitHub repository tree...";
+
+
+  const url =
+    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/HEAD?recursive=1`;
+
+
+  const data =
+    await githubRequest(url);
+
+
+  if(data.truncated){
+
+    statusEl.textContent =
+      "GitHub tree is very large. Continuing with available tree.";
+
+  }
+
+
+  return (data.tree || [])
+    .filter(item =>
+      item.type === "blob"
+    );
+
+}
+
+
+/* =========================================================
+   RAW FILE URL
+========================================================= */
+
+function rawUrl(owner,repo,path){
+
+  return (
+    "https://raw.githubusercontent.com/" +
+    encodeURIComponent(owner) +
+    "/" +
+    encodeURIComponent(repo) +
+    "/HEAD/" +
+    path
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/")
+  );
+
+}
+
+
+/* =========================================================
+   DETECTION ENGINE
+========================================================= */
+
+function findSecrets(text){
+
+  const findings = [];
+
+  const seen = new Set();
+
+
+  /*
+   * Each rule looks for common hard-coded credentials.
+   */
+
+  const patterns = [
+
+    {
+      type:"PASSWORD",
+
+      regex:
+      /\b(?:password|passwd|pwd)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{3,120})["'`]/gi
+    },
+
+
+    {
+      type:"PIN",
+
+      regex:
+      /\b(?:pin|passcode|accessPin|access_pin|adminPin|admin_pin|securityPin|security_pin)\b\s*(?:=|:|=>)\s*["'`](\d{4,10})["'`]/gi
+    },
+
+
+    {
+      type:"ACCESS KEY",
+
+      regex:
+      /\b(?:accessKey|access_key|access-key|accessCode|access_code)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{3,120})["'`]/gi
+    },
+
+
+    {
+      type:"API KEY",
+
+      regex:
+      /\b(?:apiKey|api_key|api-key|apikey)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{8,250})["'`]/gi
+    },
+
+
+    {
+      type:"SECRET KEY",
+
+      regex:
+      /\b(?:secret|secretKey|secret_key|clientSecret|client_secret)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{4,250})["'`]/gi
+    },
+
+
+    {
+      type:"TOKEN",
+
+      regex:
+      /\b(?:token|authToken|auth_token|accessToken|access_token|bearerToken|bearer_token)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{8,500})["'`]/gi
+    },
+
+
+    /*
+     * Password comparison:
+     *
+     * if(pass === "secret")
+     * if(pin == "1234")
+     */
+
+    {
+      type:"PASSWORD COMPARISON",
+
+      regex:
+      /\b(?:password|passwd|pwd|pass|pin|accessKey|access_key|secret)\b[^;\r\n]{0,100}?(?:===|==|!==|!=)\s*["'`]([^"'`\r\n]{3,120})["'`]/gi
+    },
+
+
+    /*
+     * localStorage credential
+     */
+
+    {
+      type:"STORED CREDENTIAL",
+
+      regex:
+      /localStorage\.(?:setItem|getItem)\s*\(\s*["'`]([^"'`]*(?:password|pass|pin|token|secret|key)[^"'`]*)["'`]\s*(?:,\s*["'`]([^"'`]*)["'`])?/gi
+    },
+
+
+    /*
+     * Firebase-style hard-coded credential values.
+     */
+
+    {
+      type:"FIREBASE/API CREDENTIAL",
+
+      regex:
+      /\b(?:apiKey|authDomain|databaseURL|projectId|storageBucket|messagingSenderId|appId)\s*:\s*["'`]([^"'`\r\n]+)["'`]/gi
+    }
+
+  ];
+
+
+  for(const pattern of patterns){
+
+    let match;
+
+
+    while(
+      (match =
+        pattern.regex.exec(text))
+    ){
+
+      let value;
+
+
+      /*
+       * localStorage pattern has two groups.
+       */
+
+      if(
+        pattern.type ===
+        "STORED CREDENTIAL"
+      ){
+
+        value =
+          match[2] ||
+          match[1];
+
+      }else{
+
+        value =
+          match[1];
+
+      }
+
+
+      if(!value)
+        continue;
+
+
+      value =
+        value.trim();
+
+
+      /*
+       * Ignore obvious placeholders.
+       */
+
+      if(
+        /^(your[_ -]?password|your[_ -]?key|your[_ -]?token|xxx+|change[_ -]?me|example|placeholder)$/i
+          .test(value)
+      ){
+
+        continue;
+
+      }
+
+
+      const unique =
+        pattern.type +
+        "|" +
+        value;
+
+
+      if(seen.has(unique))
+        continue;
+
+
+      seen.add(unique);
+
+
+      const before =
+        text.slice(
+          0,
+          match.index
+        );
+
+
+      const line =
+        before.split(/\r?\n/).length;
+
+
+      findings.push({
+
+        type:
+          pattern.type,
+
+        value:
+          value,
+
+        line:
+          line
+
+      });
+
+
+      /*
+       * Avoid displaying thousands of duplicate
+       * matches from one file.
+       */
+
+      if(findings.length >= 200)
+        return findings;
+
+    }
+
+  }
+
+
+  return findings;
+
+}
+
+
+/* =========================================================
+   FETCH FILE
+========================================================= */
+
+async function fetchFile(
+  owner,
+  repo,
+  file
+){
+
+  const url =
+    rawUrl(
+      owner,
+      repo,
+      file.path
+    );
+
+
+  const response =
+    await fetch(url);
+
+
+  if(!response.ok){
+
+    throw new Error(
+      `HTTP ${response.status}`
+    );
+
+  }
+
+
+  /*
+   * Limit enormous files.
+   */
+
+  if(
+    file.size &&
+    file.size > 15 * 1024 * 1024
+  ){
+
+    throw new Error(
+      "File larger than 15 MB"
+    );
+
+  }
+
+
+  return response.text();
+
+}
+
+
+/* =========================================================
+   ADD RESULT
+========================================================= */
+
+function addResult(
+  file,
+  status,
+  findings,
+  error=""
+){
+
+  results.push({
+
+    path:
+      file.path,
+
+    size:
+      file.size || 0,
+
+    status:
+      status,
+
+    findings:
+      findings || [],
+
+    error:
+      error
+
+  });
+
+}
+
+
+/* =========================================================
+   UPDATE STATISTICS
+========================================================= */
+
+function updateStats(){
+
+  document.getElementById(
+    "totalFiles"
+  ).textContent =
+    repositoryFiles.length;
+
+
+  document.getElementById(
+    "scannedFiles"
+  ).textContent =
+    results.length;
+
+
+  document.getElementById(
+    "foundFiles"
+  ).textContent =
+    results.filter(
+      x =>
+        x.findings.length > 0
+    ).length;
+
+
+  document.getElementById(
+    "findingCount"
+  ).textContent =
+    results.reduce(
+      (total,x) =>
+        total + x.findings.length,
+      0
+    );
+
+
+  document.getElementById(
+    "errorCount"
+  ).textContent =
+    results.filter(
+      x =>
+        x.status === "error"
+    ).length;
+
+}
+
+
+/* =========================================================
+   RENDER RESULTS
+========================================================= */
+
+function renderResults(){
+
+  updateStats();
+
+
+  const query =
+    searchEl.value
+      .trim()
+      .toLowerCase();
+
+
+  const filtered =
+    results.filter(result => {
+
+      const searchable =
+        (
+          result.path +
+          " " +
+          result.findings
+            .map(x =>
+              x.type +
+              " " +
+              x.value
+            )
+            .join(" ")
+        ).toLowerCase();
+
+
+      return searchable.includes(query);
+
+    });
+
+
+  if(!filtered.length){
+
+    resultsEl.innerHTML =
+      `<div class="empty">
+        No matching findings.
+      </div>`;
+
+    return;
+
+  }
+
+
+  resultsEl.innerHTML =
+    filtered.map(result => {
+
+      let badge;
+
+
+      if(result.findings.length){
+
+        badge =
+          `<span class="badge found">
+            ${result.findings.length} FOUND
+          </span>`;
+
+      }
+
+      else if(
+        result.status === "error"
+      ){
+
+        badge =
+          `<span class="badge error">
+            ERROR
+          </span>`;
+
+      }
+
+      else{
+
+        badge =
+          `<span class="badge clean">
+            CLEAN
+          </span>`;
+
+      }
+
+
+      let findingsHTML = "";
+
+
+      for(
+        const finding
+        of result.findings
+      ){
+
+        findingsHTML += `
+
+          <div class="secret">
+
+            <div class="secretType">
+              ${escapeHtml(finding.type)}
+            </div>
+
+            <div class="secretValue">
+              ${escapeHtml(finding.value)}
+            </div>
+
+            <div class="location">
+              Line ${finding.line}
+            </div>
+
+          </div>
+
+        `;
+
+      }
+
+
+      if(result.error){
+
+        findingsHTML += `
+
+          <div class="secret">
+
+            <div class="location">
+              ${escapeHtml(result.error)}
+            </div>
+
+          </div>
+
+        `;
+
+      }
+
+
+      return `
+
+        <div class="result">
+
+          <div class="filehead">
+
+            <div>
+
+              <div class="filename">
+                📄 ${escapeHtml(result.path)}
+              </div>
+
+              <div class="filesize">
+                ${formatBytes(result.size)}
+              </div>
+
+            </div>
+
+            ${badge}
+
+          </div>
+
+          ${findingsHTML}
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* =========================================================
+   FORMAT BYTES
+========================================================= */
+
+function formatBytes(bytes){
+
+  if(!bytes)
+    return "Unknown size";
+
+
+  const units =
+    ["B","KB","MB","GB"];
+
+
+  let i = 0;
+  let size = bytes;
+
+
+  while(
+    size >= 1024 &&
+    i < units.length - 1
+  ){
+
+    size /= 1024;
+    i++;
+
+  }
+
+
+  return (
+    size.toFixed(
+      size >= 10 ? 0 : 1
+    ) +
+    " " +
+    units[i]
+  );
+
+}
+
+
+/* =========================================================
+   MAIN SCANNER
+========================================================= */
+
+async function scanRepository(){
+
+  if(scanning)
+    return;
+
+
+  let repository;
+
+
+  try{
+
+    repository =
+      parseRepository(
+        repoInput.value
+      );
+
+  }
+
+  catch(error){
+
+    statusEl.textContent =
+      error.message;
+
+    return;
+
+  }
+
+
+  scanning = true;
+
+  stopRequested = false;
+
+  results = [];
+
+  repositoryFiles = [];
+
+
+  scanBtn.disabled = true;
+
+  stopBtn.disabled = false;
+
+
+  progressBar.style.width =
+    "0%";
+
+
+  resultsEl.innerHTML =
+    `<div class="empty">
+      Connecting to GitHub...
+    </div>`;
+
+
+  try{
+
+    /*
+     * STEP 1
+     * Get entire repository tree.
+     */
+
+    repositoryFiles =
+      await getRepositoryTree(
+        repository.owner,
+        repository.repo
+      );
+
+
+    /*
+     * Only scan likely text/source files.
+     */
+
+    repositoryFiles =
+      repositoryFiles.filter(file => {
+
+        if(SKIP_EXTENSIONS.test(file.path))
+          return false;
+
+        return (
+          TEXT_EXTENSIONS.test(file.path) ||
+          !/\.[^\/]+$/.test(file.path)
+        );
+
+      });
+
+
+    updateStats();
+
+
+    if(!repositoryFiles.length){
+
+      resultsEl.innerHTML =
+        `<div class="empty">
+          No readable source files found.
+        </div>`;
+
+      return;
+
+    }
+
+
+    /*
+     * STEP 2
+     * Fetch and scan every file.
+     */
+
+    for(
+      let i = 0;
+      i < repositoryFiles.length;
+      i++
+    ){
+
+      if(stopRequested)
+        break;
+
+
+      const file =
+        repositoryFiles[i];
+
+
+      statusEl.textContent =
+        `Scanning ${i + 1} of ${repositoryFiles.length}: ${file.path}`;
+
+
+      try{
+
+        const text =
+          await fetchFile(
+            repository.owner,
+            repository.repo,
+            file
+          );
+
+
+        const findings =
+          findSecrets(text);
+
+
+        addResult(
+
+          file,
+
+          findings.length
+            ? "found"
+            : "clean",
+
+          findings
+
+        );
+
+      }
+
+      catch(error){
+
+        addResult(
+
+          file,
+
+          "error",
+
+          [],
+
+          error.message ||
+          "Unable to read file."
+
+        );
+
+      }
+
+
+      const percentage =
+        Math.round(
+          ((i + 1) /
+          repositoryFiles.length) *
+          100
+        );
+
+
+      progressBar.style.width =
+        percentage + "%";
+
+
+      renderResults();
+
+
+      /*
+       * Allow phone browser UI to update.
+       */
+
+      await new Promise(
+        resolve =>
+          setTimeout(resolve,10)
+      );
+
+    }
+
+
+    if(stopRequested){
+
+      statusEl.textContent =
+        `Stopped. Scanned ${results.length} files.`;
+
+    }
+
+    else{
+
+      const findings =
+        results.reduce(
+          (total,x) =>
+            total + x.findings.length,
+          0
+        );
+
+
+      statusEl.textContent =
+        `SCAN COMPLETE — ${results.length} files scanned, ${findings} findings detected.`;
+
+    }
+
+  }
+
+  catch(error){
+
+    statusEl.textContent =
+      "Scanner error: " +
+      error.message;
+
+
+    resultsEl.innerHTML =
+      `<div class="empty">
+        ${escapeHtml(error.message)}
+      </div>`;
+
+  }
+
+  finally{
+
+    scanning = false;
+
+    scanBtn.disabled = false;
+
+    stopBtn.disabled = true;
+
+  }
+
+}
+
+
+/* =========================================================
+   EXPORT REPORT
+========================================================= */
+
+function exportReport(){
+
+  if(!results.length)
+    return;
+
+
+  const rows = [
+
+    [
+      "Repository File",
+      "Status",
+      "Credential Type",
+      "Detected Value",
+      "Line"
+    ]
+
+  ];
+
+
+  for(
+    const result
+    of results
+  ){
+
+    if(!result.findings.length){
+
+      rows.push([
+
+        result.path,
+
+        result.status,
+
+        "",
+
+        "",
+
+        ""
+
+      ]);
+
+    }
+
+    else{
+
+      for(
+        const finding
+        of result.findings
+      ){
+
+        rows.push([
+
+          result.path,
+
+          "FOUND",
+
+          finding.type,
+
+          finding.value,
+
+          finding.line
+
+        ]);
+
+      }
+
+    }
+
+  }
+
+
+  const csv =
+    rows.map(row =>
+
+      row.map(value =>
+
+        `"${String(value)
+          .replace(/"/g,'""')}"`
+
+      ).join(",")
+
+    ).join("\n");
+
+
+  const blob =
+    new Blob(
+
+      [csv],
+
+      {
+        type:
+          "text/csv;charset=utf-8"
+      }
+
+    );
+
+
+  const link =
+    document.createElement("a");
+
+
+  link.href =
+    URL.createObjectURL(blob);
+
+
+  link.download =
+    "AssetGuard-GitHub-Security-Scan.csv";
+
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+
+
+  setTimeout(
+    () =>
+      URL.revokeObjectURL(
+        link.href
+      ),
+    1000
+  );
+
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+scanBtn.addEventListener(
+  "click",
+  scanRepository
+);
+
+
+stopBtn.addEventListener(
+  "click",
+  () => {
+
+    stopRequested = true;
+
+    statusEl.textContent =
+      "Stopping after the current file...";
+
+  }
+);
+
+
+searchEl.addEventListener(
+  "input",
+  renderResults
+);
+
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
+
+repoInput.value =
+  DEFAULT_REPO;
+
+</script>
+
+</body>
+</html>

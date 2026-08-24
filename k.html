@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AssetGuard Dashboard Security Manager</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:#07111f;
+color:#eef5ff
+}
+.wrap{max-width:1100px;margin:auto;padding:16px}
+.panel{
+background:#0d1b2e;
+border:1px solid #20334d;
+border-radius:15px;
+padding:15px;
+margin:12px 0
+}
+h1{font-size:23px;margin:5px 0 8px}
+.muted{color:#91a4bd;font-size:12px;line-height:1.5}
+input,textarea{
+width:100%;
+background:#071321;
+border:1px solid #29415f;
+border-radius:9px;
+color:white;
+padding:11px;
+outline:none
+}
+textarea{
+min-height:500px;
+font-family:monospace;
+font-size:12px;
+resize:vertical
+}
+button{
+border:0;
+border-radius:9px;
+padding:11px 14px;
+font-weight:800;
+cursor:pointer;
+margin:3px
+}
+.scan{background:#35d07f;color:#04130b}
+.edit{background:#4da3ff;color:white}
+.save{background:#35d07f;color:#04130b}
+.delete{background:#ff6678;color:white}
+.cancel{background:#263449;color:white}
+.export{background:#183252;color:white}
+button:disabled{opacity:.4}
+.stats{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:8px
+}
+.stat{
+background:#091626;
+border:1px solid #20334d;
+padding:12px;
+border-radius:10px
+}
+.stat b{font-size:21px;display:block}
+.stat span{font-size:10px;color:#91a4bd}
+.search{margin-top:10px}
+.file{
+background:#091727;
+border:1px solid #20334d;
+border-radius:12px;
+margin:9px 0;
+overflow:hidden
+}
+.fileHead{
+padding:12px;
+display:flex;
+justify-content:space-between;
+gap:10px
+}
+.path{
+font-weight:800;
+font-size:13px;
+word-break:break-all
+}
+.badge{
+padding:4px 8px;
+border-radius:20px;
+font-size:10px;
+font-weight:900;
+white-space:nowrap
+}
+.found{background:#143c2a;color:#6ff0a5}
+.clean{background:#263449;color:#b4c1d1}
+.err{background:#4a2028;color:#ff9aa6}
+.finding{
+border-top:1px solid #20334d;
+padding:11px
+}
+.type{
+color:#6ff0a5;
+font-weight:900;
+font-size:10px
+}
+.value{
+font-family:monospace;
+background:#050d17;
+padding:8px;
+border-radius:7px;
+margin-top:5px;
+word-break:break-all
+}
+.line{
+font-size:10px;
+color:#91a4bd;
+margin-top:5px
+}
+.editor{
+display:none
+}
+.editor.active{
+display:block
+}
+.status{
+font-size:12px;
+color:#91a4bd;
+margin-top:8px
+}
+.tokenBox{
+display:none
+}
+.tokenBox.active{
+display:block
+}
+@media(max-width:650px){
+.stats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="panel">
+<h1>🔐 AssetGuard Dashboard Security Manager</h1>
+
+<div class="muted">
+Automatically scans dashboard HTML pages in your GitHub repository
+for hard-coded passwords, PINs, API keys, access keys, tokens and
+credential comparisons.
+</div>
+</div>
+
+
+<!-- GITHUB CONNECTION -->
+
+<div class="panel">
+
+<h3>GitHub Repository</h3>
+
+<input
+id="repo"
+value="https://github.com/assetguard-lin/use-assetguard-web1">
+
+<div style="margin-top:8px">
+
+<button
+class="scan"
+onclick="scanRepository()">
+🔎 SCAN DASHBOARD PAGES
+</button>
+
+<button
+class="export"
+onclick="exportReport()">
+⬇ EXPORT
+</button>
+
+</div>
+
+<div id="status" class="status">
+Ready.
+</div>
+
+</div>
+
+
+<!-- TOKEN -->
+
+<div class="panel">
+
+<button
+class="edit"
+onclick="toggleToken()">
+🔑 GitHub Edit/Delete Authorization
+</button>
+
+<div id="tokenBox" class="tokenBox">
+
+<p class="muted">
+Enter a GitHub token with repository Contents write permission.
+The token is kept only in this page's memory and is not saved.
+</p>
+
+<input
+id="token"
+type="password"
+placeholder="github_pat_...">
+
+</div>
+
+</div>
+
+
+<!-- STATS -->
+
+<div class="panel">
+
+<div class="stats">
+
+<div class="stat">
+<b id="files">0</b>
+<span>DASHBOARD FILES</span>
+</div>
+
+<div class="stat">
+<b id="scanned">0</b>
+<span>SCANNED</span>
+</div>
+
+<div class="stat">
+<b id="findings">0</b>
+<span>SECURITY FINDINGS</span>
+</div>
+
+<div class="stat">
+<b id="errors">0</b>
+<span>ERRORS</span>
+</div>
+
+</div>
+
+</div>
+
+
+<!-- SEARCH -->
+
+<div class="panel">
+
+<input
+id="search"
+class="search"
+placeholder="Search dashboard page, password, PIN, API key...">
+
+</div>
+
+
+<!-- RESULTS -->
+
+<div class="panel">
+
+<div id="results">
+
+<div class="muted">
+No scan performed yet.
+</div>
+
+</div>
+
+</div>
+
+
+<!-- EDITOR -->
+
+<div
+id="editorPanel"
+class="panel editor">
+
+<h3 id="editorTitle">
+Edit Dashboard Page
+</h3>
+
+<textarea
+id="editorText"
+spellcheck="false"></textarea>
+
+<div style="margin-top:8px">
+
+<button
+class="save"
+onclick="saveFile()">
+💾 SAVE TO GITHUB
+</button>
+
+<button
+class="delete"
+onclick="deleteFile()">
+🗑 DELETE PAGE
+</button>
+
+<button
+class="cancel"
+onclick="closeEditor()">
+CANCEL
+</button>
+
+</div>
+
+<div id="editorStatus" class="status"></div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+CONFIG
+========================================================= */
+
+const API =
+"https://api.github.com";
+
+const API_VERSION =
+"2022-11-28";
+
+
+let repoInfo=null;
+
+let dashboardFiles=[];
+
+let scanResults=[];
+
+let currentFile=null;
+
+
+/* =========================================================
+REPOSITORY PARSER
+========================================================= */
+
+function parseRepo(url){
+
+url=url.trim();
+
+url=url.replace(/\/+$/,"");
+
+url=url.replace(/\.git$/i,"");
+
+const m=
+url.match(
+/github\.com\/([^\/]+)\/([^\/#?]+)/
+);
+
+if(!m)
+throw new Error("Invalid GitHub repository URL.");
+
+return{
+owner:m[1],
+repo:m[2]
+};
+
+}
+
+
+/* =========================================================
+API REQUEST
+========================================================= */
+
+async function api(url,options={}){
+
+options.headers={
+"Accept":
+"application/vnd.github+json",
+"X-GitHub-Api-Version":
+API_VERSION,
+...(options.headers||{})
+};
+
+const response=
+await fetch(url,options);
+
+if(!response.ok){
+
+let message=
+`GitHub HTTP ${response.status}`;
+
+try{
+
+const data=
+await response.json();
+
+if(data.message)
+message+=": "+data.message;
+
+}catch(e){}
+
+throw new Error(message);
+
+}
+
+return response.json();
+
+}
+
+
+/* =========================================================
+TOKEN
+========================================================= */
+
+function toggleToken(){
+
+document
+.getElementById("tokenBox")
+.classList.toggle("active");
+
+}
+
+
+function getToken(){
+
+return document
+.getElementById("token")
+.value.trim();
+
+}
+
+
+function authHeaders(){
+
+const token=getToken();
+
+if(!token)
+return{};
+
+return{
+"Authorization":
+"Bearer "+token
+};
+
+}
+
+
+/* =========================================================
+SCAN REPOSITORY
+========================================================= */
+
+async function scanRepository(){
+
+try{
+
+repoInfo=
+parseRepo(
+document.getElementById("repo").value
+);
+
+scanResults=[];
+dashboardFiles=[];
+
+setStatus(
+"Reading repository..."
+);
+
+const tree=
+await api(
+`${API}/repos/${repoInfo.owner}/${repoInfo.repo}/git/trees/HEAD?recursive=1`
+);
+
+
+/*
+ONLY DASHBOARD HTML PAGES
+*/
+
+dashboardFiles=
+(tree.tree||[]).filter(file=>{
+
+if(file.type!=="blob")
+return false;
+
+const path=
+file.path.toLowerCase();
+
+if(!path.endsWith(".html"))
+return false;
+
+
+/*
+Dashboard page detection.
+
+Includes:
+
+dashboard.html
+dashboard/*.html
+pages/dashboard*.html
+and HTML files whose filename/path
+contains dashboard.
+*/
+
+return(
+path.includes("dashboard") ||
+path.includes("/dashboard/")
+);
+
+});
+
+
+document.getElementById("files")
+.textContent=
+dashboardFiles.length;
+
+
+setStatus(
+`Found ${dashboardFiles.length} dashboard page(s). Scanning...`
+);
+
+
+for(
+let i=0;
+i<dashboardFiles.length;
+i++
+){
+
+const file=
+dashboardFiles[i];
+
+setStatus(
+`Scanning ${i+1} of ${dashboardFiles.length}: ${file.path}`
+);
+
+try{
+
+const data=
+await api(
+`${API}/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${encodePath(file.path)}?ref=HEAD`
+);
+
+
+let content=
+atob(
+data.content.replace(/\n/g,"")
+);
+
+content=
+decodeUTF8(content);
+
+
+const findings=
+findSecrets(content);
+
+scanResults.push({
+
+path:file.path,
+
+sha:data.sha,
+
+size:file.size,
+
+content:content,
+
+findings:findings
+
+});
+
+}
+catch(error){
+
+scanResults.push({
+
+path:file.path,
+
+sha:file.sha,
+
+size:file.size,
+
+content:"",
+
+findings:[],
+
+error:error.message
+
+});
+
+}
+
+document.getElementById("scanned")
+.textContent=i+1;
+
+render();
+
+}
+
+
+setStatus(
+`Complete. ${scanResults.length} dashboard page(s) scanned.`
+);
+
+}
+catch(error){
+
+setStatus(
+"ERROR: "+error.message
+);
+
+}
+
+}
+
+
+/* =========================================================
+ENCODE PATH
+========================================================= */
+
+function encodePath(path){
+
+return path
+.split("/")
+.map(
+part=>encodeURIComponent(part)
+)
+.join("/");
+
+}
+
+
+/* =========================================================
+UTF8 DECODER
+========================================================= */
+
+function decodeUTF8(binary){
+
+try{
+
+const bytes=
+Uint8Array.from(
+binary,
+c=>c.charCodeAt(0)
+);
+
+return new TextDecoder()
+.decode(bytes);
+
+}catch(e){
+
+return binary;
+
+}
+
+}
+
+
+/* =========================================================
+SECRET DETECTOR
+========================================================= */
+
+function findSecrets(text){
+
+const patterns=[
+
+{
+type:"PASSWORD",
+regex:
+/\b(?:password|passwd|pwd)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{3,120})["'`]/gi
+},
+
+{
+type:"PIN",
+regex:
+/\b(?:pin|passcode|accessPin|access_pin|adminPin|admin_pin|securityPin|security_pin)\b\s*(?:=|:|=>)\s*["'`](\d{4,10})["'`]/gi
+},
+
+{
+type:"ACCESS KEY",
+regex:
+/\b(?:accessKey|access_key|access-key|accessCode|access_code)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{3,120})["'`]/gi
+},
+
+{
+type:"API KEY",
+regex:
+/\b(?:apiKey|api_key|api-key|apikey)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{8,250})["'`]/gi
+},
+
+{
+type:"SECRET",
+regex:
+/\b(?:secret|secretKey|secret_key|clientSecret|client_secret)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{4,250})["'`]/gi
+},
+
+{
+type:"TOKEN",
+regex:
+/\b(?:token|authToken|auth_token|accessToken|access_token|bearerToken|bearer_token)\b\s*(?:=|:|=>)\s*["'`]([^"'`\r\n]{8,500})["'`]/gi
+},
+
+{
+type:"PASSWORD COMPARISON",
+regex:
+/\b(?:password|passwd|pwd|pass|pin|accessKey|access_key|secret)\b[^;\r\n]{0,100}?(?:===|==|!==|!=)\s*["'`]([^"'`\r\n]{3,120})["'`]/gi
+},
+
+{
+type:"LOCAL STORAGE CREDENTIAL",
+regex:
+/localStorage\.(?:setItem|getItem)\s*\(\s*["'`]([^"'`]*(?:password|pass|pin|token|secret|key)[^"'`]*)["'`]\s*(?:,\s*["'`]([^"'`]*)["'`])?/gi
+}
+
+];
+
+
+const found=[];
+const seen=new Set();
+
+
+for(
+const pattern of patterns
+){
+
+let match;
+
+
+while(
+(match=pattern.regex.exec(text))
+){
+
+let value=
+match[1];
+
+
+if(
+pattern.type===
+"LOCAL STORAGE CREDENTIAL"
+){
+
+value=
+match[2]||match[1];
+
+}
+
+
+if(!value)
+continue;
+
+
+value=value.trim();
+
+
+if(
+/^(your[_ -]?password|your[_ -]?key|your[_ -]?token|xxx+|change[_ -]?me|placeholder)$/i
+.test(value)
+)
+continue;
+
+
+const unique=
+pattern.type+
+"|"+
+value;
+
+
+if(seen.has(unique))
+continue;
+
+
+seen.add(unique);
+
+
+const line=
+text
+.slice(0,match.index)
+.split(/\r?\n/)
+.length;
+
+
+found.push({
+
+type:pattern.type,
+
+value:value,
+
+line:line
+
+});
+
+}
+
+}
+
+
+return found;
+
+}
+
+
+/* =========================================================
+RENDER
+========================================================= */
+
+function render(){
+
+const query=
+document.getElementById("search")
+.value
+.trim()
+.toLowerCase();
+
+
+let visible=
+scanResults.filter(item=>{
+
+const searchText=
+item.path+
+" "+
+item.findings
+.map(
+x=>x.type+" "+x.value
+)
+.join(" ");
+
+return searchText
+.toLowerCase()
+.includes(query);
+
+});
+
+
+if(!visible.length){
+
+document.getElementById("results")
+.innerHTML=
+`<div class="muted">
+No dashboard findings.
+</div>`;
+
+return;
+
+}
+
+
+document.getElementById("results")
+.innerHTML=
+visible.map(item=>{
+
+let badge;
+
+
+if(item.error){
+
+badge=
+`<span class="badge err">
+ERROR
+</span>`;
+
+}
+
+else if(item.findings.length){
+
+badge=
+`<span class="badge found">
+${item.findings.length} FOUND
+</span>`;
+
+}
+else{
+
+badge=
+`<span class="badge clean">
+CLEAN
+</span>`;
+
+}
+
+
+let findingsHTML="";
+
+
+item.findings.forEach(f=>{
+
+findingsHTML+=`
+
+<div class="finding">
+
+<div class="type">
+${escapeHtml(f.type)}
+</div>
+
+<div class="value">
+${escapeHtml(f.value)}
+</div>
+
+<div class="line">
+Line ${f.line}
+</div>
+
+</div>
+
+`;
+
+});
+
+
+return`
+
+<div class="file">
+
+<div class="fileHead">
+
+<div>
+
+<div class="path">
+📄 ${escapeHtml(item.path)}
+</div>
+
+<div class="muted">
+${formatBytes(item.size)}
+</div>
+
+</div>
+
+${badge}
+
+</div>
+
+
+<div style="padding:8px">
+
+<button
+class="edit"
+onclick='openEditor(${JSON.stringify(item.path)})'>
+✏️ EDIT
+</button>
+
+<button
+class="delete"
+onclick='deletePage(${JSON.stringify(item.path)})'>
+🗑 DELETE
+</button>
+
+</div>
+
+
+${findingsHTML}
+
+</div>
+
+`;
+
+}).join("");
+
+
+updateStats();
+
+}
+
+
+/* =========================================================
+STATS
+========================================================= */
+
+function updateStats(){
+
+document.getElementById("files")
+.textContent=
+dashboardFiles.length;
+
+
+document.getElementById("scanned")
+.textContent=
+scanResults.length;
+
+
+document.getElementById("findings")
+.textContent=
+scanResults.reduce(
+(total,x)=>
+total+x.findings.length,
+0
+);
+
+
+document.getElementById("errors")
+.textContent=
+scanResults.filter(
+x=>x.error
+).length;
+
+}
+
+
+/* =========================================================
+OPEN EDITOR
+========================================================= */
+
+async function openEditor(path){
+
+const item=
+scanResults.find(
+x=>x.path===path
+);
+
+
+if(!item)
+return;
+
+
+currentFile=item;
+
+
+document.getElementById("editorPanel")
+.classList.add("active");
+
+
+document.getElementById("editorTitle")
+.textContent=
+"Edit: "+path;
+
+
+document.getElementById("editorText")
+.value=
+item.content;
+
+
+document.getElementById("editorStatus")
+.textContent=
+"";
+
+
+window.scrollTo({
+
+top:document
+.getElementById("editorPanel")
+.offsetTop-10,
+
+behavior:"smooth"
+
+});
+
+}
+
+
+/* =========================================================
+CLOSE EDITOR
+========================================================= */
+
+function closeEditor(){
+
+currentFile=null;
+
+document
+.getElementById("editorPanel")
+.classList.remove("active");
+
+}
+
+
+/* =========================================================
+SAVE FILE
+========================================================= */
+
+async function saveFile(){
+
+if(!currentFile)
+return;
+
+
+const token=
+getToken();
+
+
+if(!token){
+
+alert(
+"Enter your GitHub token first."
+);
+
+return;
+
+}
+
+
+if(
+!confirm(
+"Save these changes directly to GitHub?"
+)
+)
+return;
+
+
+const content=
+document.getElementById(
+"editorText"
+).value;
+
+
+const commitMessage=
+"Update dashboard: "+
+currentFile.path;
+
+
+document.getElementById(
+"editorStatus"
+).textContent=
+"Saving to GitHub...";
+
+
+try{
+
+const body={
+
+message:commitMessage,
+
+content:
+utf8ToBase64(content),
+
+sha:currentFile.sha
+
+};
+
+
+const response=
+await fetch(
+
+`${API}/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${encodePath(currentFile.path)}`,
+
+{
+
+method:"PUT",
+
+headers:{
+
+"Accept":
+"application/vnd.github+json",
+
+"Authorization":
+"Bearer "+token,
+
+"X-GitHub-Api-Version":
+API_VERSION,
+
+"Content-Type":
+"application/json"
+
+},
+
+body:
+JSON.stringify(body)
+
+});
+
+
+const data=
+await response.json();
+
+
+if(!response.ok){
+
+throw new Error(
+data.message||
+"GitHub update failed."
+);
+
+}
+
+
+currentFile.sha=
+data.content.sha;
+
+
+currentFile.content=
+content;
+
+
+currentFile.findings=
+findSecrets(content);
+
+
+document.getElementById(
+"editorStatus"
+).textContent=
+"✅ Saved successfully to GitHub.";
+
+
+render();
+
+}
+catch(error){
+
+document.getElementById(
+"editorStatus"
+).textContent=
+"❌ "+error.message;
+
+}
+
+}
+
+
+/* =========================================================
+DELETE PAGE
+========================================================= */
+
+async function deletePage(path){
+
+const token=
+getToken();
+
+
+if(!token){
+
+alert(
+"Enter your GitHub token first."
+);
+
+return;
+
+}
+
+
+const item=
+scanResults.find(
+x=>x.path===path
+);
+
+
+if(!item)
+return;
+
+
+if(
+!confirm(
+"PERMANENTLY DELETE:\n\n"+
+path+
+"\n\nThis creates a GitHub commit and removes the page from the repository. Continue?"
+)
+)
+return;
+
+
+setStatus(
+"Deleting "+path+"..."
+);
+
+
+try{
+
+const response=
+await fetch(
+
+`${API}/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${encodePath(path)}`,
+
+{
+
+method:"DELETE",
+
+headers:{
+
+"Accept":
+"application/vnd.github+json",
+
+"Authorization":
+"Bearer "+token,
+
+"X-GitHub-Api-Version":
+API_VERSION,
+
+"Content-Type":
+"application/json"
+
+},
+
+body:
+JSON.stringify({
+
+message:
+"Delete dashboard: "+path,
+
+sha:
+item.sha
+
+})
+
+});
+
+
+const data=
+await response.json();
+
+
+if(!response.ok){
+
+throw new Error(
+data.message||
+"GitHub deletion failed."
+);
+
+}
+
+
+scanResults=
+scanResults.filter(
+x=>x.path!==path
+);
+
+
+dashboardFiles=
+dashboardFiles.filter(
+x=>x.path!==path
+);
+
+
+closeEditor();
+
+render();
+
+setStatus(
+"✅ "+path+" deleted successfully from GitHub."
+);
+
+}
+catch(error){
+
+setStatus(
+"❌ Delete failed: "+
+error.message
+);
+
+}
+
+}
+
+
+/* =========================================================
+UTF8 BASE64
+========================================================= */
+
+function utf8ToBase64(str){
+
+const bytes=
+new TextEncoder()
+.encode(str);
+
+
+let binary="";
+
+
+const chunk=0x8000;
+
+
+for(
+let i=0;
+i<bytes.length;
+i+=chunk
+){
+
+binary+=String.fromCharCode(
+...bytes.subarray(
+i,
+Math.min(
+i+chunk,
+bytes.length
+)
+)
+);
+
+}
+
+
+return btoa(binary);
+
+}
+
+
+/* =========================================================
+ESCAPE
+========================================================= */
+
+function escapeHtml(value){
+
+return String(value)
+.replace(/[&<>"']/g,c=>({
+
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#039;"
+
+}[c]));
+
+}
+
+
+/* =========================================================
+BYTES
+========================================================= */
+
+function formatBytes(bytes){
+
+if(!bytes)
+return "";
+
+const units=[
+"B","KB","MB","GB"
+];
+
+let i=0;
+
+while(
+bytes>=1024 &&
+i<units.length-1
+){
+
+bytes/=1024;
+i++;
+
+}
+
+return(
+bytes.toFixed(
+bytes>=10?0:1
+)+
+" "+
+units[i]
+);
+
+}
+
+
+/* =========================================================
+STATUS
+========================================================= */
+
+function setStatus(message){
+
+document.getElementById(
+"status"
+).textContent=
+message;
+
+}
+
+
+/* =========================================================
+EXPORT
+========================================================= */
+
+function exportReport(){
+
+if(!scanResults.length)
+return;
+
+
+const rows=[
+
+[
+"Dashboard Page",
+"Finding Type",
+"Value",
+"Line"
+]
+
+];
+
+
+scanResults.forEach(item=>{
+
+if(!item.findings.length){
+
+rows.push([
+item.path,
+"CLEAN",
+"",
+""
+]);
+
+}
+else{
+
+item.findings.forEach(f=>{
+
+rows.push([
+item.path,
+f.type,
+f.value,
+f.line
+]);
+
+});
+
+}
+
+});
+
+
+const csv=
+rows.map(row=>
+
+row.map(value=>
+`"${String(value)
+.replace(/"/g,'""')}"`
+).join(",")
+
+).join("\n");
+
+
+const blob=
+new Blob(
+[csv],
+{
+type:"text/csv;charset=utf-8"
+}
+);
+
+
+const link=
+document.createElement("a");
+
+
+link.href=
+URL.createObjectURL(blob);
+
+
+link.download=
+"AssetGuard-Dashboard-Security-Report.csv";
+
+
+link.click();
+
+
+setTimeout(
+()=>URL.revokeObjectURL(link.href),
+1000
+);
+
+}
+
+
+/* =========================================================
+SEARCH
+========================================================= */
+
+document
+.getElementById("search")
+.addEventListener(
+"input",
+render
+);
+
+</script>
+
+</body>
+</html>
