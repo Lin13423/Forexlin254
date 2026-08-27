@@ -353,7 +353,7 @@
     }
     const rtdb = firebase.database();
 
-    let activeUID = "global_terminal_user";
+    let activeUID = null;
 
     const MASTER_CONFIG = {
         backendUrl: "https://weathered-glade-c60b.assetguardinfo.workers.dev",
@@ -380,23 +380,17 @@
         }
     };
     
-    // Ensure Firebase Auth resolves the real UID before loading settings or passcodes
+    // Strictly wait for Firebase Auth user before triggering reads or writes
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             activeUID = user.uid;
+            loadLocalSettings();
+            initPasscodeSection();
         } else {
-            activeUID = AGUtils.getActiveUID({ fallback: "global_terminal_user", persist: true });
-            if (activeUID === "global_terminal_user" && firebase.auth().currentUser) {
-                activeUID = firebase.auth().currentUser.uid;
-            }
+            // Redirect to login if unauthenticated
+            window.location.href = "login.html";
         }
-        loadLocalSettings();
-        initPasscodeSection();
     });
-
-    function resolveUserIdentity() {
-        AGUtils.resolveActiveUID({ fallback: activeUID });
-    }
 
     function toggleSalesConfig() {
         document.getElementById('salesSection').classList.toggle('expanded');
@@ -439,6 +433,7 @@
     }
 
     function loadLocalSettings() {
+        if (!activeUID) return;
         const cacheKey = AGUtils.uidKey("ag_profile_cache", activeUID);
         const parsed = AGUtils.readJSON(cacheKey, null);
         if (parsed) {
@@ -474,17 +469,31 @@
 
     function processLogoFile(uploader) {
         const emblem = uploader.files[0];
-        if (emblem) {
+        if (!emblem) return;
+
+        try {
             const parser = new FileReader();
             parser.onload = function(e) {
                 loadedSettings.logoUrl = e.target.result;
                 updatePreviewCard();
+                triggerToast("Logo loaded successfully");
+            };
+            parser.onerror = function(err) {
+                console.error("File read error:", err);
+                triggerToast("Failed to read image file");
             };
             parser.readAsDataURL(emblem);
+        } catch (error) {
+            console.error("Permission error:", error);
+            triggerToast("PERMISSION_DENIED: Cannot access file storage");
         }
     }
 
     async function saveConfiguration(isSkipAction = false) {
+        if (!activeUID) {
+            return triggerToast("Error: User session not authenticated");
+        }
+
         loadedSettings.businessName = document.getElementById('businessNameInput').value;
         loadedSettings.tagline = document.getElementById('taglineInput').value;
         const sc = document.getElementById('salesShortcode').value.trim();
@@ -529,6 +538,7 @@
         } catch (error) {
             cloudSaved = false;
             AGErrors.report("settings cloud synchronization", error);
+            console.error("Firebase write error:", error);
         }
 
         try {
@@ -621,7 +631,6 @@
 
         button.disabled = true;
         try {
-            // 1. Look up user UID by email in Firebase Realtime Database
             const usersRef = rtdb.ref("users");
             const snapshot = await usersRef.orderByChild("email").equalTo(email).once("value");
             
@@ -634,22 +643,18 @@
                 targetUid = childSnap.key;
             });
 
-            // 2. Generate secure custom reset token
             const token = "ag_rst_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
-            const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes expiration
+            const expiresAt = Date.now() + 30 * 60 * 1000;
 
-            // 3. Save token to RTDB under user_passcode_resets/{targetUid}
             await rtdb.ref(`user_passcode_resets/${targetUid}`).set({
                 token: token,
                 email: email,
                 expiresAt: expiresAt
             });
 
-            // 4. Construct reset link pointing to current page
             const resetUrl = `${window.location.origin}${window.location.pathname}?internalReset=${token}`;
             const businessName = document.getElementById('businessNameInput').value || loadedSettings.businessName || "AssetGuard Pro";
 
-            // 5. Dispatch via Cloudflare Worker custom mailer (Bypasses Firebase Auth quota completely)
             const response = await fetch(`${MASTER_CONFIG.backendUrl}/send-reset-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -682,6 +687,7 @@
     }
 
     function exitPortal() {
+        if (!activeUID) return;
         try {
             if (window.AppInventor && typeof window.AppInventor.setWebViewString === 'function') {
                 window.AppInventor.setWebViewString(JSON.stringify({ action: "navigate_back", uid: activeUID }));
