@@ -191,18 +191,6 @@
 </head>
 <body>
 
-    <div id="pinModal" class="modal-overlay">
-        <div class="modal">
-            <h3 style="margin-top:0; color:var(--dark);">Secure Access</h3>
-            <p style="font-size: 11px; color: var(--muted); margin-bottom: 15px;">Checking your authorized Firebase session...</p>
-            <div id="pinError" style="color:var(--danger); font-size:11px; margin-top:10px; font-weight:700;"></div>
-            <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
-                <button class="btn-small" style="background:#64748b; flex:1;" onclick="closePinModal()">Cancel</button>
-                <button class="btn-small" style="background:var(--primary); flex:1;" onclick="submitPin()">Submit</button>
-            </div>
-        </div>
-    </div>
-    
     <header class="header-nav">
         <div class="brand">AssetGuard <span>Purchase Terminal</span></div>
         <button class="toggle-view-btn" id="toggleViewBtn" onclick="toggleView()">View Ledger</button>
@@ -456,11 +444,6 @@
 
         window.toggleView = () => (document.getElementById('view-entry').classList.contains('active')) ? showView('view-ledger') : showView('view-entry');
         
-        window.closePinModal = () => {
-            document.getElementById('pinModal').style.display = 'none';
-            document.getElementById('pinError').innerText = "";
-        };
-
         window.refreshLedger = (data) => {
             if (data) {
                 localPurchases = Array.isArray(data) ? data : Object.entries(data).map(([id, val]) => ({ id, ...val }));
@@ -496,50 +479,33 @@
                 <div class="detail-row"><label>Quantity</label><b>${item.quantity} ${item.unit}</b></div>
                 <div class="detail-row"><label>Cost</label><b style="color:var(--primary);">${AGUtils.formatCurrency(item.amount)}</b></div>`;
             
-            document.getElementById('delBtn').onclick = () => {
-                document.getElementById('pinModal').style.display = 'flex';
-                window.submitPin = async () => {
-                    if(await window.AGPageAccess.authorize("purchases")) {
-                        closePinModal();
+            document.getElementById('delBtn').onclick = async () => {
+                item.deleted = true;
+                await localSaveSingle(item);
+                await loadAndRenderLocal();
+                showView('view-ledger');
 
-                        item.deleted = true;
-                        await localSaveSingle(item);
-                        await loadAndRenderLocal();
-                        showView('view-ledger');
-
-                        try {
-                            await remove(ref(db, `${cloudPath}/${id}`));
-                            if (idbRequest.result) {
-                                const tx = idbRequest.result.transaction("purchases", "readwrite");
-                                tx.objectStore("purchases").delete(id);
-                            }
-                        } catch (e) {
-                            if (!AGErrors.isOffline(e)) AGErrors.report("purchase cloud deletion", e);
-                            else console.log("Offline: Deleted registered locally. Syncing deletion later.");
-                        }
-                    } else { 
-                        document.getElementById('pinError').innerText = "Your account is not authorized for purchases.";
+                try {
+                    await remove(ref(db, `${cloudPath}/${id}`));
+                    if (idbRequest.result) {
+                        const tx = idbRequest.result.transaction("purchases", "readwrite");
+                        tx.objectStore("purchases").delete(id);
                     }
+                } catch (e) {
+                    if (!AGErrors.isOffline(e)) AGErrors.report("purchase cloud deletion", e);
+                    else console.log("Offline: Deleted registered locally. Syncing deletion later.");
                 };
             };
             
             document.getElementById('editBtn').onclick = () => {
-                document.getElementById('pinModal').style.display = 'flex';
-                window.submitPin = async () => {
-                    if(await window.AGPageAccess.authorize("purchases")) {
-                        document.getElementById('editId').value = id;
-                        document.getElementById('item_name').value = item.item_name;
-                        document.getElementById('supplier').value = item.supplier;
-                        document.getElementById('qty').value = item.quantity;
-                        document.getElementById('amount').value = item.amount;
-                        document.getElementById('unit').value = item.unit;
-                        document.getElementById('formTitle').innerText = "Edit Entry";
-                        showView('view-entry');
-                        closePinModal();
-                    } else { 
-                        document.getElementById('pinError').innerText = "Your account is not authorized for purchases.";
-                    }
-                };
+                document.getElementById('editId').value = id;
+                document.getElementById('item_name').value = item.item_name;
+                document.getElementById('supplier').value = item.supplier;
+                document.getElementById('qty').value = item.quantity;
+                document.getElementById('amount').value = item.amount;
+                document.getElementById('unit').value = item.unit;
+                document.getElementById('formTitle').innerText = "Edit Entry";
+                showView('view-entry');
             };
             showView('view-detail');
         };

@@ -403,7 +403,7 @@
 <body>
 
 <header class="header-nav">
-    <div class="brand" onclick="promptPin('settings')">
+                <div class="brand" onclick="authorizeAction('settings')">
         AssetGuard <span>Terminal</span>
         <span id="user-badge" style="display:none; font-size:10px; color:var(--muted); font-weight:600; margin-top:2px;">Detecting Session...</span>
     </div>
@@ -706,8 +706,8 @@ const userSettingsPath = `user_settings/${currentUID}`;
 
 let cart = [];
 let editIndex = -1;
-let pinTargetId = null;
-let pinAction = null;
+let actionTargetId = null;
+let actionType = null;
 let currentActiveLedgerId = null;
 let runtimeActiveLedgerSalesMap = new Map();
 let alertCallback = null;
@@ -758,29 +758,23 @@ window.closeCustomAlert = () => {
     }
 };
 
-window.promptPin = async (action, id = null) => {
-    pinAction = action;
-    pinTargetId = id;
+window.authorizeAction = async (action, id = null) => {
+    actionType = action;
+    actionTargetId = id;
     if (await window.AGPageAccess.authorize("sales")) {
         if (action === 'settings') openSettingsDirectly();
-        else openManager(pinTargetId);
+        else openManager(actionTargetId);
     } else {
         showAlertModal("Access denied", "Your account is not authorized for this action.");
     }
-};
-
-window.closePinModal = () => {
-    document.getElementById('pinModal').style.display = "none";
-    pinTargetId = null;
-    pinAction = null;
 };
 
 window.openSettingsDirectly = () => {
     window.location.href = 'settings.html';
 };
 
-window.showPinModal = (id) => {
-    promptPin('manage', id);
+window.showManager = (id) => {
+    authorizeAction('manage', id);
 };
 
 window.openManager = (id) => {
@@ -1950,7 +1944,7 @@ window.renderSales = () => {
                         </div>
                     ` : ''}
                     <div style="display:flex; gap:8px; margin-top:12px;">
-                        <button class="btn btn-dark" style="flex:1;" onclick="event.stopPropagation(); showPinModal('${s.id}')" ${isPending ? 'disabled' : ''}>MANAGE / PAY</button>
+                        <button class="btn btn-dark" style="flex:1;" onclick="event.stopPropagation(); showManager('${s.id}')" ${isPending ? 'disabled' : ''}>MANAGE / PAY</button>
                         <button class="btn" style="flex:1; background:var(--primary); color:white;" onclick="event.stopPropagation(); reprintReceipt('${s.id}')">INVOICE</button>
                     </div>
                 </div>

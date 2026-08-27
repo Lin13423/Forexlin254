@@ -108,26 +108,6 @@
         <div id="inventoryContainer" class="stock-container"></div>
     </div>
 
-    <div id="view-pin" class="view">
-        <div style="text-align: center; padding-top: 20px;">
-            <h3 style="font-size: 18px; color: var(--primary);">Manager PIN Access</h3>
-            <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 20px;">Enter 4-digit manager PIN code</p>
-            <div class="pin-dots" style="display: flex; justify-content: center; gap: 12px; margin: 20px 0 30px 0;">
-                <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid #cbd5e1;"></div>
-                <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid #cbd5e1;"></div>
-                <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid #cbd5e1;"></div>
-                <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid #cbd5e1;"></div>
-            </div>
-            <div class="numpad">
-                <button class="num-btn" onclick="pressNum('1')">1</button><button class="num-btn" onclick="pressNum('2')">2</button><button class="num-btn" onclick="pressNum('3')">3</button>
-                <button class="num-btn" onclick="pressNum('4')">4</button><button class="num-btn" onclick="pressNum('5')">5</button><button class="num-btn" onclick="pressNum('6')">6</button>
-                <button class="num-btn" onclick="pressNum('7')">7</button><button class="num-btn" onclick="pressNum('8')">8</button><button class="num-btn" onclick="pressNum('9')">9</button>
-                <button class="num-btn" onclick="pressNum('C')" style="color:var(--danger)">C</button><button class="num-btn" onclick="pressNum('0')">0</button><button class="num-btn" onclick="pressNum('⌫')">⌫</button>
-            </div>
-            <button class="btn-main" style="background:transparent; color:#64748b; margin-top:25px; box-shadow:none;" onclick="switchView('view-dashboard')">Cancel</button>
-        </div>
-    </div>
-
     <div id="view-admin" class="view">
         <div class="controls-row">
             <h2 style="font-size: 18px; flex: 1; margin:0; color: var(--primary);">Control Center</h2>
@@ -264,12 +244,8 @@
         }
     }, error => AGErrors.report("inventory live data", error, (message) => notify(`Live inventory data could not be loaded: ${message}`)));
 
-    window.pressNum = () => window.AGPageAccess.authorize("stock").then(authorized => {
-        if(authorized) switchView('view-admin'); else notify("Access denied", "error");
-    });
-    
     window.switchView = (id) => { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); };
-    window.openAdmin = () => window.pressNum();
+    window.openAdmin = () => switchView('view-admin');
     window.fillForm = (k) => { 
         const i = inventoryCache[k]; 
         document.getElementById('itemName').value = i.name; 

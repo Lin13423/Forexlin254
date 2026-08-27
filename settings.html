@@ -108,6 +108,7 @@
         .form-field label { font-size: 11px; font-weight: 700; color: var(--dark); text-transform: uppercase; }
         .form-field input[type="text"],
         .form-field input[type="tel"],
+        .form-field input[type="email"],
         .form-field input[type="password"],
         .form-field select {
             font-family: inherit; font-size: 14px; padding: 12px 14px;
@@ -182,6 +183,7 @@
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
@@ -226,6 +228,18 @@
                     <label>Corporate Tagline / Address</label>
                     <input type="text" id="taglineInput" placeholder="Enter Tagline/Address" oninput="updatePreviewCard()">
                 </div>
+            </div>
+        </div>
+
+        <div>
+            <span class="section-label">Account Security</span>
+            <div class="input-group">
+                <div class="form-field">
+                    <label for="resetEmail">Password Reset Email</label>
+                    <input type="email" id="resetEmail" placeholder="Enter your account email" autocomplete="email">
+                </div>
+                <button class="btn btn-primary" id="resetPasswordButton" type="button" onclick="sendSettingsReset()">Send Reset Link</button>
+                <p style="font-size:11px; color:var(--text-muted);">The link expires after 30 minutes.</p>
             </div>
         </div>
 
@@ -314,6 +328,7 @@
         firebase.initializeApp(AG_FIREBASE_CONFIG);
     }
     const rtdb = firebase.database();
+    const auth = firebase.auth();
 
     const activeUID = AGUtils.getActiveUID({ fallback: "global_terminal_user", persist: true });
 
@@ -349,6 +364,31 @@
 
     function resolveUserIdentity() {
         AGUtils.resolveActiveUID({ fallback: activeUID });
+        const user = auth.currentUser;
+        if (user && user.email) document.getElementById('resetEmail').value = user.email;
+    }
+
+    async function sendSettingsReset() {
+        const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+        const button = document.getElementById('resetPasswordButton');
+        if (!email) return triggerToast('Enter your account email first');
+
+        const expiresAt = Date.now() + (30 * 60 * 1000);
+        const resetUrl = new URL('reset-password.html', window.location.href);
+        resetUrl.searchParams.set('expires', String(expiresAt));
+        button.disabled = true;
+        button.textContent = 'Sending...';
+        try {
+            await auth.sendPasswordResetEmail(email, { url: resetUrl.href, handleCodeInApp: false });
+            triggerToast('Reset link sent. It expires in 30 minutes.');
+        } catch (error) {
+            triggerToast(error.code === 'auth/user-not-found'
+                ? 'No account is registered with that email.'
+                : 'Could not send reset link.');
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Send Reset Link';
+        }
     }
 
     function toggleSalesConfig() {
