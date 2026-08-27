@@ -1509,7 +1509,7 @@ id="businessNameInput"
 
 placeholder="Enter Business Name"
 
-oninput="updatePreviewCard()"
+oninput="updatePreviewCard(); queueAutoSave();"
 
 >
 
@@ -1536,7 +1536,7 @@ id="taglineInput"
 
 placeholder="Enter Tagline/Address"
 
-oninput="updatePreviewCard()"
+oninput="updatePreviewCard(); queueAutoSave();"
 
 >
 
@@ -1627,7 +1627,7 @@ Environment Mode
 </label>
 
 
-<select id="salesEnvironment">
+<select id="salesEnvironment" onchange="queueAutoSave();">
 
 <option value="production">
 
@@ -1660,7 +1660,7 @@ Account Type / Payment Mode
 </label>
 
 
-<select id="salesAccountType">
+<select id="salesAccountType" onchange="queueAutoSave();">
 
 
 <option value="Paybill">
@@ -1708,7 +1708,7 @@ inputmode="numeric"
 
 pattern="[0-9]*"
 
-oninput="this.value=this.value.replace(/\D/g,''); handleShortcodeInput();"
+oninput="this.value=this.value.replace(/\D/g,''); handleShortcodeInput(); queueAutoSave();"
 
 >
 
@@ -1737,6 +1737,8 @@ class="mpesa-focus"
 
 placeholder="Enter passkey"
 
+oninput="queueAutoSave();"
+
 >
 
 
@@ -1762,6 +1764,8 @@ id="salesConsumerKey"
 
 placeholder="Enter Consumer Key"
 
+oninput="queueAutoSave();"
+
 >
 
 
@@ -1786,6 +1790,8 @@ type="password"
 id="salesConsumerSecret"
 
 placeholder="Enter Consumer Secret"
+
+oninput="queueAutoSave();"
 
 >
 
@@ -2005,7 +2011,7 @@ autocomplete="new-password"
 
 
 
-<!-- COMBINED SAVE & CANCEL BUTTONS -->
+<!-- ACTION BUTTONS: CANCEL & UPDATE PASSCODE -->
 
 <div
     style="
@@ -2036,15 +2042,15 @@ Cancel
 
 class="btn btn-primary"
 
-id="saveAllBtn"
+id="updatePasscodeBtn"
 
-onclick="saveAllChanges()"
+onclick="updatePasscodeOnly()"
 
 style="flex: 1;"
 
 >
 
-Save Changes
+Update Passcode
 
 </button>
 
@@ -2958,7 +2964,7 @@ function updatePreviewCard() {
 
 
 // ============================================================
-// LOGO (UPDATED WITH TEXT & SELECTION TOAST)
+// LOGO (INSTANT SAVE ON UPLOAD)
 // ============================================================
 
 function processLogoFile(uploader) {
@@ -2979,7 +2985,7 @@ function processLogoFile(uploader) {
 
 
     reader.onload =
-        function(event) {
+        async function(event) {
 
             loadedSettings.logoUrl =
                 event.target.result;
@@ -2989,7 +2995,9 @@ function processLogoFile(uploader) {
 
             document.getElementById("logoSubText").innerText = "Image selected";
 
-            triggerToast("Image selected");
+            await saveConfiguration(true);
+
+            triggerToast("Logo updated successfully");
 
         };
 
@@ -3002,11 +3010,25 @@ function processLogoFile(uploader) {
 
 
 // ============================================================
+// AUTO-SAVE DEBOUNCE
+// ============================================================
+
+let autoSaveTimer = null;
+
+function queueAutoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(async () => {
+        await saveConfiguration(true);
+    }, 500);
+}
+
+
+// ============================================================
 // SAVE SETTINGS (ROBUST SAFEGUARDED SAVE)
 // ============================================================
 
 async function saveConfiguration(
-    isSkipAction = false
+    isSilent = false
 ) {
 
     try {
@@ -3040,7 +3062,7 @@ async function saveConfiguration(
 
         if (
 
-            !isSkipAction &&
+            !isSilent &&
 
             shortcode !== ""
 
@@ -3193,15 +3215,7 @@ async function saveConfiguration(
 
                         description:
 
-                            isSkipAction
-
-                                ?
-
-                                "POS Payment Setup Skipped"
-
-                                :
-
-                                "Corporate business and payment settings updated",
+                            "Corporate business and payment settings auto-saved",
 
 
                         timestamp:
@@ -3245,7 +3259,7 @@ async function saveConfiguration(
 
         }
 
-        if (!isSkipAction) {
+        if (!isSilent) {
             triggerToast(
 
                 cloudSaved
@@ -3263,7 +3277,6 @@ async function saveConfiguration(
 
     } catch (err) {
         console.error("Save error:", err);
-        triggerToast("Saved locally");
     }
 
 }
@@ -3438,53 +3451,54 @@ async function initPasscodeSection() {
 
 
 // ============================================================
-// MASTER SAVE ALL CHANGES HANDLER
+// UPDATE PASSCODE ONLY
 // ============================================================
 
-async function saveAllChanges() {
+async function updatePasscodeOnly() {
 
-    const button = document.getElementById("saveAllBtn");
+    const button = document.getElementById("updatePasscodeBtn");
     button.disabled = true;
     const originalText = button.innerText;
-    button.innerText = "Saving...";
+    button.innerText = "Updating...";
 
     try {
-        // 1. Save standard configuration and settings
-        await saveConfiguration(false);
-
-        // 2. Check if user attempted to change/set passcode
         const newPasscode = document.getElementById("newPasscode").value.trim();
         const confirmation = document.getElementById("confirmPasscode").value.trim();
         const currentPasscode = document.getElementById("currentPasscode").value.trim();
 
-        if (newPasscode !== "" || confirmation !== "" || currentPasscode !== "") {
-            if (newPasscode.length !== 4) {
-                triggerToast("Passcode must be exactly 4 digits");
-                button.disabled = false;
-                button.innerText = originalText;
-                return;
-            }
-
-            if (newPasscode !== confirmation) {
-                triggerToast("New passcodes do not match");
-                button.disabled = false;
-                button.innerText = originalText;
-                return;
-            }
-
-            const api = await passcodeApi();
-            await api.setPasscode(newPasscode, { currentPasscode });
-
-            document.getElementById("currentPasscode").value = "";
-            document.getElementById("newPasscode").value = "";
-            document.getElementById("confirmPasscode").value = "";
-
-            await initPasscodeSection();
-            triggerToast("All changes & passcode updated successfully");
+        if (newPasscode === "" && confirmation === "") {
+            triggerToast("Please enter a new 4-digit passcode");
+            button.disabled = false;
+            button.innerText = originalText;
+            return;
         }
+
+        if (newPasscode.length !== 4) {
+            triggerToast("Passcode must be exactly 4 digits");
+            button.disabled = false;
+            button.innerText = originalText;
+            return;
+        }
+
+        if (newPasscode !== confirmation) {
+            triggerToast("New passcodes do not match");
+            button.disabled = false;
+            button.innerText = originalText;
+            return;
+        }
+
+        const api = await passcodeApi();
+        await api.setPasscode(newPasscode, { currentPasscode });
+
+        document.getElementById("currentPasscode").value = "";
+        document.getElementById("newPasscode").value = "";
+        document.getElementById("confirmPasscode").value = "";
+
+        await initPasscodeSection();
+        triggerToast("Passcode updated successfully");
     }
     catch (error) {
-        triggerToast(error.message || "Save failed");
+        triggerToast(error.message || "Passcode update failed");
     }
     finally {
         button.disabled = false;
@@ -3767,7 +3781,7 @@ function triggerToast(message) {
 
 
 // ============================================================
-// EXIT SETTINGS (ROBUST SAFEGUARDED CANCEL)
+// EXIT SETTINGS
 // ============================================================
 
 function exitPortal() {
