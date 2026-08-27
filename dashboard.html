@@ -4,6 +4,7 @@
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
 <script src="ag-config.js"></script>
+<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
 <script>
     // Keep the protected UI invisible until Firebase has resolved the session.
@@ -665,14 +666,15 @@ const auth = firebase.auth();
 
 const activeUID = AGUtils.getActiveUID({ fallback: "global_terminal_user", persist: true });
 
+const savedPaymentSettings = AGUtils.readJSON(AGUtils.uidKey("ag_profile_cache", activeUID), {}).salesDaraja || {};
 const MASTER_CONFIG = {
-    backendUrl: "https://weathered-glade-c60b.assetguardinfo.workers.dev",
-    environment: "production",
-    accountType: "Paybill",
-    shortcode: "257471",
-    passkey: "103f80194fedeaefb352960fb340d766ef3f84a9dcb96aafdd21d0b0bb8dfbab",
-    consumerKey: "AGJGJGGktfRf8OHhos6TJXKupDMb3f2wG9pZDdF8tG5qm0qK",
-    consumerSecret: "xmd2sXJzRA6Chl1KHGvR9jG0qtSBse1oRBCdgBjb4DnO7SEi4QzPVwKNWWraubJd"
+    backendUrl: savedPaymentSettings.backendUrl || "https://weathered-glade-c60b.assetguardinfo.workers.dev",
+    environment: savedPaymentSettings.environment || "production",
+    accountType: savedPaymentSettings.accountType || "Paybill",
+    shortcode: savedPaymentSettings.shortcode || "",
+    passkey: savedPaymentSettings.passkey || "",
+    consumerKey: savedPaymentSettings.consumerKey || "",
+    consumerSecret: savedPaymentSettings.consumerSecret || ""
 };
 
 let pendingSubDays = 0;

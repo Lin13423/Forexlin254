@@ -23,7 +23,6 @@
         .lock-btn.active { background: var(--danger); }
         .security-bar { display: none; background: var(--dark); padding: 12px; border-radius: 12px; margin-bottom: 12px; align-items: center; justify-content: space-between; }
         .security-bar.visible { display: flex; }
-        .pin-input { width: 70px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; padding: 6px; text-align: center; font-size: 14px; outline: none; letter-spacing: 2px; }
         .search-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px; font-size: 14px; background: #fff; outline: none; }
         .contact-row { background: #fff; padding: 12px; margin-bottom: 8px; border-radius: 14px; border: 1px solid #edf2f7; display: flex; align-items: center; gap: 12px; transition: 0.2s; position: relative; }
         .unlocked-view .contact-row { cursor: pointer; }
@@ -233,7 +232,7 @@
         }
     };
 
-    window.checkPin = async () => {
+    window.authorizeAdmin = async () => {
         if (await window.AGPageAccess.authorize("crm")) {
             isAdmin = true;
             document.getElementById('mainBody').classList.add('unlocked-view');

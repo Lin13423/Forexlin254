@@ -55,7 +55,6 @@
         
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
         .modal { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; }
-        .pin-input { width: 100%; padding: 12px; border: 2px solid #f1f5f9; border-radius: 12px; font-size: 24px; text-align: center; letter-spacing: 8px; margin-bottom: 15px; outline: none; }
     </style>
 </head>
 <body>
@@ -202,9 +201,9 @@
     // --- SECURITY ---
     window.toggleAdmin = () => {
         if(isAdmin) { isAdmin = false; document.getElementById('lock-icon').innerText = "🔒"; filterAndRender(); }
-        else window.verifyPin();
+        else window.authorizeAdmin();
     };
-    window.verifyPin = async () => {
+    window.authorizeAdmin = async () => {
         if(await window.AGPageAccess.authorize("cash-report")) {
             isAdmin = true; document.getElementById('lock-icon').innerText = "🔓";
             closeModals(); filterAndRender();
