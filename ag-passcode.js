@@ -133,10 +133,24 @@ const AGPasscode = {
         return Boolean(record && record.hash);
     },
 
-    // Returns { ok, reason } where reason is "not_set", "empty" or "mismatch".
+    // Never throws: page gates rely on always getting a message they can show.
+    // reason is "not_set", "empty", "mismatch" or "unavailable".
     async verify(passcode) {
         const value = String(passcode ?? "");
-        const record = await loadRecord();
+        let record;
+        try {
+            record = await loadRecord();
+        } catch (error) {
+            if (globalThis.AGErrors) AGErrors.report("internal passcode verification", error);
+            const denied = String(error && (error.code || error.message) || "").toLowerCase().includes("permission");
+            return {
+                ok: false,
+                reason: "unavailable",
+                message: denied
+                    ? "Security settings are unreachable. Deploy the latest database rules (internal_security) for this project."
+                    : (error.message || "Security check unavailable. Check your connection and retry.")
+            };
+        }
         if (!record || !record.hash) return { ok: false, reason: "not_set", message: NOT_CONFIGURED_MESSAGE };
         if (!value) return { ok: false, reason: "empty", message: "Enter your internal passcode." };
         if (await matches(record, value)) return { ok: true, reason: "ok", message: "" };
