@@ -97,15 +97,6 @@
     "system_config": {
       ".read": "auth != null && auth.token.email == 'forexlin254@gmail.com'",
       ".write": "auth != null && auth.token.email == 'forexlin254@gmail.com'"
-    },
-
-    "page_access": {
-      "$page": {
-        "$uid": {
-          ".read": "auth != null && (auth.uid == $uid || auth.token.email == 'forexlin254@gmail.com')",
-          ".write": "auth != null && auth.token.email == 'forexlin254@gmail.com'"
-        }
-      }
     }
   }
 }

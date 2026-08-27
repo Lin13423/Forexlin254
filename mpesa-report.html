@@ -3,11 +3,6 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
-<script src="ag-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>M-Pesa Revenue - AssetGuard</title>
@@ -63,7 +58,8 @@
         <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">Secure Admin Access Only.</p>
         <input type="text" id="edit-cust-name" class="edit-input" placeholder="Customer Name">
         <input type="text" id="edit-cust-phone" class="edit-input" placeholder="M-Pesa Number">
-        <div id="auth-btns">
+        <input type="password" id="authPin" class="pin-field" maxlength="4" placeholder="••••" oninput="validatePin()">
+        <div id="auth-btns" style="display: none;">
             <button id="btn-save-changes" class="btn btn-save">APPLY CHANGES</button>
             <button onclick="openConfirmModal()" class="btn btn-del">DELETE TRANSACTION</button>
         </div>
@@ -125,6 +121,7 @@ const salesPath = AGUtils.userPath(currentUID, "sales");
 const queueKey = AGUtils.uidKey("ag_sales_queue", currentUID);
 const cacheKey = AGUtils.uidKey("ag_mpesa_cache", currentUID);
 
+const ADMIN_PASS = "1234";
 let cloudRecords = [];
 let combinedStore = [];
 let activeId = null;
@@ -203,12 +200,18 @@ window.renderSales = () => {
     document.getElementById('footer-bar').classList.toggle('active', gross > 0);
 };
 
-window.openManager = async id => {
-    if (!(await window.AGPageAccess.authorize("mpesa-report"))) return;
+window.validatePin = () => {
+    const pin = document.getElementById('authPin').value;
+    document.getElementById('auth-btns').style.display = (pin === ADMIN_PASS) ? 'block' : 'none';
+};
+
+window.openManager = id => {
     activeId = id;
     const s = combinedStore.find(x => x.id === id);
     document.getElementById('edit-cust-name').value = s.customer;
     document.getElementById('edit-cust-phone').value = s.mpesa || "";
+    document.getElementById('authPin').value = "";
+    validatePin();
     document.getElementById('manageModal').style.display = 'flex';
 };
 

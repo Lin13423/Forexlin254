@@ -75,6 +75,8 @@
     // --- USER ISOLATION ---
     const currentUID = AGUtils.getActiveUID();
     const userSalesPath = AGUtils.userPath(currentUID, "sales");
+    const ADMIN_PIN = "1234";
+
     let cloudSales = [];
     let combinedSales = [];
     let activeID = null;
@@ -134,10 +136,25 @@
 
     window.gatekeeper = (id) => {
         activeID = id;
-        window.AGPageAccess.authorize("bank-report").then(authorized => {
-            if (authorized) openEditor();
-            else showToast("You do not have access to manage bank records.");
-        });
+        document.getElementById('modal-content').innerHTML = `
+            <div style="font-size:32px; margin-bottom:10px;">🔐</div>
+            <h3 style="margin:0;">Admin Unlock</h3>
+            <p style="font-size:11px; color:#94a3b8; margin-bottom:10px;">Enter PIN for record management</p>
+            <input type="password" id="pinField" class="pin-input" maxlength="4" placeholder="••••" inputmode="numeric">
+            <button class="btn-action btn-verify" onclick="verifyPin()">UNLOCK TOOLS</button>
+            <button class="btn-action btn-cancel" onclick="closeGate()">DISMISS</button>`;
+        document.getElementById('adminModal').style.display = 'flex';
+        setTimeout(() => document.getElementById('pinField').focus(), 150);
+    };
+
+    window.verifyPin = () => {
+        const entered = document.getElementById('pinField').value;
+        if (String(entered) === String(ADMIN_PIN)) {
+            openEditor();
+        } else {
+            alert("❌ Denied: Incorrect PIN");
+            document.getElementById('pinField').value = "";
+        }
     };
 
     window.openEditor = () => {

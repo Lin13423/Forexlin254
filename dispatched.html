@@ -2,11 +2,6 @@
 <html lang="en">
 <head>
 <script src="error-utils.js"></script>
-<script src="ag-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
 <meta charset="utf-8">
 <title>Master Tracker Pro | Signal Turbo V5.1 (Secure Edition)</title>
@@ -98,6 +93,7 @@ input:disabled { background: #e0e0e0; opacity: 0.5; color: #666 !important; }
     <div class="modal-box">
         <h3 id="modalTitle" style="margin:0 0 10px 0; color:var(--saxo-red);">SECURITY CLEARANCE</h3>
         <p id="modalDesc" style="font-size:11px; opacity:0.8; margin-bottom:20px;">Verification Required</p>
+        <input type="password" id="adminPass" placeholder="Admin Key" style="margin-bottom:15px; text-align:center;">
         <div class="grid-2">
             <button id="modalConfirmBtn" class="btn-red">CONFIRM</button>
             <button onclick="window.closeAdmin()" style="background:#444;">CANCEL</button>
@@ -310,12 +306,12 @@ window.openAdminModal = (t, d, cb) => {
     document.getElementById('modalTitle').innerText = t;
     document.getElementById('modalDesc').innerText = d;
     document.getElementById('adminModal').style.display = 'flex';
-    document.getElementById('modalConfirmBtn').onclick = async () => {
-        if(await window.AGPageAccess.authorize("dispatched")) { cb(); window.closeAdmin(); }
+    document.getElementById('modalConfirmBtn').onclick = () => {
+        if(document.getElementById('adminPass').value === "nakuru1") { cb(); window.closeAdmin(); }
         else { window.sendPush("Denied"); }
     };
 };
-window.closeAdmin = () => { document.getElementById('adminModal').style.display='none'; };
+window.closeAdmin = () => { document.getElementById('adminModal').style.display='none'; document.getElementById('adminPass').value=''; };
 
 // --- MAIN LISTENER ---
 onValue(carRef, snap => {

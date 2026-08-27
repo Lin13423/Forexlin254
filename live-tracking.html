@@ -5,11 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Master Tracker Pro | Enterprise Telemetry V7.0</title>
 
-<script src="ag-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="page-access.js"></script>
 <script type="module" src="auth-guard.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -809,6 +804,7 @@ input,select{
     <div class="modal-box">
         <h3 id="modalTitle" style="margin:0 0 10px;color:var(--red);">SECURITY CLEARANCE</h3>
         <p id="modalDesc" style="font-size:10px;opacity:.75;">Verification Required</p>
+        <input type="password" id="adminPass" placeholder="Admin Key" style="margin:15px 0;text-align:center;">
         <div class="grid-2">
             <button id="modalConfirmBtn" class="btn-red">CONFIRM</button>
             <button onclick="window.closeAdmin()" style="background:#444;">CANCEL</button>
@@ -3673,9 +3669,13 @@ window.openAdminModal=(
 
     document.getElementById(
         "modalConfirmBtn"
-    ).onclick=async()=>{
+    ).onclick=()=>{
 
-        if(await window.AGPageAccess.authorize("live-tracking")){
+        if(
+            document.getElementById(
+                "adminPass"
+            ).value==="nakuru1"
+        ){
 
             callback();
 
@@ -3699,6 +3699,9 @@ window.closeAdmin=()=>{
         "none";
 
 
+    document.getElementById(
+        "adminPass"
+    ).value="";
 };
 
 
