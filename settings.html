@@ -994,18 +994,81 @@ body {
 }
 
 
-.recovery-box {
+/* ==========================================================
+   MODAL DIALOG STYLES
+========================================================== */
 
-    margin-top:
-        4px;
+.modal-overlay {
 
-    padding-top:
-        14px;
+    position:
+        fixed;
 
-    border-top:
+    inset:
+        0;
 
-        1px dashed
-        var(--border);
+    background:
+        rgba(0, 26, 53, 0.55);
+
+    backdrop-filter:
+        blur(8px);
+
+    display:
+        flex;
+
+    justify-content:
+        center;
+
+    align-items:
+        center;
+
+    z-index:
+        10000;
+
+    opacity:
+        0;
+
+    pointer-events:
+        none;
+
+    transition:
+        opacity 0.3s ease;
+
+    padding:
+        20px;
+
+}
+
+
+.modal-overlay.active {
+
+    opacity:
+        1;
+
+    pointer-events:
+        auto;
+
+}
+
+
+.modal-card {
+
+    background:
+        var(--card-bg);
+
+    width:
+        100%;
+
+    max-width:
+        420px;
+
+    border-radius:
+        var(--radius-lg);
+
+    padding:
+        22px;
+
+    box-shadow:
+        0 20px 40px rgba(0, 26, 53, 0.2);
 
     display:
         flex;
@@ -1014,15 +1077,55 @@ body {
         column;
 
     gap:
+        16px;
+
+    transform:
+        translateY(20px);
+
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+    max-height:
+        90vh;
+
+    overflow-y:
+        auto;
+
+}
+
+
+.modal-overlay.active .modal-card {
+
+    transform:
+        translateY(0);
+
+}
+
+
+.modal-header {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    border-bottom:
+        1px solid var(--border);
+
+    padding-bottom:
         12px;
 
 }
 
 
-.recovery-title {
+.modal-title {
 
     font-size:
-        13px;
+        16px;
 
     font-weight:
         800;
@@ -1033,16 +1136,39 @@ body {
 }
 
 
-.recovery-description {
+.modal-close {
+
+    background:
+        none;
+
+    border:
+        none;
 
     font-size:
-        11px;
+        18px;
 
     color:
         var(--text-muted);
 
-    line-height:
-        1.6;
+    cursor:
+        pointer;
+
+    padding:
+        4px;
+
+    border-radius:
+        50%;
+
+}
+
+
+.modal-close:hover {
+
+    background:
+        #f1f5f9;
+
+    color:
+        var(--dark);
 
 }
 
@@ -1626,7 +1752,9 @@ placeholder="e.g. 257471"
 
 inputmode="numeric"
 
-oninput="handleShortcodeInput()"
+pattern="[0-9]*"
+
+oninput="this.value=this.value.replace(/\D/g,''); handleShortcodeInput();"
 
 >
 
@@ -1832,6 +1960,12 @@ id="currentPasscode"
 
 placeholder="Enter current passcode"
 
+inputmode="numeric"
+
+pattern="[0-9]*"
+
+oninput="this.value=this.value.replace(/\D/g,'')"
+
 autocomplete="off"
 
 >
@@ -1860,7 +1994,13 @@ type="password"
 
 id="newPasscode"
 
-placeholder="At least 4 characters"
+placeholder="Numbers only (e.g. 4 digits)"
+
+inputmode="numeric"
+
+pattern="[0-9]*"
+
+oninput="this.value=this.value.replace(/\D/g,'')"
 
 autocomplete="new-password"
 
@@ -1892,6 +2032,12 @@ id="confirmPasscode"
 
 placeholder="Repeat new passcode"
 
+inputmode="numeric"
+
+pattern="[0-9]*"
+
+oninput="this.value=this.value.replace(/\D/g,'')"
+
 autocomplete="new-password"
 
 >
@@ -1922,160 +2068,30 @@ Save Internal Passcode
 
 
 
-<!-- QUOTA FREE RECOVERY -->
+<!-- MODERN RESET PASSCODE TRIGGER -->
 
-<div class="recovery-box">
-
-
-<div class="recovery-title">
-
-Forgot Internal Passcode?
-
-</div>
-
-
-<div class="recovery-description">
-
-Verify your identity using your normal AssetGuard login password.
-
-No e-mail is sent and no Firebase e-mail quota is used.
-
-</div>
-
-
-<div class="security-note">
-
-Your normal AssetGuard login password is used only to verify that you own the currently signed-in account.
-
-It does not become your internal passcode.
-
-</div>
-
-
-
-<div class="form-field">
-
-
-<label>
-
-AssetGuard Account E-mail
-
-</label>
-
-
-<input
-
-type="email"
-
-id="recoveryEmail"
-
-placeholder="Enter your account e-mail"
-
-autocomplete="email"
-
+<div
+    style="
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px dashed var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    "
 >
-
-
-</div>
-
-
-
-<div class="form-field">
-
-
-<label>
-
-AssetGuard Login Password
-
-</label>
-
-
-<input
-
-type="password"
-
-id="recoveryLoginPassword"
-
-placeholder="Enter normal login password"
-
-autocomplete="current-password"
-
->
-
-
-</div>
-
-
-
-<div class="form-field">
-
-
-<label>
-
-New Internal Passcode
-
-</label>
-
-
-<input
-
-type="password"
-
-id="recoveryNewPasscode"
-
-placeholder="Create new internal passcode"
-
-autocomplete="new-password"
-
->
-
-
-</div>
-
-
-
-<div class="form-field">
-
-
-<label>
-
-Confirm New Internal Passcode
-
-</label>
-
-
-<input
-
-type="password"
-
-id="recoveryConfirmPasscode"
-
-placeholder="Repeat new internal passcode"
-
-autocomplete="new-password"
-
->
-
-
-</div>
-
-
-
-<button
-
-class="btn btn-danger"
-
-id="recoverPasscodeBtn"
-
-onclick="recoverPasscode()"
-
->
-
-Verify Login & Reset Passcode
-
-</button>
-
-
+    <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--dark);">Forgot Passcode?</div>
+        <div style="font-size: 11px; color: var(--text-muted);">Reset securely via login credentials</div>
+    </div>
+    
+    <button
+        class="btn btn-secondary"
+        onclick="openResetModal()"
+        style="flex: unset; padding: 10px 16px; font-size: 12px;"
+    >
+        Reset Password
+    </button>
 </div>
 
 
@@ -2196,6 +2212,213 @@ Save Settings
 
 
 
+<!-- =====================================================
+     MODAL: RESET PASSCODE WINDOW
+===================================================== -->
+
+<div
+    class="modal-overlay"
+    id="resetPasscodeModal"
+>
+
+<div class="modal-card">
+
+<div class="modal-header">
+
+<div class="modal-title">
+
+Reset Internal Passcode
+
+</div>
+
+<button
+    class="modal-close"
+    onclick="closeResetModal()"
+>
+    ✕
+</button>
+
+</div>
+
+
+<div
+    style="
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.6;
+    "
+>
+    Verify your identity using your normal AssetGuard login password. No e-mail is sent and no Firebase e-mail quota is used.
+</div>
+
+
+<div class="security-note">
+    Your normal AssetGuard login password is used only to verify that you own the currently signed-in account. It does not become your internal passcode.
+</div>
+
+
+<div class="form-field">
+
+<label>
+
+AssetGuard Account E-mail
+
+</label>
+
+
+<input
+
+type="email"
+
+id="recoveryEmail"
+
+placeholder="Enter your account e-mail"
+
+autocomplete="email"
+
+>
+
+
+</div>
+
+
+
+<div class="form-field">
+
+
+<label>
+
+AssetGuard Login Password
+
+</label>
+
+
+<input
+
+type="password"
+
+id="recoveryLoginPassword"
+
+placeholder="Enter normal login password"
+
+autocomplete="current-password"
+
+>
+
+
+</div>
+
+
+
+<div class="form-field">
+
+
+<label>
+
+New Internal Passcode
+
+</label>
+
+
+<input
+
+type="password"
+
+id="recoveryNewPasscode"
+
+placeholder="Numbers only (e.g. 4 digits)"
+
+inputmode="numeric"
+
+pattern="[0-9]*"
+
+oninput="this.value=this.value.replace(/\D/g,'')"
+
+autocomplete="new-password"
+
+>
+
+
+</div>
+
+
+
+<div class="form-field">
+
+
+<label>
+
+Confirm New Internal Passcode
+
+</label>
+
+
+<input
+
+type="password"
+
+id="recoveryConfirmPasscode"
+
+placeholder="Repeat new internal passcode"
+
+inputmode="numeric"
+
+pattern="[0-9]*"
+
+oninput="this.value=this.value.replace(/\D/g,'')"
+
+autocomplete="new-password"
+
+>
+
+
+</div>
+
+
+
+<div
+    style="
+        display: flex;
+        gap: 10px;
+        margin-top: 6px;
+    "
+>
+
+<button
+
+class="btn btn-secondary"
+
+onclick="closeResetModal()"
+
+>
+
+Cancel
+
+</button>
+
+
+<button
+
+class="btn btn-danger"
+
+id="recoverPasscodeBtn"
+
+onclick="recoverPasscode()"
+
+>
+
+Verify & Reset Passcode
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
 <div
 
 id="toastBox"
@@ -2246,16 +2469,6 @@ let activeUID =
 
 // ============================================================
 // PAYMENT CONFIGURATION
-// ============================================================
-//
-// IMPORTANT:
-//
-// Do not hardcode Consumer Secrets or M-Pesa Passkeys
-// inside public frontend source files.
-//
-// Sensitive credentials should be entered by the owner
-// or stored/processed securely on the backend.
-//
 // ============================================================
 
 const MASTER_CONFIG = {
@@ -2356,6 +2569,29 @@ firebase.auth()
     }
 
 );
+
+
+// ============================================================
+// MODAL CONTROLS
+// ============================================================
+
+function openResetModal() {
+
+    document
+        .getElementById("resetPasscodeModal")
+        .classList
+        .add("active");
+
+}
+
+function closeResetModal() {
+
+    document
+        .getElementById("resetPasscodeModal")
+        .classList
+        .remove("active");
+
+}
 
 
 // ============================================================
@@ -3199,7 +3435,7 @@ async function initPasscodeSection() {
 
             stateRow.innerText =
 
-                "Internal passcode is active. You can change it using the current passcode or recover it using your login password.";
+                "Internal passcode is active. You can change it using your current passcode or reset it securely.";
 
 
         }
@@ -3229,7 +3465,7 @@ async function initPasscodeSection() {
 
 
         stateRow.style.color =
-            "var(--danger)";
+                "var(--danger)";
 
 
         stateRow.innerText =
@@ -3445,10 +3681,6 @@ async function recoverPasscode() {
             .trim();
 
 
-    // --------------------------------------------------------
-    // VALIDATE NEW PASSCODE
-    // --------------------------------------------------------
-
     if (
 
         newPasscode !==
@@ -3499,14 +3731,6 @@ async function recoverPasscode() {
             await passcodeApi();
 
 
-        // ----------------------------------------------------
-        // FIREBASE REAUTHENTICATION
-        //
-        // NO EMAIL
-        // NO RESET LINK
-        // NO EMAIL QUOTA
-        // ----------------------------------------------------
-
         await api.recoverWithLoginPassword({
 
             email:
@@ -3525,8 +3749,6 @@ async function recoverPasscode() {
 
         });
 
-
-        // Clear sensitive fields immediately.
 
         document
             .getElementById(
@@ -3574,6 +3796,9 @@ async function recoverPasscode() {
             )
             .value =
             "";
+
+
+        closeResetModal();
 
 
         triggerToast(
