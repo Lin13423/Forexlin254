@@ -3,6 +3,7 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>AssetGuard Pro - Contacts</title>
@@ -58,7 +59,7 @@
 
 <div class="security-bar" id="lockBar">
     <span style="color:#fff; font-size:10px; font-weight:800;">MASTER PIN</span>
-    <input type="password" id="masterPin" class="pin-input" maxlength="4" placeholder="••••" oninput="checkPin()">
+    <input type="password" id="masterPin" class="pin-input" maxlength="32" placeholder="••••" oninput="checkPin()">
 </div>
 
 <input type="text" id="searchInput" class="search-input" placeholder="Search registry..." onkeyup="filter()">
@@ -94,6 +95,7 @@
 <script type="module">
     import { getDb } from "./ag-firebase.js";
     import { ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import AGPasscode from "./ag-passcode.js";
     const db = getDb();
 
     // --- USER ISOLATION ---
@@ -229,8 +231,10 @@
         }
     };
 
-    window.checkPin = () => {
-        if (document.getElementById('masterPin').value === "1234") {
+    window.checkPin = async () => {
+        const entered = document.getElementById('masterPin').value;
+        if (entered.length < AGPasscode.MIN_LENGTH) return;
+        if ((await AGPasscode.verify(entered)).ok) {
             isAdmin = true;
             document.getElementById('mainBody').classList.add('unlocked-view');
             document.getElementById('lockTrigger').innerText = "LOCK";

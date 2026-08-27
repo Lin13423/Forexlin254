@@ -3,6 +3,7 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
 <meta charset="utf-8">
 <title>AssetGuard Pro - Unified Purchase Terminal & Analytics</title>
@@ -190,7 +191,7 @@
         <div class="modal">
             <h3 style="margin-top:0; color:var(--dark);">Secure Access</h3>
             <p style="font-size: 11px; color: var(--muted); margin-bottom: 15px;">Enter Admin PIN to continue</p>
-            <input type="password" id="pinInput" placeholder="PIN" maxlength="4" style="text-align:center; font-size: 20px; letter-spacing: 5px;">
+            <input type="password" id="pinInput" placeholder="PIN" maxlength="32" style="text-align:center; font-size: 20px; letter-spacing: 5px;">
             <div id="pinError" style="color:var(--danger); font-size:11px; margin-top:10px; font-weight:700;"></div>
             <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
                 <button class="btn-small" style="background:#64748b; flex:1;" onclick="closePinModal()">Cancel</button>
@@ -317,6 +318,7 @@
     <script type="module">
         import { getDb } from "./ag-firebase.js";
         import { ref, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import AGPasscode from "./ag-passcode.js";
 
         if (navigator.storage && navigator.storage.persist) {
             navigator.storage.persist().then(granted => {
@@ -331,7 +333,6 @@
         const db = getDb();
         const currentUID = AGUtils.getActiveUID({ fallback: "global_user" });
         const cloudPath = AGUtils.userPath(currentUID, "purchases");
-        const ADMIN_PASS = "0000";
 
         let localPurchases = [];
 
@@ -498,7 +499,8 @@
             document.getElementById('delBtn').onclick = () => {
                 document.getElementById('pinModal').style.display = 'flex';
                 window.submitPin = async () => {
-                    if(document.getElementById('pinInput').value === ADMIN_PASS) {
+                    const attempt = await AGPasscode.verify(document.getElementById('pinInput').value);
+                    if(attempt.ok) {
                         closePinModal();
 
                         item.deleted = true;
@@ -517,15 +519,16 @@
                             else console.log("Offline: Deleted registered locally. Syncing deletion later.");
                         }
                     } else { 
-                        document.getElementById('pinError').innerText = "Incorrect PIN"; 
+                        document.getElementById('pinError').innerText = attempt.message; 
                     }
                 };
             };
             
             document.getElementById('editBtn').onclick = () => {
                 document.getElementById('pinModal').style.display = 'flex';
-                window.submitPin = () => {
-                    if(document.getElementById('pinInput').value === ADMIN_PASS) {
+                window.submitPin = async () => {
+                    const attempt = await AGPasscode.verify(document.getElementById('pinInput').value);
+                    if(attempt.ok) {
                         document.getElementById('editId').value = id;
                         document.getElementById('item_name').value = item.item_name;
                         document.getElementById('supplier').value = item.supplier;
@@ -536,7 +539,7 @@
                         showView('view-entry');
                         closePinModal();
                     } else { 
-                        document.getElementById('pinError').innerText = "Incorrect PIN"; 
+                        document.getElementById('pinError').innerText = attempt.message; 
                     }
                 };
             };
