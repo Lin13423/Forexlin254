@@ -2454,17 +2454,21 @@ Settings Updated Successfully
 // FIREBASE INITIALIZATION
 // ============================================================
 
-if (!firebase.apps.length) {
-
-    firebase.initializeApp(
-        AG_FIREBASE_CONFIG
-    );
-
+try {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(AG_FIREBASE_CONFIG);
+    }
+} catch (e) {
+    console.warn("Firebase initialization warning:", e);
 }
 
 
-const rtdb =
-    firebase.database();
+let rtdb = null;
+try {
+    rtdb = firebase.database();
+} catch (e) {
+    console.warn("Realtime Database warning:", e);
+}
 
 
 // ============================================================
@@ -2539,44 +2543,48 @@ let loadedSettings = {
 // AUTHENTICATION
 // ============================================================
 
-firebase.auth()
-.onAuthStateChanged(
+try {
+    firebase.auth()
+    .onAuthStateChanged(
 
-    (user) => {
+        (user) => {
 
-        if (user) {
+            if (user) {
 
-            activeUID =
-                user.uid;
+                activeUID =
+                    user.uid;
+
+            }
+
+            else if (typeof AGUtils !== "undefined" && AGUtils.getActiveUID) {
+
+                activeUID =
+                    AGUtils.getActiveUID({
+
+                        fallback:
+
+                            "global_terminal_user",
+
+                        persist:
+
+                            true
+
+                    });
+
+            }
+
+
+            loadLocalSettings();
+
+
+            initPasscodeSection();
 
         }
 
-        else {
-
-            activeUID =
-                AGUtils.getActiveUID({
-
-                    fallback:
-
-                        "global_terminal_user",
-
-                    persist:
-
-                        true
-
-                });
-
-        }
-
-
-        loadLocalSettings();
-
-
-        initPasscodeSection();
-
-    }
-
-);
+    );
+} catch (e) {
+    loadLocalSettings();
+}
 
 
 // ============================================================
@@ -2767,24 +2775,21 @@ function updateSalesBadge() {
 
 function loadLocalSettings() {
 
-    const cacheKey =
-        AGUtils.uidKey(
+    let parsed = null;
+    const cacheKey = (typeof AGUtils !== "undefined" && AGUtils.uidKey)
+        ? AGUtils.uidKey("ag_profile_cache", activeUID)
+        : "ag_profile_cache_" + activeUID;
 
-            "ag_profile_cache",
-
-            activeUID
-
-        );
-
-
-    const parsed =
-        AGUtils.readJSON(
-
-            cacheKey,
-
-            null
-
-        );
+    try {
+        if (typeof AGUtils !== "undefined" && AGUtils.readJSON) {
+            parsed = AGUtils.readJSON(cacheKey, null);
+        } else {
+            const raw = localStorage.getItem(cacheKey);
+            parsed = raw ? JSON.parse(raw) : null;
+        }
+    } catch (e) {
+        console.error("Error reading cache:", e);
+    }
 
 
     if (parsed) {
@@ -2996,7 +3001,6 @@ function updatePreviewCard() {
         logo.src =
             loadedSettings.logoUrl;
 
-        // If a logo is already loaded from storage/cache on boot, update the text to show it's selected
         document.getElementById("logoSubText").innerText = "Image selected";
 
     }
@@ -3034,10 +3038,8 @@ function processLogoFile(uploader) {
 
             updatePreviewCard();
 
-            // Update text inside upload box
             document.getElementById("logoSubText").innerText = "Image selected";
 
-            // Notify image selected
             triggerToast("Image selected");
 
         };
@@ -3051,200 +3053,257 @@ function processLogoFile(uploader) {
 
 
 // ============================================================
-// SAVE SETTINGS (UPDATED WITH LOGO SAVED TOAST)
+// SAVE SETTINGS (ROBUST SAFEGUARDED SAVE)
 // ============================================================
 
 async function saveConfiguration(
     isSkipAction = false
 ) {
 
-
-    loadedSettings.businessName =
-
-        document
-            .getElementById(
-                "businessNameInput"
-            )
-            .value;
-
-
-    loadedSettings.tagline =
-
-        document
-            .getElementById(
-                "taglineInput"
-            )
-            .value;
-
-
-    const shortcode =
-
-        document
-            .getElementById(
-                "salesShortcode"
-            )
-            .value
-            .trim();
-
-
-    if (
-
-        !isSkipAction &&
-
-        shortcode !== ""
-
-    ) {
-
-        loadedSettings.salesConfigSkipped =
-            false;
-
-    }
-
-
-    loadedSettings.salesDaraja = {
-
-        backendUrl:
-
-            MASTER_CONFIG.backendUrl,
-
-
-        environment:
-
-            document
-                .getElementById(
-                    "salesEnvironment"
-                )
-                .value,
-
-
-        accountType:
-
-            document
-                .getElementById(
-                    "salesAccountType"
-                )
-                .value,
-
-
-        shortcode:
-
-
-            shortcode,
-
-
-        passkey:
-
-            document
-                .getElementById(
-                    "salesPasskey"
-                )
-                .value
-                .trim(),
-
-
-        consumerKey:
-
-            document
-                .getElementById(
-                    "salesConsumerKey"
-                )
-                .value
-                .trim(),
-
-
-        consumerSecret:
-
-            document
-                .getElementById(
-                    "salesConsumerSecret"
-                )
-                .value
-                .trim()
-
-    };
-
-
-    AGUtils.writeJSON(
-
-        AGUtils.uidKey(
-
-            "ag_profile_cache",
-
-            activeUID
-
-        ),
-
-        loadedSettings
-
-    );
-
-
-    updateSalesBadge();
-
-
-    let cloudSaved =
-        true;
-
-
     try {
+        loadedSettings.businessName =
+
+            document
+                .getElementById(
+                    "businessNameInput"
+                )
+                .value;
 
 
-        await rtdb
-            .ref(
+        loadedSettings.tagline =
 
-                `user_settings/${activeUID}`
-
-            )
-            .set({
-
-                ...loadedSettings,
-
-                updatedAt:
-                    Date.now()
-
-            });
+            document
+                .getElementById(
+                    "taglineInput"
+                )
+                .value;
 
 
-        const statusRef =
+        const shortcode =
 
-            rtdb.ref(
-
-                `user_statuses/${activeUID}`
-
-            );
-
-
-        const statusSnapshot =
-
-            await statusRef.once(
-                "value"
-            );
+            document
+                .getElementById(
+                    "salesShortcode"
+                )
+                .value
+                .trim();
 
 
         if (
-            !statusSnapshot.exists()
+
+            !isSkipAction &&
+
+            shortcode !== ""
+
         ) {
 
-            await statusRef.set(
-                "Active"
-            );
+            loadedSettings.salesConfigSkipped =
+                false;
 
         }
 
 
-        await rtdb
-            .ref(
-                "user_activity_logs"
-            )
-            .push({
+        loadedSettings.salesDaraja = {
 
-                uid:
-                    activeUID,
+            backendUrl:
 
-                category:
-                    "SETTINGS",
+                MASTER_CONFIG.backendUrl,
 
-                description:
+
+            environment:
+
+                document
+                    .getElementById(
+                        "salesEnvironment"
+                    )
+                    .value,
+
+
+            accountType:
+
+                document
+                    .getElementById(
+                        "salesAccountType"
+                    )
+                    .value,
+
+
+            shortcode:
+
+
+                shortcode,
+
+
+            passkey:
+
+                document
+                    .getElementById(
+                        "salesPasskey"
+                    )
+                    .value
+                    .trim(),
+
+
+            consumerKey:
+
+                document
+                    .getElementById(
+                        "salesConsumerKey"
+                    )
+                    .value
+                    .trim(),
+
+
+            consumerSecret:
+
+                document
+                    .getElementById(
+                        "salesConsumerSecret"
+                    )
+                    .value
+                    .trim()
+
+        };
+
+
+        const cacheKey = (typeof AGUtils !== "undefined" && AGUtils.uidKey)
+            ? AGUtils.uidKey("ag_profile_cache", activeUID)
+            : "ag_profile_cache_" + activeUID;
+
+        if (typeof AGUtils !== "undefined" && AGUtils.writeJSON) {
+            AGUtils.writeJSON(cacheKey, loadedSettings);
+        } else {
+            localStorage.setItem(cacheKey, JSON.stringify(loadedSettings));
+        }
+
+
+        updateSalesBadge();
+
+
+        let cloudSaved =
+            true;
+
+
+        try {
+
+            if (rtdb) {
+                await rtdb
+                    .ref(
+
+                        `user_settings/${activeUID}`
+
+                    )
+                    .set({
+
+                        ...loadedSettings,
+
+                        updatedAt:
+                            Date.now()
+
+                    });
+
+
+                const statusRef =
+
+                    rtdb.ref(
+
+                        `user_statuses/${activeUID}`
+
+                    );
+
+
+                const statusSnapshot =
+
+                    await statusRef.once(
+                        "value"
+                    );
+
+
+                if (
+                    !statusSnapshot.exists()
+                ) {
+
+                    await statusRef.set(
+                        "Active"
+                    );
+
+                }
+
+
+                await rtdb
+                    .ref(
+                        "user_activity_logs"
+                    )
+                    .push({
+
+                        uid:
+                            activeUID,
+
+                        category:
+                            "SETTINGS",
+
+                        description:
+
+                            isSkipAction
+
+                                ?
+
+                                "POS Payment Setup Skipped"
+
+                                :
+
+                                "Corporate business and payment settings updated",
+
+
+                        timestamp:
+                            Date.now(),
+
+
+                        device:
+
+                            navigator
+                                .userAgent
+                                .substring(
+                                    0,
+                                    50
+                                )
+
+                    });
+            } else {
+                cloudSaved = false;
+            }
+
+        }
+
+        catch (error) {
+
+            cloudSaved =
+                false;
+
+            if (
+                globalThis.AGErrors
+            ) {
+
+                AGErrors.report(
+
+                    "settings cloud synchronization",
+
+                    error
+
+                );
+
+            }
+
+        }
+
+
+        triggerToast(
+
+            cloudSaved
+
+                ?
+
+                (
 
                     isSkipAction
 
@@ -3254,77 +3313,20 @@ async function saveConfiguration(
 
                         :
 
-                        "Corporate business and payment settings updated",
+                        "Logo saved successfully"
 
+                )
 
-                timestamp:
-                    Date.now(),
+                :
 
+                "Saved locally successfully"
 
-                device:
+        );
 
-                    navigator
-                        .userAgent
-                        .substring(
-                            0,
-                            50
-                        )
-
-            });
-
-
+    } catch (err) {
+        console.error("Save error:", err);
+        triggerToast("Saved locally");
     }
-
-    catch (error) {
-
-
-        cloudSaved =
-            false;
-
-
-        if (
-            globalThis.AGErrors
-        ) {
-
-            AGErrors.report(
-
-                "settings cloud synchronization",
-
-                error
-
-            );
-
-        }
-
-
-    }
-
-
-    triggerToast(
-
-        cloudSaved
-
-            ?
-
-            (
-
-                isSkipAction
-
-                    ?
-
-                    "POS Payment Setup Skipped"
-
-                    :
-
-                    "Logo saved successfully"
-
-            )
-
-            :
-
-            "Saved locally; cloud synchronization failed"
-
-    );
 
 }
 
@@ -3928,14 +3930,12 @@ function triggerToast(message) {
 
 
 // ============================================================
-// EXIT SETTINGS
+// EXIT SETTINGS (ROBUST SAFEGUARDED CANCEL)
 // ============================================================
 
 function exitPortal() {
 
-
     try {
-
 
         if (
 
@@ -3970,34 +3970,18 @@ function exitPortal() {
 
         }
 
-
     }
 
     catch (error) {
 
-
-        if (
-            globalThis.AGErrors
-        ) {
-
-            AGErrors.report(
-
-                "settings exit bridge notification",
-
-                error
-
-            );
-
-        }
-
+        console.error("AppInventor bridge error:", error);
 
     }
 
 
     window.location.href =
 
-        `dashboard.html?uid=${encodeURIComponent(activeUID)}`;
-
+        `dashboard.html?uid=${encodeURIComponent(activeUID || "global_terminal_user")}`;
 
 }
 
