@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="error-utils.js"></script>
-<script src="ag-utils.js"></script>
-<script src="ag-config.js"></script>
-<script src="ag-context-guard.js"></script>
-<script type="module" src="auth-guard.js"></script>
-<script type="module" src="ag-passcode.js"></script>
+    <script src="error-utils.js"></script>
+    <script src="ag-utils.js"></script>
+    <script src="ag-config.js"></script>
+    <script src="ag-context-guard.js"></script>
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="ag-passcode.js"></script>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
     <title>AssetGuard Pro - Business Setup & Settings</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;600;700&display=swap"
+        rel="stylesheet"
+    >
+
     <style>
+
         :root {
             --primary: #0072CE;
             --primary-light: #e6f0fa;
@@ -29,10 +41,18 @@
             --mpesa: #00a859;
             --radius-lg: 16px;
             --radius-md: 12px;
-            --shadow: 0 10px 25px -5px rgba(0, 26, 53, 0.05), 0 8px 10px -6px rgba(0, 26, 53, 0.05);
+
+            --shadow:
+                0 10px 25px -5px rgba(0, 26, 53, 0.05),
+                0 8px 10px -6px rgba(0, 26, 53, 0.05);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -56,647 +76,2448 @@
         }
 
         .app-header {
-            position: sticky; top: 0; background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px); padding: 16px 20px;
-            display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid var(--border); z-index: 100;
+            position: sticky;
+            top: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
         }
-        .header-title { font-size: 16px; font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: 8px; }
-        .header-title span { color: var(--primary); }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .header-title span {
+            color: var(--primary);
+        }
 
         .back-btn {
-            background: none; border: none; color: var(--text-muted); cursor: pointer;
-            padding: 4px; display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; transition: 0.2s;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
-        .back-btn:active { background: var(--primary-light); color: var(--primary); }
+
+        .back-btn:active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
 
         .settings-content {
-            flex: 1; padding: 20px; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 20px; padding-bottom: 120px;
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-bottom: 120px;
         }
 
         .section-label {
-            font-size: 11px; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.8px; color: var(--text-muted); display: block; margin-bottom: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 8px;
         }
 
         .brand-preview-card {
-            background: linear-gradient(135deg, var(--dark) 0%, #002d5c 100%);
-            color: white; padding: 20px; border-radius: var(--radius-lg);
-            position: relative; box-shadow: 0 10px 20px rgba(0, 26, 53, 0.15);
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--dark) 0%,
+                    #002d5c 100%
+                );
+
+            color: white;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 20px rgba(0,26,53,0.15);
         }
-        .card-header-flex { display: flex; justify-content: space-between; align-items: center; }
-        .card-identity h3 { font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 700; }
-        .card-identity p { font-size: 10px; opacity: 0.8; margin-top: 2px; text-transform: uppercase; }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-identity h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .card-identity p {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 2px;
+            text-transform: uppercase;
+        }
+
         .card-logo-slot {
-            width: 42px; height: 42px; border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center;
-            border: 1px solid rgba(255, 255, 255, 0.15); overflow: hidden;
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.15);
+            overflow: hidden;
         }
-        .card-logo-slot img { width: 100%; height: 100%; object-fit: cover; }
+
+        .card-logo-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .preview-badge {
-            display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px;
-            background: rgba(255,255,255,0.1); border-radius: 100px; font-size: 8px;
-            font-weight: 800; text-transform: uppercase; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 100px;
+            font-size: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-top: 15px;
         }
 
         .input-group {
-            background: var(--card-bg); border: 1px solid var(--border);
-            border-radius: var(--radius-lg); padding: 16px;
-            display: flex; flex-direction: column; gap: 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
-        .form-field { display: flex; flex-direction: column; gap: 6px; }
-        .form-field label { font-size: 11px; font-weight: 700; color: var(--dark); text-transform: uppercase; }
-        .form-field input[type="text"],
-        .form-field input[type="tel"],
-        .form-field input[type="password"],
-        .form-field input[type="email"],
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-field label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--dark);
+            text-transform: uppercase;
+        }
+
+        .form-field input,
         .form-field select {
-            font-family: inherit; font-size: 14px; padding: 12px 14px;
-            border: 2px solid var(--border); border-radius: var(--radius-md); background: #fafbfe;
-            outline: none; transition: 0.2s; color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            padding: 12px 14px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            background: #fafbfe;
+            outline: none;
+            transition: 0.2s;
+            color: var(--text-main);
         }
-        .form-field input:focus, .form-field select:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(0, 114, 206, 0.1); }
-        .form-field input.mpesa-focus:focus { border-color: var(--mpesa); box-shadow: 0 0 0 4px rgba(0, 168, 89, 0.1); }
+
+        .form-field input:focus,
+        .form-field select:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(0,114,206,0.1);
+        }
+
+        .form-field input.mpesa-focus:focus {
+            border-color: var(--mpesa);
+            box-shadow: 0 0 0 4px rgba(0,168,89,0.1);
+        }
 
         .logo-upload-area {
-            border: 2px dashed var(--border); border-radius: var(--radius-md);
-            padding: 16px; text-align: center; cursor: pointer; background: #fafbfe;
-            display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafbfe;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            position: relative;
         }
-        .logo-upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-        .upload-icon { color: var(--primary); }
-        .upload-text b { color: var(--primary); font-size: 12px; }
-        .upload-text p { font-size: 10px; color: var(--text-muted); }
+
+        .logo-upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            color: var(--primary);
+        }
+
+        .upload-text b {
+            color: var(--primary);
+            font-size: 12px;
+        }
+
+        .upload-text p {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
 
         .collapsible-section {
-            border: 1px solid var(--border); border-radius: var(--radius-lg);
-            background: #fff; overflow: hidden; transition: box-shadow 0.3s;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: white;
+            overflow: hidden;
         }
-        .collapsible-section.expanded { box-shadow: var(--shadow); }
+
+        .collapsible-section.expanded {
+            box-shadow: var(--shadow);
+        }
 
         .section-toggle-header {
-            padding: 16px; display: flex; justify-content: space-between;
-            align-items: center; cursor: pointer; background: #f8fafc;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: #f8fafc;
         }
-        .section-toggle-header:hover { background: #f1f5f9; }
-        .toggle-title-wrap h3 { font-size: 14px; font-weight: 700; color: var(--dark); display: flex; align-items: center; gap: 8px; }
-        .toggle-title-wrap p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-        
-        .status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; }
-        .badge-configured { background: var(--success-light); color: var(--success); }
-        .badge-skipped { background: var(--danger-light); color: #b91c1c; }
-        .badge-pending { background: #e2e8f0; color: var(--text-muted); }
 
-        .chevron-icon { transition: transform 0.3s ease; color: var(--text-muted); }
-        .collapsible-section.expanded .chevron-icon { transform: rotate(180deg); }
+        .toggle-title-wrap h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+        }
 
-        .collapsible-body { padding: 16px; display: none; flex-direction: column; gap: 14px; border-top: 1px solid var(--border); }
-        .collapsible-section.expanded .collapsible-body { display: flex; }
+        .toggle-title-wrap p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
 
-        .skip-action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 10px; border-top: 1px dashed var(--border); }
-        .skip-btn { background: none; border: none; color: var(--danger); font-size: 12px; font-weight: 700; cursor: pointer; padding: 6px 12px; border-radius: var(--radius-md); transition: 0.2s; }
-        .skip-btn:hover { background: var(--danger-light); }
+        .status-badge {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 100px;
+        }
+
+        .badge-configured {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .badge-skipped {
+            background: var(--danger-light);
+            color: #b91c1c;
+        }
+
+        .badge-pending {
+            background: #e2e8f0;
+            color: var(--text-muted);
+        }
+
+        .chevron-icon {
+            transition: transform 0.3s ease;
+            color: var(--text-muted);
+        }
+
+        .collapsible-section.expanded .chevron-icon {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-body {
+            padding: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .collapsible-section.expanded .collapsible-body {
+            display: flex;
+        }
+
+        .skip-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .skip-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 6px 12px;
+        }
 
         .settings-footer {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
-            padding: 16px 20px; border-top: 1px solid var(--border);
-            display: flex; gap: 12px; z-index: 100;
+            position: sticky;
+            bottom: 0;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(12px);
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            z-index: 100;
         }
+
         .btn {
-            flex: 1; font-family: inherit; font-size: 14px; font-weight: 700;
-            padding: 14px; border: none; border-radius: var(--radius-md);
-            cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+            flex: 1;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:active { background: #00569e; }
-        .btn-secondary { background: #f1f5f9; color: var(--text-muted); }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--text-muted);
+        }
 
         .toast {
-            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: #0f172a; color: white; padding: 12px 24px; border-radius: 100px;
-            font-size: 12px; font-weight: 700; z-index: 10005; opacity: 0;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #0f172a;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 10005;
+            opacity: 0;
+            transition: 0.3s;
         }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 </head>
+
 <body>
 
 <div class="app-container">
+
     <header class="app-header">
+
         <button class="back-btn" onclick="exitPortal()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            ←
         </button>
-        <div class="header-title">AssetGuard <span>Settings</span></div>
-        <div style="width: 20px;"></div>
+
+        <div class="header-title">
+            AssetGuard <span>Settings</span>
+        </div>
+
+        <div style="width:20px"></div>
+
     </header>
 
+
     <main class="settings-content">
-        <div>
-            <span class="section-label">Branding Visualizer</span>
-            <div class="brand-preview-card">
-                <div class="card-header-flex">
-                    <div class="card-identity">
-                        <h3 id="prevName">JCorp Kenya Inc</h3>
-                        <p id="prevTag">Transformation you need</p>
-                    </div>
-                    <div class="card-logo-slot">
-                        <img id="prevLogo" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='42' height='42' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5'><path d='M4.5 16.5c-1.5 1.26-2.5 3.19-2.5 5.5h20c0-2.31-1-4.24-2.5-5.5' /><circle cx='12' cy='8' r='5' /></svg>" alt="Logo">
-                    </div>
-                </div>
-                <div class="preview-badge">
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#22c55e;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    Live Preview
-                </div>
-            </div>
-        </div>
 
         <div>
-            <span class="section-label">Corporate Settings</span>
-            <div class="input-group">
-                <div class="form-field">
-                    <label>Business Identity Name</label>
-                    <input type="text" id="businessNameInput" placeholder="Enter Business Name" oninput="updatePreviewCard()">
+
+            <span class="section-label">
+                Branding Visualizer
+            </span>
+
+            <div class="brand-preview-card">
+
+                <div class="card-header-flex">
+
+                    <div class="card-identity">
+
+                        <h3 id="prevName">
+                            JCorp Kenya Inc
+                        </h3>
+
+                        <p id="prevTag">
+                            Transformation you need
+                        </p>
+
+                    </div>
+
+                    <div class="card-logo-slot">
+
+                        <img
+                            id="prevLogo"
+                            alt="Logo"
+                            src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='42' height='42' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5'><circle cx='12' cy='8' r='5'/><path d='M2 22c0-4 4-7 10-7s10 3 10 7'/></svg>"
+                        >
+
+                    </div>
+
                 </div>
-                <div class="form-field">
-                    <label>Corporate Tagline / Address</label>
-                    <input type="text" id="taglineInput" placeholder="Enter Tagline/Address" oninput="updatePreviewCard()">
+
+                <div class="preview-badge">
+                    ✓ Live Preview
                 </div>
+
             </div>
+
         </div>
+
+
+        <div>
+
+            <span class="section-label">
+                Corporate Settings
+            </span>
+
+            <div class="input-group">
+
+                <div class="form-field">
+
+                    <label>
+                        Business Identity Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="businessNameInput"
+                        placeholder="Enter Business Name"
+                        oninput="updatePreviewCard()"
+                    >
+
+                </div>
+
+
+                <div class="form-field">
+
+                    <label>
+                        Corporate Tagline / Address
+                    </label>
+
+                    <input
+                        type="text"
+                        id="taglineInput"
+                        placeholder="Enter Tagline/Address"
+                        oninput="updatePreviewCard()"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
 
         <div class="collapsible-section" id="salesSection">
-            <div class="section-toggle-header" onclick="toggleSalesConfig()">
+
+            <div
+                class="section-toggle-header"
+                onclick="toggleSalesConfig()"
+            >
+
                 <div class="toggle-title-wrap">
-                    <h3>Accept Customer Payments (STK push) <span id="salesStatusBadge" class="status-badge badge-pending">Optional</span></h3>
-                    <p>Configure your own Paybill/Till for customer sales</p>
+
+                    <h3>
+
+                        Accept Customer Payments (STK Push)
+
+                        <span
+                            id="salesStatusBadge"
+                            class="status-badge badge-pending"
+                        >
+                            Optional
+                        </span>
+
+                    </h3>
+
+                    <p>
+                        Configure your own Paybill/Till for customer sales
+                    </p>
+
                 </div>
+
                 <div class="chevron-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    ▼
                 </div>
+
             </div>
+
+
             <div class="collapsible-body">
+
                 <div class="form-field">
+
                     <label>Environment Mode</label>
+
                     <select id="salesEnvironment">
-                        <option value="production">Production (Live)</option>
-                        <option value="sandbox">Sandbox (Testing)</option>
+
+                        <option value="production">
+                            Production (Live)
+                        </option>
+
+                        <option value="sandbox">
+                            Sandbox (Testing)
+                        </option>
+
                     </select>
+
                 </div>
+
+
                 <div class="form-field">
-                    <label>Account Type / Payment Mode</label>
+
+                    <label>Account Type</label>
+
                     <select id="salesAccountType">
-                        <option value="Paybill">Paybill (Business Shortcode)</option>
-                        <option value="Till">Till Number (Buy Goods & Services)</option>
+
+                        <option value="Paybill">
+                            Paybill
+                        </option>
+
+                        <option value="Till">
+                            Till Number
+                        </option>
+
                     </select>
+
                 </div>
+
+
                 <div class="form-field">
-                    <label>My Business Shortcode / Till Number</label>
-                    <input type="tel" id="salesShortcode" class="mpesa-focus" placeholder="e.g. 257471" inputmode="numeric" oninput="handleShortcodeInput()">
+
+                    <label>
+                        Business Shortcode / Till Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="salesShortcode"
+                        class="mpesa-focus"
+                        inputmode="numeric"
+                        oninput="handleShortcodeInput()"
+                    >
+
                 </div>
+
+
                 <div class="form-field">
-                    <label>My Passkey (Lipwa Na M-Pesa Online)</label>
-                    <input type="password" id="salesPasskey" class="mpesa-focus" placeholder="Enter your Lipwa passkey">
+
+                    <label>
+                        M-Pesa Passkey
+                    </label>
+
+                    <input
+                        type="password"
+                        id="salesPasskey"
+                        class="mpesa-focus"
+                    >
+
                 </div>
+
+
                 <div class="form-field">
-                    <label>My Consumer Key (Daraja Portal)</label>
-                    <input type="text" id="salesConsumerKey" placeholder="Enter your Consumer Key">
+
+                    <label>
+                        Consumer Key
+                    </label>
+
+                    <input
+                        type="text"
+                        id="salesConsumerKey"
+                    >
+
                 </div>
+
+
                 <div class="form-field">
-                    <label>My Consumer Secret (Daraja Portal)</label>
-                    <input type="password" id="salesConsumerSecret" placeholder="Enter your Consumer Secret">
+
+                    <label>
+                        Consumer Secret
+                    </label>
+
+                    <input
+                        type="password"
+                        id="salesConsumerSecret"
+                    >
+
                 </div>
-                
+
+
                 <div class="skip-action-row">
-                    <span style="font-size:11px; color:var(--text-muted);">Don't have automated keys yet?</span>
-                    <button class="skip-btn" onclick="skipSalesConfig(event)">Skip Configuration for Now</button>
+
+                    <span style="font-size:11px;color:var(--text-muted)">
+                        Don't have automated keys yet?
+                    </span>
+
+                    <button
+                        class="skip-btn"
+                        onclick="skipSalesConfig(event)"
+                    >
+                        Skip Configuration
+                    </button>
+
                 </div>
+
             </div>
+
         </div>
 
+
         <div>
-            <span class="section-label">Internal Security Passcode</span>
+
+            <span class="section-label">
+                Internal Security Passcode
+            </span>
+
             <div class="input-group">
-                <p style="font-size:11px; color:var(--text-muted);">
-                    One passcode unlocks every protected in-app area (sales, stock, ledgers, reports, CRM, dispatch).
-                    Changing it here changes it everywhere. This is separate from your sign-in password.
+
+                <p style="font-size:11px;color:var(--text-muted)">
+
+                    One passcode unlocks protected AssetGuard areas.
+                    This passcode is separate from your login password.
+
                 </p>
-                <div id="passcodeStateRow" style="font-size:11px; font-weight:700; color:var(--text-muted);">Checking passcode status...</div>
 
-                <div class="form-field" id="currentPasscodeField">
-                    <label>Current Passcode</label>
-                    <input type="password" id="currentPasscode" placeholder="Enter current passcode" autocomplete="off">
-                </div>
-                <div class="form-field">
-                    <label>New Passcode</label>
-                    <input type="password" id="newPasscode" placeholder="At least 4 characters" autocomplete="off">
-                </div>
-                <div class="form-field">
-                    <label>Confirm New Passcode</label>
-                    <input type="password" id="confirmPasscode" placeholder="Repeat new passcode" autocomplete="off">
-                </div>
-                <button class="btn btn-primary" id="savePasscodeBtn" onclick="savePasscode()">Save Internal Passcode</button>
 
-                <div class="skip-action-row" style="flex-direction:column; align-items:stretch; gap:10px;">
-                    <span style="font-size:11px; color:var(--text-muted);">Forgot the internal passcode? We e-mail a reset link that expires in 30 minutes via custom mailer.</span>
+                <div
+                    id="passcodeStateRow"
+                    style="font-size:11px;font-weight:700;color:var(--text-muted)"
+                >
+                    Checking passcode status...
+                </div>
+
+
+                <div
+                    class="form-field"
+                    id="currentPasscodeField"
+                >
+
+                    <label>
+                        Current Passcode
+                    </label>
+
+                    <input
+                        type="password"
+                        id="currentPasscode"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="form-field">
+
+                    <label>
+                        New Passcode
+                    </label>
+
+                    <input
+                        type="password"
+                        id="newPasscode"
+                        placeholder="At least 4 characters"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="form-field">
+
+                    <label>
+                        Confirm New Passcode
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirmPasscode"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <button
+                    class="btn btn-primary"
+                    id="savePasscodeBtn"
+                    onclick="savePasscode()"
+                >
+                    Save Internal Passcode
+                </button>
+
+
+                <div
+                    class="skip-action-row"
+                    style="flex-direction:column;align-items:stretch;gap:10px"
+                >
+
+                    <span
+                        style="font-size:11px;color:var(--text-muted)"
+                    >
+
+                        Forgot your internal passcode?
+                        Enter the email address of your currently
+                        logged-in account to receive a reset link.
+
+                    </span>
+
+
                     <div class="form-field">
-                        <label>Account E-mail</label>
-                        <input type="email" id="resetEmail" placeholder="Enter your account e-mail" autocomplete="off">
+
+                        <label>
+                            Account E-mail
+                        </label>
+
+                        <input
+                            type="email"
+                            id="resetEmail"
+                            placeholder="Enter your account e-mail"
+                            autocomplete="email"
+                        >
+
                     </div>
-                    <button class="btn btn-secondary" id="requestResetBtn" onclick="requestPasscodeReset()">Send Reset Link</button>
+
+
+                    <button
+                        class="btn btn-secondary"
+                        id="requestResetBtn"
+                        onclick="requestPasscodeReset()"
+                    >
+                        Send Reset Link
+                    </button>
+
                 </div>
+
             </div>
+
         </div>
+
 
         <div>
-            <span class="section-label">Corporate Emblem</span>
+
+            <span class="section-label">
+                Corporate Emblem
+            </span>
+
             <div class="input-group">
+
                 <div class="logo-upload-area">
-                    <input type="file" id="logoFileInput" accept="image/*" onchange="processLogoFile(this)">
+
+                    <input
+                        type="file"
+                        id="logoFileInput"
+                        accept="image/*"
+                        onchange="processLogoFile(this)"
+                    >
+
                     <div class="upload-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx='8.5' cy='8.5' r='1.5'></circle><polyline points='21 15 16 10 5 21'></polyline></svg>
+                        🖼️
                     </div>
+
                     <div class="upload-text">
-                        <b>Upload Corporate Logo</b>
-                        <p>Select image from device storage</p>
+
+                        <b>
+                            Upload Corporate Logo
+                        </b>
+
+                        <p>
+                            Select image from device storage
+                        </p>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
     </main>
 
+
     <footer class="settings-footer">
-        <button class="btn btn-secondary" onclick="exitPortal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveConfiguration()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+
+        <button
+            class="btn btn-secondary"
+            onclick="exitPortal()"
+        >
+            Cancel
+        </button>
+
+
+        <button
+            class="btn btn-primary"
+            onclick="saveConfiguration()"
+        >
             Save Settings
         </button>
+
     </footer>
+
 </div>
 
-<div id="toastBox" class="toast">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success);"><polyline points="20 6 9 17 4 12"></polyline></svg>
-    <span id="toastText">Settings Updated Successfully</span>
+
+<div
+    id="toastBox"
+    class="toast"
+>
+    <span id="toastText">
+        Settings Updated Successfully
+    </span>
 </div>
+
 
 <script>
+
+    /*
+    ---------------------------------------------------
+    FIREBASE INITIALIZATION
+    ---------------------------------------------------
+    */
+
     if (!firebase.apps.length) {
-        firebase.initializeApp(AG_FIREBASE_CONFIG);
+
+        firebase.initializeApp(
+            AG_FIREBASE_CONFIG
+        );
+
     }
+
     const rtdb = firebase.database();
+
+
+    /*
+    ---------------------------------------------------
+    CONFIGURATION
+    ---------------------------------------------------
+    */
+
+    const MASTER_CONFIG = {
+
+        backendUrl:
+            "https://weathered-glade-c60b.assetguardinfo.workers.dev"
+
+    };
+
 
     let activeUID = null;
 
-    const MASTER_CONFIG = {
-        backendUrl: "https://weathered-glade-c60b.assetguardinfo.workers.dev",
-        environment: "production",
-        accountType: "Paybill",
-        shortcode: "257471",
-        passkey: "103f80194fedeaefb352960fb340d766ef3f84a9dcb96aafdd21d0b0bb8dfbab",
-        consumerKey: "AGJGJGGktfRf8OHhos6TJXKupDMb3f2wG9pZDdF8tG5qm0qK",
-        consumerSecret: "xmd2sXJzRA6Chl1KHGvR9jG0qtSBse1oRBCdgBjb4DnO7SEi4QzPVwKNWWraubJd"
+    let loadedSettings = {
+
+        businessName:
+            "JCorp Kenya Inc",
+
+        tagline:
+            "Transformation you need",
+
+        logoUrl:
+            "",
+
+        salesConfigSkipped:
+            true,
+
+        salesDaraja: {
+
+            environment:
+                "production",
+
+            accountType:
+                "Paybill",
+
+            shortcode:
+                "",
+
+            passkey:
+                "",
+
+            consumerKey:
+                "",
+
+            consumerSecret:
+                ""
+
+        }
+
     };
 
-    let loadedSettings = { 
-        businessName: "JCorp Kenya Inc", 
-        tagline: "Transformation you need", 
-        logoUrl: "",
-        salesConfigSkipped: true,
-        salesDaraja: {
-            environment: "production",
-            accountType: "Paybill",
-            shortcode: "",
-            passkey: "",
-            consumerKey: "",
-            consumerSecret: ""
-        }
-    };
-    
-    // Strictly wait for Firebase Auth user before triggering reads or writes
+
+    /*
+    ---------------------------------------------------
+    AUTHENTICATION
+    ---------------------------------------------------
+    */
+
     firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            activeUID = user.uid;
-            loadLocalSettings();
-            initPasscodeSection();
-        } else {
-            // Redirect to login if unauthenticated
-            window.location.href = "login.html";
+
+        if (!user) {
+
+            window.location.replace(
+                "login.html"
+            );
+
+            return;
+
         }
+
+        activeUID = user.uid;
+
+        loadLocalSettings();
+
+        initPasscodeSection();
+
     });
 
+
+    /*
+    ---------------------------------------------------
+    SALES CONFIGURATION
+    ---------------------------------------------------
+    */
+
     function toggleSalesConfig() {
-        document.getElementById('salesSection').classList.toggle('expanded');
+
+        document
+            .getElementById("salesSection")
+            .classList
+            .toggle("expanded");
+
     }
 
-    async function skipSalesConfig(e) {
-        e.stopPropagation();
+
+    async function skipSalesConfig(event) {
+
+        event.stopPropagation();
+
         loadedSettings.salesConfigSkipped = true;
-        document.getElementById('salesShortcode').value = "";
-        document.getElementById('salesPasskey').value = "";
-        document.getElementById('salesConsumerKey').value = "";
-        document.getElementById('salesConsumerSecret').value = "";
-        document.getElementById('salesSection').classList.remove('expanded');
+
+        document.getElementById(
+            "salesShortcode"
+        ).value = "";
+
+        document.getElementById(
+            "salesPasskey"
+        ).value = "";
+
+        document.getElementById(
+            "salesConsumerKey"
+        ).value = "";
+
+        document.getElementById(
+            "salesConsumerSecret"
+        ).value = "";
+
+
+        document
+            .getElementById("salesSection")
+            .classList
+            .remove("expanded");
+
+
         updateSalesBadge();
-        
+
         await saveConfiguration(true);
+
     }
+
 
     function handleShortcodeInput() {
-        const sc = document.getElementById('salesShortcode').value.trim();
-        if (sc !== "") {
-            loadedSettings.salesConfigSkipped = false;
+
+        const shortcode =
+            document
+                .getElementById("salesShortcode")
+                .value
+                .trim();
+
+
+        if (shortcode) {
+
+            loadedSettings.salesConfigSkipped =
+                false;
+
         }
+
+
         updateSalesBadge();
+
     }
+
 
     function updateSalesBadge() {
-        const badge = document.getElementById('salesStatusBadge');
-        const sc = document.getElementById('salesShortcode').value.trim();
-        if (loadedSettings.salesConfigSkipped) {
-            badge.innerText = "Skipped";
-            badge.className = "status-badge badge-skipped";
-        } else if (sc !== "") {
-            badge.innerText = "Configured";
-            badge.className = "status-badge badge-configured";
-        } else {
-            badge.innerText = "Optional";
-            badge.className = "status-badge badge-pending";
+
+        const badge =
+            document.getElementById(
+                "salesStatusBadge"
+            );
+
+
+        const shortcode =
+            document
+                .getElementById(
+                    "salesShortcode"
+                )
+                .value
+                .trim();
+
+
+        if (
+            loadedSettings.salesConfigSkipped
+        ) {
+
+            badge.innerText =
+                "Skipped";
+
+            badge.className =
+                "status-badge badge-skipped";
+
         }
+
+        else if (shortcode) {
+
+            badge.innerText =
+                "Configured";
+
+            badge.className =
+                "status-badge badge-configured";
+
+        }
+
+        else {
+
+            badge.innerText =
+                "Optional";
+
+            badge.className =
+                "status-badge badge-pending";
+
+        }
+
     }
+
+
+    /*
+    ---------------------------------------------------
+    LOAD SETTINGS
+    ---------------------------------------------------
+    */
 
     function loadLocalSettings() {
+
         if (!activeUID) return;
-        const cacheKey = AGUtils.uidKey("ag_profile_cache", activeUID);
-        const parsed = AGUtils.readJSON(cacheKey, null);
-        if (parsed) {
-            loadedSettings = { ...loadedSettings, ...parsed };
-            if (!loadedSettings.salesDaraja) {
-                loadedSettings.salesDaraja = { environment: "production", accountType: "Paybill", shortcode: "", passkey: "", consumerKey: "", consumerSecret: "" };
+
+
+        const cacheKey =
+            AGUtils.uidKey(
+                "ag_profile_cache",
+                activeUID
+            );
+
+
+        const cached =
+            AGUtils.readJSON(
+                cacheKey,
+                null
+            );
+
+
+        if (cached) {
+
+            loadedSettings = {
+
+                ...loadedSettings,
+
+                ...cached
+
+            };
+
+
+            if (
+                !loadedSettings.salesDaraja
+            ) {
+
+                loadedSettings.salesDaraja = {
+
+                    environment:
+                        "production",
+
+                    accountType:
+                        "Paybill",
+
+                    shortcode:
+                        "",
+
+                    passkey:
+                        "",
+
+                    consumerKey:
+                        "",
+
+                    consumerSecret:
+                        ""
+
+                };
+
             }
-        } else {
-            loadedSettings.salesConfigSkipped = true;
+
         }
 
-        document.getElementById('businessNameInput').value = loadedSettings.businessName || "";
-        document.getElementById('taglineInput').value = loadedSettings.tagline || "";
-        document.getElementById('salesEnvironment').value = loadedSettings.salesDaraja.environment || "production";
-        document.getElementById('salesAccountType').value = loadedSettings.salesDaraja.accountType || "Paybill";
-        document.getElementById('salesShortcode').value = loadedSettings.salesDaraja.shortcode || "";
-        document.getElementById('salesPasskey').value = loadedSettings.salesDaraja.passkey || "";
-        document.getElementById('salesConsumerKey').value = loadedSettings.salesDaraja.consumerKey || "";
-        document.getElementById('salesConsumerSecret').value = loadedSettings.salesDaraja.consumerSecret || "";
+
+        document
+            .getElementById(
+                "businessNameInput"
+            )
+            .value =
+                loadedSettings.businessName || "";
+
+
+        document
+            .getElementById(
+                "taglineInput"
+            )
+            .value =
+                loadedSettings.tagline || "";
+
+
+        document
+            .getElementById(
+                "salesEnvironment"
+            )
+            .value =
+                loadedSettings
+                    .salesDaraja
+                    .environment ||
+                "production";
+
+
+        document
+            .getElementById(
+                "salesAccountType"
+            )
+            .value =
+                loadedSettings
+                    .salesDaraja
+                    .accountType ||
+                "Paybill";
+
+
+        document
+            .getElementById(
+                "salesShortcode"
+            )
+            .value =
+                loadedSettings
+                    .salesDaraja
+                    .shortcode ||
+                "";
+
+
+        document
+            .getElementById(
+                "salesPasskey"
+            )
+            .value =
+                loadedSettings
+                    .salesDaraja
+                    .passkey ||
+                "";
+
+
+        document
+            .getElementById(
+                "salesConsumerKey"
+            )
+            .value =
+                loadedSettings
+                    .salesDaraja
+                    .consumerKey ||
+                "";
+
+
+        document
+            .getElementById(
+                "salesConsumerSecret"
+            )
+            .value =
+                loadedSettings
+                    .salesDaraja
+                    .consumerSecret ||
+                "";
+
 
         updatePreviewCard();
+
         updateSalesBadge();
+
     }
+
+
+    /*
+    ---------------------------------------------------
+    BRAND PREVIEW
+    ---------------------------------------------------
+    */
 
     function updatePreviewCard() {
-        document.getElementById('prevName').innerText = document.getElementById('businessNameInput').value || "JCorp Kenya Inc";
-        document.getElementById('prevTag').innerText = document.getElementById('taglineInput').value || "Transformation you need";
-        const previewLogoImg = document.getElementById('prevLogo');
-        if (loadedSettings.logoUrl && loadedSettings.logoUrl !== "") {
-            previewLogoImg.src = loadedSettings.logoUrl;
+
+        document
+            .getElementById(
+                "prevName"
+            )
+            .innerText =
+
+            document
+                .getElementById(
+                    "businessNameInput"
+                )
+                .value ||
+
+            "JCorp Kenya Inc";
+
+
+        document
+            .getElementById(
+                "prevTag"
+            )
+            .innerText =
+
+            document
+                .getElementById(
+                    "taglineInput"
+                )
+                .value ||
+
+            "Transformation you need";
+
+
+        if (
+            loadedSettings.logoUrl
+        ) {
+
+            document
+                .getElementById(
+                    "prevLogo"
+                )
+                .src =
+                    loadedSettings.logoUrl;
+
         }
+
     }
+
+
+    /*
+    ---------------------------------------------------
+    LOGO UPLOAD
+    ---------------------------------------------------
+    */
 
     function processLogoFile(uploader) {
-        const emblem = uploader.files[0];
-        if (!emblem) return;
 
-        try {
-            const parser = new FileReader();
-            parser.onload = function(e) {
-                loadedSettings.logoUrl = e.target.result;
-                updatePreviewCard();
-                triggerToast("Logo loaded successfully");
-            };
-            parser.onerror = function(err) {
-                console.error("File read error:", err);
-                triggerToast("Failed to read image file");
-            };
-            parser.readAsDataURL(emblem);
-        } catch (error) {
-            console.error("Permission error:", error);
-            triggerToast("PERMISSION_DENIED: Cannot access file storage");
-        }
-    }
+        const file =
+            uploader.files &&
+            uploader.files[0];
 
-    async function saveConfiguration(isSkipAction = false) {
-        if (!activeUID) {
-            return triggerToast("Error: User session not authenticated");
+
+        if (!file) return;
+
+
+        if (
+            !file.type ||
+            !file.type.startsWith("image/")
+        ) {
+
+            triggerToast(
+                "Please select a valid image"
+            );
+
+            uploader.value = "";
+
+            return;
+
         }
 
-        loadedSettings.businessName = document.getElementById('businessNameInput').value;
-        loadedSettings.tagline = document.getElementById('taglineInput').value;
-        const sc = document.getElementById('salesShortcode').value.trim();
 
-        if (!isSkipAction && sc !== "") {
-            loadedSettings.salesConfigSkipped = false;
-        }
+        const reader =
+            new FileReader();
 
-        loadedSettings.salesDaraja = {
-            backendUrl: MASTER_CONFIG.backendUrl,
-            environment: document.getElementById('salesEnvironment').value,
-            accountType: document.getElementById('salesAccountType').value,
-            shortcode: sc,
-            passkey: document.getElementById('salesPasskey').value.trim(),
-            consumerKey: document.getElementById('salesConsumerKey').value.trim(),
-            consumerSecret: document.getElementById('salesConsumerSecret').value.trim()
+
+        reader.onload = function(event) {
+
+            loadedSettings.logoUrl =
+                event.target.result;
+
+
+            updatePreviewCard();
+
+
+            triggerToast(
+                "Logo loaded successfully"
+            );
+
         };
 
-        AGUtils.writeJSON(AGUtils.uidKey("ag_profile_cache", activeUID), loadedSettings);
-        updateSalesBadge();
 
-        let cloudSaved = true;
-        try {
-            await rtdb.ref(`user_settings/${activeUID}`).set({
-                ...loadedSettings,
-                updatedAt: Date.now()
-            });
+        reader.onerror = function() {
 
-            const statusRef = rtdb.ref(`user_statuses/${activeUID}`);
-            const statusSnap = await statusRef.once('value');
-            if (!statusSnap.exists()) {
-                await statusRef.set("Active");
-            }
+            console.error(
+                "Logo read error:",
+                reader.error
+            );
 
-            await rtdb.ref('user_activity_logs').push({
-                uid: activeUID,
-                category: "SETTINGS",
-                description: isSkipAction ? "POS Payment Setup Skipped" : "Corporate business and payment settings updated",
-                timestamp: Date.now(),
-                device: navigator.userAgent.substring(0, 50)
-            });
-        } catch (error) {
-            cloudSaved = false;
-            AGErrors.report("settings cloud synchronization", error);
-            console.error("Firebase write error:", error);
-        }
+
+            triggerToast(
+                "Unable to read the selected image"
+            );
+
+        };
+
 
         try {
-            if (window.AppInventor && typeof window.AppInventor.setWebViewString === 'function') {
-                window.AppInventor.setWebViewString(JSON.stringify({ action: "settings_updated", uid: activeUID, data: loadedSettings }));
-            }
-        } catch (e) {
-            AGErrors.report("settings update bridge notification", e);
+
+            reader.readAsDataURL(
+                file
+            );
+
         }
 
-        triggerToast(cloudSaved
-            ? (isSkipAction ? "POS Payment Setup Skipped" : "Settings Saved & Synchronized")
-            : "Saved locally; cloud synchronization failed");
+        catch (error) {
+
+            console.error(
+                "Logo upload error:",
+                error
+            );
+
+
+            triggerToast(
+                error.message ||
+                "Unable to access selected image"
+            );
+
+        }
+
     }
 
-    let passcodeResetToken = null;
+
+    /*
+    ---------------------------------------------------
+    SAVE SETTINGS
+    ---------------------------------------------------
+    */
+
+    async function saveConfiguration(
+        isSkipAction = false
+    ) {
+
+        if (!activeUID) {
+
+            triggerToast(
+                "User session not authenticated"
+            );
+
+            return;
+
+        }
+
+
+        const saveButton =
+            document.querySelector(
+                ".settings-footer .btn-primary"
+            );
+
+
+        if (saveButton) {
+
+            saveButton.disabled = true;
+
+            saveButton.innerText =
+                "Saving...";
+
+        }
+
+
+        try {
+
+            loadedSettings.businessName =
+                document
+                    .getElementById(
+                        "businessNameInput"
+                    )
+                    .value
+                    .trim();
+
+
+            loadedSettings.tagline =
+                document
+                    .getElementById(
+                        "taglineInput"
+                    )
+                    .value
+                    .trim();
+
+
+            const shortcode =
+                document
+                    .getElementById(
+                        "salesShortcode"
+                    )
+                    .value
+                    .trim();
+
+
+            if (
+                !isSkipAction &&
+                shortcode
+            ) {
+
+                loadedSettings.salesConfigSkipped =
+                    false;
+
+            }
+
+
+            loadedSettings.salesDaraja = {
+
+                backendUrl:
+                    MASTER_CONFIG.backendUrl,
+
+                environment:
+                    document
+                        .getElementById(
+                            "salesEnvironment"
+                        )
+                        .value,
+
+                accountType:
+                    document
+                        .getElementById(
+                            "salesAccountType"
+                        )
+                        .value,
+
+                shortcode:
+
+                    shortcode,
+
+                passkey:
+
+                    document
+                        .getElementById(
+                            "salesPasskey"
+                        )
+                        .value
+                        .trim(),
+
+                consumerKey:
+
+                    document
+                        .getElementById(
+                            "salesConsumerKey"
+                        )
+                        .value
+                        .trim(),
+
+                consumerSecret:
+
+                    document
+                        .getElementById(
+                            "salesConsumerSecret"
+                        )
+                        .value
+                        .trim()
+
+            };
+
+
+            AGUtils.writeJSON(
+
+                AGUtils.uidKey(
+                    "ag_profile_cache",
+                    activeUID
+                ),
+
+                loadedSettings
+
+            );
+
+
+            updateSalesBadge();
+
+
+            /*
+            SAVE USER SETTINGS
+            */
+
+            await rtdb
+                .ref(
+                    `user_settings/${activeUID}`
+                )
+                .set({
+
+                    ...loadedSettings,
+
+                    updatedAt:
+                        Date.now()
+
+                });
+
+
+            /*
+            CREATE USER STATUS IF MISSING
+            */
+
+            const statusRef =
+                rtdb.ref(
+                    `user_statuses/${activeUID}`
+                );
+
+
+            const statusSnapshot =
+                await statusRef.once(
+                    "value"
+                );
+
+
+            if (
+                !statusSnapshot.exists()
+            ) {
+
+                await statusRef.set(
+                    "Active"
+                );
+
+            }
+
+
+            /*
+            ACTIVITY LOG
+            */
+
+            try {
+
+                await rtdb
+                    .ref(
+                        "user_activity_logs"
+                    )
+                    .push({
+
+                        uid:
+                            activeUID,
+
+                        category:
+                            "SETTINGS",
+
+                        description:
+
+                            isSkipAction
+
+                                ? "POS Payment Setup Skipped"
+
+                                : "Corporate business and payment settings updated",
+
+                        timestamp:
+                            Date.now(),
+
+                        device:
+                            navigator.userAgent.substring(
+                                0,
+                                80
+                            )
+
+                    });
+
+            }
+
+            catch (logError) {
+
+                console.warn(
+                    "Activity log could not be saved:",
+                    logError
+                );
+
+            }
+
+
+            /*
+            APP INVENTOR BRIDGE
+            */
+
+            try {
+
+                if (
+
+                    window.AppInventor &&
+
+                    typeof
+                    window.AppInventor
+                        .setWebViewString ===
+                    "function"
+
+                ) {
+
+                    window.AppInventor
+                        .setWebViewString(
+
+                            JSON.stringify({
+
+                                action:
+                                    "settings_updated",
+
+                                uid:
+                                    activeUID,
+
+                                data:
+                                    loadedSettings
+
+                            })
+
+                        );
+
+                }
+
+            }
+
+            catch (bridgeError) {
+
+                console.warn(
+                    "App bridge error:",
+                    bridgeError
+                );
+
+            }
+
+
+            triggerToast(
+
+                isSkipAction
+
+                    ? "POS Payment Setup Skipped"
+
+                    : "Settings Saved & Synchronized"
+
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Settings save error:",
+                error
+            );
+
+
+            if (
+
+                error.code ===
+                "PERMISSION_DENIED"
+
+            ) {
+
+                triggerToast(
+                    "Permission denied. Check Firebase database rules."
+                );
+
+            }
+
+            else {
+
+                triggerToast(
+
+                    error.message ||
+
+                    "Settings could not be saved"
+
+                );
+
+            }
+
+        }
+
+        finally {
+
+            if (saveButton) {
+
+                saveButton.disabled =
+                    false;
+
+                saveButton.innerText =
+                    "Save Settings";
+
+            }
+
+        }
+
+    }
+
+
+    /*
+    ---------------------------------------------------
+    PASSCODE SYSTEM
+    ---------------------------------------------------
+    */
+
+    let passcodeResetToken =
+        null;
+
 
     async function passcodeApi() {
-        if (globalThis.AGPasscode) return globalThis.AGPasscode;
-        await new Promise(resolve => setTimeout(resolve, 250));
-        if (!globalThis.AGPasscode) throw new Error("Security module is still loading. Try again in a moment.");
+
+        if (
+            globalThis.AGPasscode
+        ) {
+
+            return globalThis.AGPasscode;
+
+        }
+
+
+        await new Promise(
+            resolve =>
+                setTimeout(
+                    resolve,
+                    300
+                )
+        );
+
+
+        if (
+            !globalThis.AGPasscode
+        ) {
+
+            throw new Error(
+                "Security module is still loading. Please try again."
+            );
+
+        }
+
+
         return globalThis.AGPasscode;
+
     }
+
 
     async function initPasscodeSection() {
-        const params = new URLSearchParams(window.location.search);
-        passcodeResetToken = params.get("internalReset");
-        const stateRow = document.getElementById('passcodeStateRow');
-        const currentField = document.getElementById('currentPasscodeField');
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        passcodeResetToken =
+            params.get(
+                "internalReset"
+            );
+
+
+        const stateRow =
+            document.getElementById(
+                "passcodeStateRow"
+            );
+
+
+        const currentField =
+            document.getElementById(
+                "currentPasscodeField"
+            );
+
 
         try {
-            const api = await passcodeApi();
-            const configured = await api.isConfigured();
 
-            if (passcodeResetToken) {
-                await api.validateResetToken(passcodeResetToken);
-                currentField.style.display = 'none';
-                stateRow.style.color = 'var(--success)';
-                stateRow.innerText = "Reset link verified. Choose a new internal passcode below.";
-                document.getElementById('resetEmail').value = "";
+            const api =
+                await passcodeApi();
+
+
+            const configured =
+                await api.isConfigured();
+
+
+            if (
+                passcodeResetToken
+            ) {
+
+                await api.validateResetToken(
+                    passcodeResetToken
+                );
+
+
+                currentField.style.display =
+                    "none";
+
+
+                stateRow.style.color =
+                    "var(--success)";
+
+
+                stateRow.innerText =
+                    "Reset link verified. Choose a new internal passcode.";
+
+
                 return;
+
             }
 
-            currentField.style.display = configured ? 'flex' : 'none';
-            stateRow.style.color = configured ? 'var(--text-muted)' : 'var(--warning)';
-            stateRow.innerText = configured
-                ? "An internal passcode is active on this account."
-                : "No internal passcode set yet. Protected pages stay locked until you create one.";
-        } catch (error) {
-            passcodeResetToken = null;
-            currentField.style.display = 'flex';
-            stateRow.style.color = 'var(--danger)';
-            stateRow.innerText = error.message || "Internal passcode status unavailable.";
+
+            currentField.style.display =
+                configured
+                    ? "flex"
+                    : "none";
+
+
+            stateRow.style.color =
+                configured
+                    ? "var(--text-muted)"
+                    : "var(--warning)";
+
+
+            stateRow.innerText =
+
+                configured
+
+                    ? "An internal passcode is active on this account."
+
+                    : "No internal passcode has been created yet.";
+
         }
+
+        catch (error) {
+
+            console.error(
+                "Passcode initialization error:",
+                error
+            );
+
+
+            passcodeResetToken =
+                null;
+
+
+            currentField.style.display =
+                "flex";
+
+
+            stateRow.style.color =
+                "var(--danger)";
+
+
+            stateRow.innerText =
+
+                error.message ||
+
+                "Internal passcode status unavailable.";
+
+        }
+
     }
+
 
     async function savePasscode() {
-        const button = document.getElementById('savePasscodeBtn');
-        const next = document.getElementById('newPasscode').value.trim();
-        const confirmValue = document.getElementById('confirmPasscode').value.trim();
-        const current = document.getElementById('currentPasscode').value.trim();
 
-        if (next !== confirmValue) return triggerToast("New passcodes do not match");
+        const button =
+            document.getElementById(
+                "savePasscodeBtn"
+            );
 
-        button.disabled = true;
-        try {
-            const api = await passcodeApi();
-            await api.setPasscode(next, { currentPasscode: current, resetToken: passcodeResetToken });
-            document.getElementById('currentPasscode').value = "";
-            document.getElementById('newPasscode').value = "";
-            document.getElementById('confirmPasscode').value = "";
-            passcodeResetToken = null;
-            history.replaceState(null, "", window.location.pathname);
-            triggerToast("Internal passcode updated on all pages");
-            await initPasscodeSection();
-        } catch (error) {
-            triggerToast(error.message || "Passcode update failed");
-        } finally {
-            button.disabled = false;
+
+        const current =
+            document
+                .getElementById(
+                    "currentPasscode"
+                )
+                .value
+                .trim();
+
+
+        const next =
+            document
+                .getElementById(
+                    "newPasscode"
+                )
+                .value
+                .trim();
+
+
+        const confirm =
+            document
+                .getElementById(
+                    "confirmPasscode"
+                )
+                .value
+                .trim();
+
+
+        if (
+            next.length < 4
+        ) {
+
+            triggerToast(
+                "Passcode must contain at least 4 characters"
+            );
+
+            return;
+
         }
+
+
+        if (
+            next !== confirm
+        ) {
+
+            triggerToast(
+                "New passcodes do not match"
+            );
+
+            return;
+
+        }
+
+
+        button.disabled =
+            true;
+
+
+        try {
+
+            const api =
+                await passcodeApi();
+
+
+            await api.setPasscode(
+
+                next,
+
+                {
+
+                    currentPasscode:
+                        current,
+
+                    resetToken:
+                        passcodeResetToken
+
+                }
+
+            );
+
+
+            document
+                .getElementById(
+                    "currentPasscode"
+                )
+                .value =
+                    "";
+
+
+            document
+                .getElementById(
+                    "newPasscode"
+                )
+                .value =
+                    "";
+
+
+            document
+                .getElementById(
+                    "confirmPasscode"
+                )
+                .value =
+                    "";
+
+
+            passcodeResetToken =
+                null;
+
+
+            history.replaceState(
+
+                null,
+
+                "",
+
+                window.location.pathname
+
+            );
+
+
+            triggerToast(
+                "Internal passcode updated successfully"
+            );
+
+
+            await initPasscodeSection();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Passcode save error:",
+                error
+            );
+
+
+            triggerToast(
+
+                error.message ||
+
+                "Passcode update failed"
+
+            );
+
+        }
+
+        finally {
+
+            button.disabled =
+                false;
+
+        }
+
     }
+
+
+    /*
+    ---------------------------------------------------
+    PASSCODE RESET
+    ---------------------------------------------------
+    */
 
     async function requestPasscodeReset() {
-        const button = document.getElementById('requestResetBtn');
-        const email = document.getElementById('resetEmail').value.trim().toLowerCase();
-        
+
+        const button =
+            document.getElementById(
+                "requestResetBtn"
+            );
+
+
+        const email =
+            document
+                .getElementById(
+                    "resetEmail"
+                )
+                .value
+                .trim()
+                .toLowerCase();
+
+
         if (!email) {
-            return triggerToast("Please enter your account e-mail");
+
+            triggerToast(
+                "Please enter your account e-mail"
+            );
+
+            return;
+
         }
 
-        button.disabled = true;
+
+        const currentUser =
+            firebase
+                .auth()
+                .currentUser;
+
+
+        if (!currentUser) {
+
+            triggerToast(
+                "Your session has expired. Please log in again."
+            );
+
+            return;
+
+        }
+
+
+        const accountEmail =
+            (
+                currentUser.email ||
+                ""
+            )
+            .toLowerCase();
+
+
+        /*
+        IMPORTANT:
+        DO NOT SEARCH /users FROM THE BROWSER.
+
+        We use the currently authenticated UID.
+        */
+
+
+        if (
+            accountEmail !== email
+        ) {
+
+            triggerToast(
+                "Please enter the e-mail address of your currently logged-in account."
+            );
+
+            return;
+
+        }
+
+
+        button.disabled =
+            true;
+
+
         try {
-            const usersRef = rtdb.ref("users");
-            const snapshot = await usersRef.orderByChild("email").equalTo(email).once("value");
-            
-            if (!snapshot.exists()) {
-                throw new Error("No account found with this email address.");
+
+            const token =
+
+                "ag_rst_" +
+
+                Math.random()
+                    .toString(36)
+                    .substring(2) +
+
+                Date.now()
+                    .toString(36);
+
+
+            const expiresAt =
+
+                Date.now() +
+
+                (
+                    30 *
+                    60 *
+                    1000
+                );
+
+
+            /*
+            THIS PATH REQUIRES
+            user_passcode_resets RULES
+            */
+
+            await rtdb
+
+                .ref(
+                    `user_passcode_resets/${activeUID}`
+                )
+
+                .set({
+
+                    token:
+                        token,
+
+                    email:
+                        email,
+
+                    expiresAt:
+                        expiresAt,
+
+                    createdAt:
+                        Date.now()
+
+                });
+
+
+            const resetUrl =
+
+                `${window.location.origin}` +
+
+                `${window.location.pathname}` +
+
+                `?internalReset=${encodeURIComponent(token)}`;
+
+
+            const businessName =
+
+                document
+                    .getElementById(
+                        "businessNameInput"
+                    )
+                    .value ||
+
+                loadedSettings.businessName ||
+
+                "AssetGuard Pro";
+
+
+            const response =
+
+                await fetch(
+
+                    `${MASTER_CONFIG.backendUrl}/send-reset-email`,
+
+                    {
+
+                        method:
+                            "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+
+                            JSON.stringify({
+
+                                email:
+                                    email,
+
+                                resetUrl:
+                                    resetUrl,
+
+                                businessName:
+                                    businessName
+
+                            })
+
+                    }
+
+                );
+
+
+            let result = {};
+
+
+            try {
+
+                result =
+                    await response.json();
+
             }
 
-            let targetUid = "";
-            snapshot.forEach((childSnap) => {
-                targetUid = childSnap.key;
-            });
+            catch (_) {}
 
-            const token = "ag_rst_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
-            const expiresAt = Date.now() + 30 * 60 * 1000;
 
-            await rtdb.ref(`user_passcode_resets/${targetUid}`).set({
-                token: token,
-                email: email,
-                expiresAt: expiresAt
-            });
+            if (
+                !response.ok
+            ) {
 
-            const resetUrl = `${window.location.origin}${window.location.pathname}?internalReset=${token}`;
-            const businessName = document.getElementById('businessNameInput').value || loadedSettings.businessName || "AssetGuard Pro";
+                throw new Error(
 
-            const response = await fetch(`${MASTER_CONFIG.backendUrl}/send-reset-email`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: email,
-                    resetUrl: resetUrl,
-                    businessName: businessName
-                })
-            });
+                    result.error ||
 
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.error || "Failed to dispatch reset email via custom mailer.");
+                    "Failed to send reset email."
+
+                );
+
             }
 
-            triggerToast("Reset link sent successfully via custom mailer!");
-            document.getElementById('resetEmail').value = "";
-        } catch (error) {
-            triggerToast(error.message || "Reset request failed");
-        } finally {
-            button.disabled = false;
+
+            triggerToast(
+                "Reset link sent successfully!"
+            );
+
+
+            document
+                .getElementById(
+                    "resetEmail"
+                )
+                .value =
+                    "";
+
         }
+
+        catch (error) {
+
+            console.error(
+                "Passcode reset error:",
+                error
+            );
+
+
+            if (
+
+                error.code ===
+                "PERMISSION_DENIED"
+
+            ) {
+
+                triggerToast(
+                    "Permission denied. Add the user_passcode_resets Firebase rule."
+                );
+
+            }
+
+            else {
+
+                triggerToast(
+
+                    error.message ||
+
+                    "Reset request failed"
+
+                );
+
+            }
+
+        }
+
+        finally {
+
+            button.disabled =
+                false;
+
+        }
+
     }
 
-    function triggerToast(msg) {
-        const box = document.getElementById('toastBox');
-        document.getElementById('toastText').innerText = msg;
-        box.classList.add('show');
-        setTimeout(() => { box.classList.remove('show'); }, 3000);
+
+    /*
+    ---------------------------------------------------
+    TOAST
+    ---------------------------------------------------
+    */
+
+    function triggerToast(message) {
+
+        const toast =
+            document.getElementById(
+                "toastBox"
+            );
+
+
+        document
+            .getElementById(
+                "toastText"
+            )
+            .innerText =
+                message;
+
+
+        toast.classList.add(
+            "show"
+        );
+
+
+        setTimeout(
+
+            () => {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            },
+
+            3500
+
+        );
+
     }
+
+
+    /*
+    ---------------------------------------------------
+    EXIT
+    ---------------------------------------------------
+    */
 
     function exitPortal() {
-        if (!activeUID) return;
-        try {
-            if (window.AppInventor && typeof window.AppInventor.setWebViewString === 'function') {
-                window.AppInventor.setWebViewString(JSON.stringify({ action: "navigate_back", uid: activeUID }));
-            }
-        } catch (e) {
-            AGErrors.report("settings exit bridge notification", e);
+
+        if (!activeUID) {
+
+            window.location.href =
+                "dashboard.html";
+
+            return;
+
         }
-        window.location.href = `dashboard.html?uid=${encodeURIComponent(activeUID)}`;
+
+
+        try {
+
+            if (
+
+                window.AppInventor &&
+
+                typeof
+                window.AppInventor
+                    .setWebViewString ===
+                "function"
+
+            ) {
+
+                window.AppInventor
+                    .setWebViewString(
+
+                        JSON.stringify({
+
+                            action:
+                                "navigate_back",
+
+                            uid:
+                                activeUID
+
+                        })
+
+                    );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.warn(
+                "Navigation bridge error:",
+                error
+            );
+
+        }
+
+
+        window.location.href =
+
+            `dashboard.html?uid=` +
+
+            encodeURIComponent(
+                activeUID
+            );
+
     }
+
 </script>
+
 </body>
 </html>
