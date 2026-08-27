@@ -4,7 +4,9 @@
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
 <script src="ag-config.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
+<script type="module" src="ag-passcode.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AssetGuard Pro - Business Setup & Settings</title>
@@ -279,6 +281,40 @@
         </div>
 
         <div>
+            <span class="section-label">Internal Security Passcode</span>
+            <div class="input-group">
+                <p style="font-size:11px; color:var(--text-muted);">
+                    One passcode unlocks every protected in-app area (sales, stock, ledgers, reports, CRM, dispatch).
+                    Changing it here changes it everywhere. This is separate from your sign-in password.
+                </p>
+                <div id="passcodeStateRow" style="font-size:11px; font-weight:700; color:var(--text-muted);">Checking passcode status...</div>
+
+                <div class="form-field" id="currentPasscodeField">
+                    <label>Current Passcode</label>
+                    <input type="password" id="currentPasscode" placeholder="Enter current passcode" autocomplete="off">
+                </div>
+                <div class="form-field">
+                    <label>New Passcode</label>
+                    <input type="password" id="newPasscode" placeholder="At least 4 characters" autocomplete="off">
+                </div>
+                <div class="form-field">
+                    <label>Confirm New Passcode</label>
+                    <input type="password" id="confirmPasscode" placeholder="Repeat new passcode" autocomplete="off">
+                </div>
+                <button class="btn btn-primary" id="savePasscodeBtn" onclick="savePasscode()">Save Internal Passcode</button>
+
+                <div class="skip-action-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+                    <span style="font-size:11px; color:var(--text-muted);">Forgot the internal passcode? We e-mail a reset link that expires in 30 minutes.</span>
+                    <div class="form-field">
+                        <label>Account E-mail</label>
+                        <input type="email" id="resetEmail" placeholder="Enter your account e-mail" autocomplete="off">
+                    </div>
+                    <button class="btn btn-secondary" id="requestResetBtn" onclick="requestPasscodeReset()">Send Reset Link</button>
+                </div>
+            </div>
+        </div>
+
+        <div>
             <span class="section-label">Corporate Emblem</span>
             <div class="input-group">
                 <div class="logo-upload-area">
@@ -345,6 +381,7 @@
     window.onload = function() {
         resolveUserIdentity();
         loadLocalSettings();
+        initPasscodeSection();
     };
 
     function resolveUserIdentity() {
@@ -499,6 +536,88 @@
         triggerToast(cloudSaved
             ? (isSkipAction ? "POS Payment Setup Skipped" : "Settings Saved & Synchronized")
             : "Saved locally; cloud synchronization failed");
+    }
+
+    let passcodeResetToken = null;
+
+    async function passcodeApi() {
+        if (globalThis.AGPasscode) return globalThis.AGPasscode;
+        await new Promise(resolve => setTimeout(resolve, 250));
+        if (!globalThis.AGPasscode) throw new Error("Security module is still loading. Try again in a moment.");
+        return globalThis.AGPasscode;
+    }
+
+    async function initPasscodeSection() {
+        const params = new URLSearchParams(window.location.search);
+        passcodeResetToken = params.get("internalReset");
+        const stateRow = document.getElementById('passcodeStateRow');
+        const currentField = document.getElementById('currentPasscodeField');
+
+        try {
+            const api = await passcodeApi();
+            const configured = await api.isConfigured();
+
+            if (passcodeResetToken) {
+                await api.validateResetToken(passcodeResetToken);
+                currentField.style.display = 'none';
+                stateRow.style.color = 'var(--success)';
+                stateRow.innerText = "Reset link verified. Choose a new internal passcode below.";
+                document.getElementById('resetEmail').value = "";
+                return;
+            }
+
+            currentField.style.display = configured ? 'flex' : 'none';
+            stateRow.style.color = configured ? 'var(--text-muted)' : 'var(--warning)';
+            stateRow.innerText = configured
+                ? "An internal passcode is active on this account."
+                : "No internal passcode set yet. Protected pages stay locked until you create one.";
+        } catch (error) {
+            passcodeResetToken = null;
+            currentField.style.display = 'flex';
+            stateRow.style.color = 'var(--danger)';
+            stateRow.innerText = error.message || "Internal passcode status unavailable.";
+        }
+    }
+
+    async function savePasscode() {
+        const button = document.getElementById('savePasscodeBtn');
+        const next = document.getElementById('newPasscode').value.trim();
+        const confirmValue = document.getElementById('confirmPasscode').value.trim();
+        const current = document.getElementById('currentPasscode').value.trim();
+
+        if (next !== confirmValue) return triggerToast("New passcodes do not match");
+
+        button.disabled = true;
+        try {
+            const api = await passcodeApi();
+            await api.setPasscode(next, { currentPasscode: current, resetToken: passcodeResetToken });
+            document.getElementById('currentPasscode').value = "";
+            document.getElementById('newPasscode').value = "";
+            document.getElementById('confirmPasscode').value = "";
+            passcodeResetToken = null;
+            history.replaceState(null, "", window.location.pathname);
+            triggerToast("Internal passcode updated on all pages");
+            await initPasscodeSection();
+        } catch (error) {
+            triggerToast(error.message || "Passcode update failed");
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function requestPasscodeReset() {
+        const button = document.getElementById('requestResetBtn');
+        const email = document.getElementById('resetEmail').value.trim();
+        button.disabled = true;
+        try {
+            const api = await passcodeApi();
+            const { expiresAt } = await api.requestReset(email);
+            triggerToast(`Reset link sent. It expires at ${new Date(expiresAt).toLocaleTimeString()}`);
+        } catch (error) {
+            triggerToast(error.message || "Reset request failed");
+        } finally {
+            button.disabled = false;
+        }
     }
 
     function triggerToast(msg) {

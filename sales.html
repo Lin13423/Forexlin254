@@ -3,6 +3,7 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
 <meta charset="utf-8">
 <title>AssetGuard Pro - Unified Terminal & Sales Analytics</title>
@@ -694,7 +695,7 @@
     <div class="modal-content" style="max-width: 300px; text-align: center; background: white;">
         <h3 style="margin: 0 0 10px 0; font-size: 16px; color: var(--dark);">Secure Access</h3>
         <p style="font-size: 11px; color: var(--muted); margin-bottom: 20px;">Enter Admin PIN to manage record</p>
-        <input type="password" id="pinInput" placeholder="Enter 4-Digit PIN" maxlength="4" pattern="[0-9]*" inputmode="numeric" style="margin-bottom: 10px; text-align: center; border: 1px solid #e2e8f0;">
+        <input type="password" id="pinInput" placeholder="Enter Internal Passcode" maxlength="32" style="margin-bottom: 10px; text-align: center; border: 1px solid #e2e8f0;">
         <div id="pinError" style="color: var(--danger); font-size: 10px; font-weight: 700; margin-bottom: 10px; display: none;">Incorrect PIN. Please try again.</div>
         <button class="btn btn-dark" onclick="verifyPin()">Unlock</button>
         <button class="btn" style="background:transparent; color:var(--muted); margin-top:10px; font-size: 11px;" onclick="closePinModal()">Cancel</button>
@@ -704,6 +705,7 @@
 <script type="module">
 import { getDb } from "./ag-firebase.js";
 import { ref, onValue, push, set, runTransaction, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import AGPasscode from "./ag-passcode.js";
 
 const db = getDb();
 const currentUID = AGUtils.resolveActiveUID();
@@ -735,7 +737,6 @@ let userProfile = AGUtils.readJSON(AGUtils.uidKey("ag_profile_cache", currentUID
     businessName: "Business Name", 
     tagline: "Your Business Tagline", 
     logoUrl: "", 
-    adminPin: "0000",
     salesConfigSkipped: false,
     daraja: {
         backendUrl: "https://weathered-glade-c60b.assetguardinfo.workers.dev",
@@ -747,7 +748,6 @@ let userProfile = AGUtils.readJSON(AGUtils.uidKey("ag_profile_cache", currentUID
     }
 });
 
-if(!userProfile.adminPin) { userProfile.adminPin = "0000"; }
 if(userProfile.salesConfigSkipped === undefined) { userProfile.salesConfigSkipped = false; }
 if(!userProfile.daraja) {
     userProfile.daraja = { backendUrl: "https://weathered-glade-c60b.assetguardinfo.workers.dev", accountType: "Paybill", shortcode: "", passkey: "", consumerKey: "", consumerSecret: "" };
@@ -794,10 +794,10 @@ window.closePinModal = () => {
     pinAction = null;
 };
 
-window.verifyPin = () => {
+window.verifyPin = async () => {
     const input = document.getElementById('pinInput').value;
-    const activePin = userProfile.adminPin || "0000";
-    if (input === activePin) {
+    const attempt = await AGPasscode.verify(input);
+    if (attempt.ok) {
         document.getElementById('pinModal').style.display = "none";
         setTimeout(() => {
             if (pinAction === 'settings') {
@@ -809,7 +809,7 @@ window.verifyPin = () => {
     } else {
         const err = document.getElementById('pinError');
         err.style.display = "block";
-        err.innerText = "Incorrect PIN. Please try again.";
+        err.innerText = attempt.message;
         document.getElementById('pinInput').value = "";
     }
 };

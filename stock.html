@@ -3,6 +3,7 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -145,6 +146,7 @@
 <script type="module">
     import { getDb } from "./ag-firebase.js";
     import { ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import AGPasscode from "./ag-passcode.js";
 
     const db = getDb();
     const currentUID = AGUtils.getActiveUID({ fallback: "global_user" });
@@ -260,10 +262,22 @@
     }, error => AGErrors.report("inventory live data", error, (message) => notify(`Live inventory data could not be loaded: ${message}`)));
 
     let pinBuffer = "";
-    window.pressNum = (n) => {
-        if(n === 'C') pinBuffer = ""; else if(n === '⌫') pinBuffer = pinBuffer.slice(0, -1); else if(pinBuffer.length < 4) pinBuffer += n;
+    const clearPinDots = () => document.querySelectorAll('.pin-dot').forEach(d => d.style.background = "transparent");
+
+    window.pressNum = async (n) => {
+        if(n === 'C') pinBuffer = ""; else if(n === '⌫') pinBuffer = pinBuffer.slice(0, -1); else if(pinBuffer.length < AGPasscode.MAX_LENGTH) pinBuffer += n;
         document.querySelectorAll('.pin-dot').forEach((d, i) => { d.style.background = i < pinBuffer.length ? "var(--accent)" : "transparent"; });
-        if(pinBuffer.length === 4) { if(pinBuffer === "1234") switchView('view-admin'); else { notify("Invalid PIN", "error"); pinBuffer = ""; document.querySelectorAll('.pin-dot').forEach(d => d.style.background = "transparent"); } }
+        if(pinBuffer.length < AGPasscode.MIN_LENGTH) return;
+
+        const attempt = pinBuffer;
+        const result = await AGPasscode.verify(attempt);
+        if(attempt !== pinBuffer) return;
+        if(result.ok) { pinBuffer = ""; clearPinDots(); switchView('view-admin'); return; }
+        if(result.reason === 'not_set' || pinBuffer.length >= AGPasscode.MAX_LENGTH) {
+            notify(result.message, "error");
+            pinBuffer = "";
+            clearPinDots();
+        }
     };
     
     window.switchView = (id) => { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); };

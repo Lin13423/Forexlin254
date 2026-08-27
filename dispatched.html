@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <script src="error-utils.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
 <meta charset="utf-8">
 <title>Master Tracker Pro | Signal Turbo V5.1 (Secure Edition)</title>
@@ -93,7 +94,7 @@ input:disabled { background: #e0e0e0; opacity: 0.5; color: #666 !important; }
     <div class="modal-box">
         <h3 id="modalTitle" style="margin:0 0 10px 0; color:var(--saxo-red);">SECURITY CLEARANCE</h3>
         <p id="modalDesc" style="font-size:11px; opacity:0.8; margin-bottom:20px;">Verification Required</p>
-        <input type="password" id="adminPass" placeholder="Admin Key" style="margin-bottom:15px; text-align:center;">
+        <input type="password" id="adminPass" placeholder="Internal Passcode" style="margin-bottom:15px; text-align:center;">
         <div class="grid-2">
             <button id="modalConfirmBtn" class="btn-red">CONFIRM</button>
             <button onclick="window.closeAdmin()" style="background:#444;">CANCEL</button>
@@ -188,6 +189,7 @@ input:disabled { background: #e0e0e0; opacity: 0.5; color: #666 !important; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, set, update, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import AGPasscode from "./ag-passcode.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC3zyNPQibIk-XTrUcKGfQOfu0-td55SSM",
@@ -306,9 +308,10 @@ window.openAdminModal = (t, d, cb) => {
     document.getElementById('modalTitle').innerText = t;
     document.getElementById('modalDesc').innerText = d;
     document.getElementById('adminModal').style.display = 'flex';
-    document.getElementById('modalConfirmBtn').onclick = () => {
-        if(document.getElementById('adminPass').value === "nakuru1") { cb(); window.closeAdmin(); }
-        else { window.sendPush("Denied"); }
+    document.getElementById('modalConfirmBtn').onclick = async () => {
+        const attempt = await AGPasscode.verify(document.getElementById('adminPass').value);
+        if(attempt.ok) { cb(); window.closeAdmin(); }
+        else { window.sendPush(attempt.message); }
     };
 };
 window.closeAdmin = () => { document.getElementById('adminModal').style.display='none'; document.getElementById('adminPass').value=''; };
