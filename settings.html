@@ -1879,7 +1879,7 @@ Skip Configuration
 
 
 <!-- =====================================================
-     INTERNAL PASSCODE
+     INTERNAL PASSCODE (STRICTLY 4 DIGITS)
 ===================================================== -->
 
 <div>
@@ -1903,9 +1903,7 @@ Internal Security Passcode
     "
 >
 
-One internal passcode unlocks protected AssetGuard areas such as sales, stock, ledgers, reports, CRM and dispatch.
-
-This passcode is separate from your normal AssetGuard login password.
+One internal 4-digit passcode unlocks protected AssetGuard areas such as sales, stock, ledgers, reports, CRM and dispatch.
 
 </p>
 
@@ -1947,7 +1945,7 @@ id="currentPasscodeField"
 
 <label>
 
-Current Internal Passcode
+Current Internal Passcode (4 Digits)
 
 </label>
 
@@ -1958,13 +1956,15 @@ type="password"
 
 id="currentPasscode"
 
-placeholder="Enter current passcode"
+placeholder="Enter 4-digit PIN"
 
 inputmode="numeric"
 
 pattern="[0-9]*"
 
-oninput="this.value=this.value.replace(/\D/g,'')"
+maxlength="4"
+
+oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
 
 autocomplete="off"
 
@@ -1983,7 +1983,7 @@ autocomplete="off"
 
 <label>
 
-New Internal Passcode
+New Internal Passcode (4 Digits)
 
 </label>
 
@@ -1994,13 +1994,15 @@ type="password"
 
 id="newPasscode"
 
-placeholder="Numbers only (e.g. 4 digits)"
+placeholder="Enter 4 digits (e.g. 1234)"
 
 inputmode="numeric"
 
 pattern="[0-9]*"
 
-oninput="this.value=this.value.replace(/\D/g,'')"
+maxlength="4"
+
+oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
 
 autocomplete="new-password"
 
@@ -2030,13 +2032,15 @@ type="password"
 
 id="confirmPasscode"
 
-placeholder="Repeat new passcode"
+placeholder="Repeat 4-digit PIN"
 
 inputmode="numeric"
 
 pattern="[0-9]*"
 
-oninput="this.value=this.value.replace(/\D/g,'')"
+maxlength="4"
+
+oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
 
 autocomplete="new-password"
 
@@ -2315,7 +2319,7 @@ autocomplete="current-password"
 
 <label>
 
-New Internal Passcode
+New Internal Passcode (4 Digits)
 
 </label>
 
@@ -2326,13 +2330,15 @@ type="password"
 
 id="recoveryNewPasscode"
 
-placeholder="Numbers only (e.g. 4 digits)"
+placeholder="Enter 4 digits"
 
 inputmode="numeric"
 
 pattern="[0-9]*"
 
-oninput="this.value=this.value.replace(/\D/g,'')"
+maxlength="4"
+
+oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
 
 autocomplete="new-password"
 
@@ -2359,13 +2365,15 @@ type="password"
 
 id="recoveryConfirmPasscode"
 
-placeholder="Repeat new internal passcode"
+placeholder="Repeat 4-digit PIN"
 
 inputmode="numeric"
 
 pattern="[0-9]*"
 
-oninput="this.value=this.value.replace(/\D/g,'')"
+maxlength="4"
+
+oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
 
 autocomplete="new-password"
 
@@ -3435,7 +3443,7 @@ async function initPasscodeSection() {
 
             stateRow.innerText =
 
-                "Internal passcode is active. You can change it using your current passcode or reset it securely.";
+                "Internal 4-digit passcode is active. You can change or reset it below.";
 
 
         }
@@ -3449,7 +3457,7 @@ async function initPasscodeSection() {
 
             stateRow.innerText =
 
-                "No internal passcode is configured yet. Create one below.";
+                "No internal passcode is configured yet. Create a 4-digit PIN below.";
 
 
         }
@@ -3481,7 +3489,7 @@ async function initPasscodeSection() {
 
 
 // ============================================================
-// NORMAL PASSCODE SAVE
+// NORMAL PASSCODE SAVE (STRICTLY 4 DIGITS VALIDATION)
 // ============================================================
 
 async function savePasscode() {
@@ -3523,6 +3531,17 @@ async function savePasscode() {
             )
             .value
             .trim();
+
+
+    if (newPasscode.length !== 4) {
+
+        triggerToast(
+            "Passcode must be exactly 4 digits"
+        );
+
+        return;
+
+    }
 
 
     if (
@@ -3591,7 +3610,7 @@ async function savePasscode() {
 
         triggerToast(
 
-            "Internal passcode updated successfully"
+            "Internal 4-digit passcode updated successfully"
 
         );
 
@@ -3628,7 +3647,7 @@ async function savePasscode() {
 
 
 // ============================================================
-// QUOTA FREE PASSCODE RECOVERY
+// QUOTA FREE PASSCODE RECOVERY (STRICTLY 4 DIGITS VALIDATION)
 // ============================================================
 
 async function recoverPasscode() {
@@ -3679,6 +3698,17 @@ async function recoverPasscode() {
             )
             .value
             .trim();
+
+
+    if (newPasscode.length !== 4) {
+
+        triggerToast(
+            "New passcode must be exactly 4 digits"
+        );
+
+        return;
+
+    }
 
 
     if (
@@ -3803,7 +3833,7 @@ async function recoverPasscode() {
 
         triggerToast(
 
-            "Identity verified. Internal passcode reset successfully."
+            "Identity verified. 4-digit passcode reset successfully."
 
         );
 
