@@ -91,8 +91,9 @@ async function requireUid() {
     return user.uid;
 }
 
+// Updated to target user_settings matching your database rules and settings structure
 function securityRef(uid) {
-    return ref(getDb(), `internal_security/${uid}`);
+    return ref(getDb(), `user_settings/${uid}/internal_passcode`);
 }
 
 async function loadRecord({ force = false } = {}) {
@@ -133,8 +134,6 @@ const AGPasscode = {
         return Boolean(record && record.hash);
     },
 
-    // Never throws: page gates rely on always getting a message they can show.
-    // reason is "not_set", "empty", "mismatch" or "unavailable".
     async verify(passcode) {
         const value = String(passcode ?? "");
         let record;
@@ -147,7 +146,7 @@ const AGPasscode = {
                 ok: false,
                 reason: "unavailable",
                 message: denied
-                    ? "Security settings are unreachable. Deploy the latest database rules (internal_security) for this project."
+                    ? "Security settings are unreachable. Check database rules for user_settings."
                     : (error.message || "Security check unavailable. Check your connection and retry.")
             };
         }
@@ -157,7 +156,6 @@ const AGPasscode = {
         return { ok: false, reason: "mismatch", message: "Incorrect passcode." };
     },
 
-    // Convenience wrapper that swallows nothing but never throws on network errors.
     async check(passcode) {
         try {
             const result = await this.verify(passcode);
@@ -168,8 +166,6 @@ const AGPasscode = {
         }
     },
 
-    // currentPasscode is required once a passcode exists, unless a valid reset
-    // token issued by the e-mail flow is supplied instead.
     async setPasscode(newPasscode, { currentPasscode = null, resetToken = null } = {}) {
         const value = validateNewPasscode(newPasscode);
         const uid = await requireUid();
@@ -196,7 +192,6 @@ const AGPasscode = {
         invalidateCache();
     },
 
-    // Sends the reset link to the account e-mail. The link is only valid for 30 minutes.
     async requestReset(email) {
         const address = String(email ?? "").trim().toLowerCase();
         if (!address) throw new Error("Enter the e-mail address of this account.");
