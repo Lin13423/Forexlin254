@@ -1,80 +1,89 @@
 // ============================================================
-// AssetGuard Shared Internal Passcode Security
-// ------------------------------------------------------------
-// One internal passcode per signed-in account.
-// Separate from the Firebase login password.
+// AssetGuard Shared Internal Passcode Security Module
+// ============================================================
 //
-// SECURITY DATA:
-// user_settings/{uid}/internal_passcode
+// One internal passcode per Firebase account.
 //
-// RESET DATA:
-// user_passcode_resets/{uid}
+// The internal passcode is separate from the Firebase login
+// password.
 //
-// Reset tokens are never stored directly. Only SHA-256 hashes
-// of tokens are stored.
+// PASSCODE CHANGE:
+//   - Existing passcode required.
+//
+// PASSCODE RECOVERY:
+//   - User must already be signed into AssetGuard.
+//   - User enters their Firebase account email.
+//   - User enters their normal Firebase login password.
+//   - Firebase re-authenticates the user.
+//   - User can immediately create a new internal passcode.
+//
+// NO EMAIL IS SENT.
+// NO FIREBASE EMAIL-LINK QUOTA IS USED.
 // ============================================================
 
 import { getFirebaseApp, getDb } from "./ag-firebase.js";
 
 import {
-    ref,
-    get,
-    set,
-    update,
-    remove
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-
-import {
     getAuth,
     onAuthStateChanged,
-    sendSignInLinkToEmail
+    EmailAuthProvider,
+    reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+import {
+    ref,
+    get,
+    set
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
 
 // ============================================================
-// CONFIGURATION
+// SECURITY SETTINGS
 // ============================================================
 
 const ITERATIONS = 120000;
 
-const RESET_TTL_MS = 30 * 60 * 1000;
-
 const MIN_LENGTH = 4;
-
 const MAX_LENGTH = 32;
 
 const CACHE_TTL_MS = 15000;
 
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+
 const NOT_CONFIGURED_MESSAGE =
     "No internal passcode has been set yet. Open Settings to create one.";
 
+const RECOVERY_REQUIRED_MESSAGE =
+    "Verify your AssetGuard login password to reset the internal passcode.";
+
 
 // ============================================================
-// MEMORY CACHE
+// INTERNAL STATE
 // ============================================================
 
 let cachedRecord = null;
-
 let cachedAt = 0;
 
 let userPromise = null;
 
 
 // ============================================================
-// UTILITY FUNCTIONS
+// TEXT / CRYPTO HELPERS
 // ============================================================
 
 function textBytes(value) {
-
     return new TextEncoder().encode(String(value));
-
 }
 
 
 function toHex(bytes) {
 
-    return Array.from(bytes)
-        .map(byte => byte.toString(16).padStart(2, "0"))
+    return Array
+        .from(bytes)
+        .map((byte) => byte.toString(16).padStart(2, "0"))
         .join("");
 
 }
@@ -82,12 +91,14 @@ function toHex(bytes) {
 
 function fromHex(hex) {
 
-    const output = new Uint8Array(hex.length / 2);
+    const length = hex.length / 2;
 
-    for (let i = 0; i < output.length; i++) {
+    const output = new Uint8Array(length);
 
-        output[i] = parseInt(
-            hex.substr(i * 2, 2),
+    for (let index = 0; index < length; index++) {
+
+        output[index] = parseInt(
+            hex.substr(index * 2, 2),
             16
         );
 
@@ -117,7 +128,7 @@ function subtle() {
     ) {
 
         throw new Error(
-            "Secure cryptography is unavailable in this browser."
+            "Secure cryptography is unavailable in this browser context."
         );
 
     }
@@ -162,7 +173,7 @@ async function derive(
 
                 salt: fromHex(saltHex),
 
-                iterations,
+                iterations: iterations,
 
                 hash: "SHA-256"
 
@@ -183,31 +194,7 @@ async function derive(
 
 
 // ============================================================
-// SHA256
-// Used for reset token hashing.
-// ============================================================
-
-async function sha256Hex(value) {
-
-    const digest =
-        await subtle().digest(
-
-            "SHA-256",
-
-            textBytes(value)
-
-        );
-
-
-    return toHex(
-        new Uint8Array(digest)
-    );
-
-}
-
-
-// ============================================================
-// CONSTANT TIME STRING COMPARISON
+// CONSTANT TIME COMPARISON
 // ============================================================
 
 function constantTimeEquals(a, b) {
@@ -227,14 +214,14 @@ function constantTimeEquals(a, b) {
 
 
     for (
-        let i = 0;
-        i < a.length;
-        i++
+        let index = 0;
+        index < a.length;
+        index++
     ) {
 
         difference |=
-            a.charCodeAt(i) ^
-            b.charCodeAt(i);
+            a.charCodeAt(index) ^
+            b.charCodeAt(index);
 
     }
 
@@ -245,7 +232,7 @@ function constantTimeEquals(a, b) {
 
 
 // ============================================================
-// FIREBASE AUTH USER
+// CURRENT FIREBASE USER
 // ============================================================
 
 function currentUser() {
@@ -340,11 +327,8 @@ async function requireUid() {
 
 
 // ============================================================
-// FIREBASE DATABASE REFERENCES
+// FIREBASE DATABASE LOCATION
 // ============================================================
-
-
-// Internal passcode record
 
 function securityRef(uid) {
 
@@ -359,38 +343,30 @@ function securityRef(uid) {
 }
 
 
-// Reset request record
-
-function resetRef(uid) {
-
-    return ref(
-
-        getDb(),
-
-        `user_passcode_resets/${uid}`
-
-    );
-
-}
-
-
 // ============================================================
 // LOAD PASSCODE RECORD
 // ============================================================
 
 async function loadRecord(
-    { force = false } = {}
+    {
+        force = false
+    } = {}
 ) {
 
-    if (
-
-        !force &&
+    const cacheStillValid =
 
         cachedRecord !== null &&
 
-        Date.now() - cachedAt <
-        CACHE_TTL_MS
+        (
+            Date.now() - cachedAt
+            <
+            CACHE_TTL_MS
+        );
 
+
+    if (
+        !force &&
+        cacheStillValid
     ) {
 
         return cachedRecord;
@@ -440,38 +416,35 @@ function invalidateCache() {
 // VALIDATE NEW PASSCODE
 // ============================================================
 
-function validateNewPasscode(
-    passcode
-) {
+function validateNewPasscode(passcode) {
 
     const value =
-        String(passcode ?? "")
-            .trim();
+        String(
+            passcode ?? ""
+        ).trim();
 
 
     if (
-        value.length <
+        value.length
+        <
         MIN_LENGTH
     ) {
 
         throw new Error(
-
             `Passcode must be at least ${MIN_LENGTH} characters.`
-
         );
 
     }
 
 
     if (
-        value.length >
+        value.length
+        >
         MAX_LENGTH
     ) {
 
         throw new Error(
-
             `Passcode must be at most ${MAX_LENGTH} characters.`
-
         );
 
     }
@@ -492,13 +465,9 @@ async function matches(
 ) {
 
     if (
-
         !record ||
-
         !record.hash ||
-
         !record.salt
-
     ) {
 
         return false;
@@ -531,24 +500,257 @@ async function matches(
 
 
 // ============================================================
-// AG PASSCODE API
+// SAVE NEW PASSCODE HASH
+// ============================================================
+
+async function saveNewPasscode(
+    uid,
+    passcode
+) {
+
+    const value =
+        validateNewPasscode(
+            passcode
+        );
+
+
+    const salt =
+        randomHex(16);
+
+
+    const hash =
+        await derive(
+
+            value,
+
+            salt,
+
+            ITERATIONS
+
+        );
+
+
+    await set(
+
+        securityRef(uid),
+
+        {
+
+            hash,
+
+            salt,
+
+            iterations:
+                ITERATIONS,
+
+            algorithm:
+                "PBKDF2-SHA256",
+
+            updatedAt:
+                Date.now()
+
+        }
+
+    );
+
+
+    invalidateCache();
+
+}
+
+
+// ============================================================
+// FIREBASE LOGIN PASSWORD VERIFICATION
+// ============================================================
+
+async function verifyLoginPassword(
+    email,
+    password
+) {
+
+    const user =
+        await requireUser();
+
+
+    const address =
+        String(
+            email ?? ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    const loginPassword =
+        String(
+            password ?? ""
+        );
+
+
+    if (!address) {
+
+        throw new Error(
+            "Enter your AssetGuard account e-mail."
+        );
+
+    }
+
+
+    if (!loginPassword) {
+
+        throw new Error(
+            "Enter your AssetGuard login password."
+        );
+
+    }
+
+
+    const currentEmail =
+        String(
+            user.email || ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (!currentEmail) {
+
+        throw new Error(
+            "Your signed-in account does not have an e-mail address."
+        );
+
+    }
+
+
+    if (
+        address !==
+        currentEmail
+    ) {
+
+        throw new Error(
+            "The e-mail does not match the currently signed-in AssetGuard account."
+        );
+
+    }
+
+
+    const credential =
+        EmailAuthProvider.credential(
+
+            currentEmail,
+
+            loginPassword
+
+        );
+
+
+    try {
+
+        await reauthenticateWithCredential(
+
+            user,
+
+            credential
+
+        );
+
+    }
+
+    catch (error) {
+
+        const code =
+            String(
+                error?.code || ""
+            );
+
+
+        if (
+            code ===
+                "auth/wrong-password" ||
+            code ===
+                "auth/invalid-credential"
+        ) {
+
+            throw new Error(
+                "The AssetGuard login password is incorrect."
+            );
+
+        }
+
+
+        if (
+            code ===
+            "auth/user-mismatch"
+        ) {
+
+            throw new Error(
+                "These credentials do not belong to the current account."
+            );
+
+        }
+
+
+        if (
+            code ===
+            "auth/too-many-requests"
+        ) {
+
+            throw new Error(
+                "Too many incorrect password attempts. Please wait and try again."
+            );
+
+        }
+
+
+        if (
+            code ===
+            "auth/invalid-email"
+        ) {
+
+            throw new Error(
+                "The e-mail address is invalid."
+            );
+
+        }
+
+
+        throw new Error(
+
+            error?.message ||
+
+            "Account verification failed. Please try again."
+
+        );
+
+    }
+
+
+    return true;
+
+}
+
+
+// ============================================================
+// PUBLIC API
 // ============================================================
 
 const AGPasscode = {
 
 
+    // --------------------------------------------------------
+    // PUBLIC SETTINGS
+    // --------------------------------------------------------
+
     NOT_CONFIGURED_MESSAGE,
+
+    RECOVERY_REQUIRED_MESSAGE,
 
     MIN_LENGTH,
 
     MAX_LENGTH,
 
-    RESET_TTL_MINUTES:
-        RESET_TTL_MS / 60000,
-
 
     // --------------------------------------------------------
-    // CHECK IF PASSCODE EXISTS
+    // CHECK WHETHER PASSCODE EXISTS
     // --------------------------------------------------------
 
     async isConfigured() {
@@ -568,13 +770,15 @@ const AGPasscode = {
 
 
     // --------------------------------------------------------
-    // VERIFY PASSCODE
+    // VERIFY INTERNAL PASSCODE
     // --------------------------------------------------------
 
     async verify(passcode) {
 
         const value =
-            String(passcode ?? "");
+            String(
+                passcode ?? ""
+            );
 
 
         let record;
@@ -585,7 +789,9 @@ const AGPasscode = {
             record =
                 await loadRecord();
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             if (
                 globalThis.AGErrors
@@ -602,22 +808,24 @@ const AGPasscode = {
             }
 
 
-            const errorText =
+            const message =
                 String(
 
                     error &&
                     (
                         error.code ||
                         error.message
-                    ) ||
+                    )
+
+                    ||
                     ""
 
                 )
-                .toLowerCase();
+                    .toLowerCase();
 
 
-            const denied =
-                errorText.includes(
+            const permissionDenied =
+                message.includes(
                     "permission"
                 );
 
@@ -630,13 +838,21 @@ const AGPasscode = {
                     "unavailable",
 
                 message:
-                    denied
 
-                        ? "Security settings are unreachable. Check Firebase database rules for user_settings."
+                    permissionDenied
 
-                        : (
+                        ?
+
+                        "Security settings are unreachable. Check Firebase rules for user_settings."
+
+                        :
+
+                        (
+
                             error.message ||
+
                             "Security check unavailable. Check your connection and retry."
+
                         )
 
             };
@@ -645,11 +861,8 @@ const AGPasscode = {
 
 
         if (
-
             !record ||
-
             !record.hash
-
         ) {
 
             return {
@@ -685,12 +898,13 @@ const AGPasscode = {
 
 
         if (
-
             await matches(
-                record,
-                value
-            )
 
+                record,
+
+                value
+
+            )
         ) {
 
             return {
@@ -724,7 +938,7 @@ const AGPasscode = {
 
 
     // --------------------------------------------------------
-    // SIMPLE TRUE/FALSE CHECK
+    // SIMPLE BOOLEAN CHECK
     // --------------------------------------------------------
 
     async check(passcode) {
@@ -739,7 +953,9 @@ const AGPasscode = {
 
             return result.ok;
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             if (
                 globalThis.AGErrors
@@ -763,24 +979,16 @@ const AGPasscode = {
     },
 
 
-    // ========================================================
-    // CREATE OR CHANGE PASSCODE
-    // ========================================================
+    // --------------------------------------------------------
+    // NORMAL PASSCODE CHANGE
+    // --------------------------------------------------------
 
     async setPasscode(
-
         newPasscode,
-
         {
-
-            currentPasscode = null,
-
-            resetToken = null
-
+            currentPasscode = null
         } = {}
-
     ) {
-
 
         const value =
             validateNewPasscode(
@@ -792,10 +1000,6 @@ const AGPasscode = {
             await requireUser();
 
 
-        const uid =
-            user.uid;
-
-
         const record =
             await loadRecord({
 
@@ -804,44 +1008,25 @@ const AGPasscode = {
             });
 
 
-        // ----------------------------------------------------
-        // EXISTING PASSCODE REQUIRES VERIFICATION
-        // ----------------------------------------------------
+        // If an internal passcode already exists,
+        // require the existing passcode.
 
         if (
-
             record &&
             record.hash
-
         ) {
 
+            const valid =
+                await matches(
 
-            if (resetToken) {
+                    record,
 
-                await this.validateResetToken(
-
-                    resetToken
+                    currentPasscode ?? ""
 
                 );
 
-            }
 
-
-            else if (
-
-                !(
-
-                    await matches(
-
-                        record,
-
-                        currentPasscode ?? ""
-
-                    )
-
-                )
-
-            ) {
+            if (!valid) {
 
                 throw new Error(
                     "Current passcode is incorrect."
@@ -852,482 +1037,132 @@ const AGPasscode = {
         }
 
 
-        // ----------------------------------------------------
-        // CREATE NEW HASH
-        // ----------------------------------------------------
+        await saveNewPasscode(
 
-        const salt =
-            randomHex(16);
+            user.uid,
 
-
-        const hash =
-            await derive(
-
-                value,
-
-                salt,
-
-                ITERATIONS
-
-            );
-
-
-        // ----------------------------------------------------
-        // SAVE PASSCODE
-        // ----------------------------------------------------
-
-        await set(
-
-            securityRef(uid),
-
-            {
-
-                hash,
-
-                salt,
-
-                iterations:
-                    ITERATIONS,
-
-                algorithm:
-                    "PBKDF2-SHA256",
-
-                updatedAt:
-                    Date.now()
-
-            }
+            value
 
         );
-
-
-        // ----------------------------------------------------
-        // RESET TOKEN MUST ONLY WORK ONCE
-        // ----------------------------------------------------
-
-        if (resetToken) {
-
-            await remove(
-
-                resetRef(uid)
-
-            );
-
-        }
-
-
-        invalidateCache();
 
     },
 
 
-    // ========================================================
-    // REQUEST RESET EMAIL
-    // ========================================================
+    // --------------------------------------------------------
+    // QUOTA-FREE PASSCODE RECOVERY
+    // --------------------------------------------------------
+    //
+    // The user's Firebase login password verifies identity.
+    //
+    // No e-mail.
+    // No reset link.
+    // No Firebase e-mail quota.
+    //
+    // --------------------------------------------------------
 
-    async requestReset(email) {
+    async recoverWithLoginPassword(
+        {
 
+            email,
 
-        const address =
-            String(email ?? "")
-                .trim()
-                .toLowerCase();
+            loginPassword,
 
+            newPasscode
 
-        if (!address) {
+        } = {}
+    ) {
 
-            throw new Error(
-                "Enter the e-mail address of this account."
+        const value =
+            validateNewPasscode(
+                newPasscode
             );
-
-        }
 
 
         const user =
             await requireUser();
 
 
-        // ----------------------------------------------------
-        // ENSURE USER CAN ONLY RESET THEIR OWN PASSCODE
-        // ----------------------------------------------------
+        // Verify normal Firebase login credentials.
 
-        if (
+        await verifyLoginPassword(
 
-            String(
-                user.email || ""
-            )
-            .toLowerCase()
+            email,
 
-            !==
-
-            address
-
-        ) {
-
-            throw new Error(
-                "That e-mail does not match the signed-in account."
-            );
-
-        }
-
-
-        // ----------------------------------------------------
-        // CREATE SECURE TOKEN
-        // ----------------------------------------------------
-
-        const token =
-            randomHex(32);
-
-
-        // Store only the hash
-
-        const tokenHash =
-            await sha256Hex(
-                token
-            );
-
-
-        const requestedAt =
-            Date.now();
-
-
-        const expiresAt =
-            requestedAt +
-            RESET_TTL_MS;
-
-
-        // ----------------------------------------------------
-        // SAVE RESET REQUEST
-        // ----------------------------------------------------
-
-        await set(
-
-            resetRef(
-                user.uid
-            ),
-
-            {
-
-                tokenHash,
-
-                email:
-                    address,
-
-                requestedAt,
-
-                expiresAt,
-
-                used:
-                    false
-
-            }
+            loginPassword
 
         );
 
 
-        // ----------------------------------------------------
-        // CREATE RESET URL
-        // ----------------------------------------------------
+        // After successful Firebase re-authentication,
+        // replace the internal passcode.
 
-        const url =
-            new URL(
+        await saveNewPasscode(
 
-                "settings.html",
+            user.uid,
 
-                window.location.href
-
-            );
-
-
-        url.searchParams.set(
-
-            "internalReset",
-
-            token
+            value
 
         );
-
-
-        // UID is useful for page context,
-        // but authentication still controls access.
-
-        url.searchParams.set(
-
-            "uid",
-
-            user.uid
-
-        );
-
-
-        // ----------------------------------------------------
-        // SEND EMAIL LINK
-        // ----------------------------------------------------
-
-        try {
-
-            await sendSignInLinkToEmail(
-
-                getAuth(
-                    getFirebaseApp()
-                ),
-
-                address,
-
-                {
-
-                    url:
-                        url.toString(),
-
-                    handleCodeInApp:
-                        true
-
-                }
-
-            );
-
-
-            localStorage.setItem(
-
-                "ag_internal_reset_email",
-
-                address
-
-            );
-
-        }
-
-
-        catch (error) {
-
-
-            // Remove reset request if email fails
-
-            await remove(
-
-                resetRef(
-                    user.uid
-                )
-
-            );
-
-
-            if (
-
-                error &&
-                error.code ===
-                "auth/operation-not-allowed"
-
-            ) {
-
-                throw new Error(
-
-                    "E-mail link delivery is disabled. Enable Email Link (passwordless sign-in) in Firebase Authentication."
-
-                );
-
-            }
-
-
-            if (
-
-                error &&
-                error.code ===
-                "auth/invalid-continue-uri"
-
-            ) {
-
-                throw new Error(
-
-                    "The AssetGuard website URL is not authorized in Firebase Authentication."
-
-                );
-
-            }
-
-
-            if (
-
-                error &&
-                error.code ===
-                "auth/unauthorized-continue-uri"
-
-            ) {
-
-                throw new Error(
-
-                    "This website domain must be added to Firebase Authentication Authorized Domains."
-
-                );
-
-            }
-
-
-            throw error;
-
-        }
 
 
         return {
 
-            email:
-                address,
+            ok: true,
 
-            expiresAt
+            message:
+                "Internal passcode successfully reset."
 
         };
 
     },
 
 
-    // ========================================================
-    // VALIDATE RESET TOKEN
-    // ========================================================
+    // --------------------------------------------------------
+    // VERIFY LOGIN PASSWORD ONLY
+    // --------------------------------------------------------
 
-    async validateResetToken(token) {
+    async verifyLoginPassword(
+        email,
+        password
+    ) {
+
+        return await verifyLoginPassword(
+
+            email,
+
+            password
+
+        );
+
+    },
 
 
-        const value =
-            String(token ?? "")
-                .trim();
+    // --------------------------------------------------------
+    // CURRENT ACCOUNT INFORMATION
+    // --------------------------------------------------------
 
-
-        if (!value) {
-
-            throw new Error(
-                "Reset link is missing its security token."
-            );
-
-        }
-
+    async getCurrentAccount() {
 
         const user =
             await requireUser();
 
 
-        const uid =
-            user.uid;
+        return {
 
+            uid:
+                user.uid,
 
-        const snapshot =
-            await get(
+            email:
+                user.email || ""
 
-                resetRef(uid)
-
-            );
-
-
-        if (
-
-            !snapshot.exists()
-
-        ) {
-
-            throw new Error(
-                "No internal passcode reset was requested."
-            );
-
-        }
-
-
-        const reset =
-            snapshot.val();
-
-
-        // ----------------------------------------------------
-        // ALREADY USED
-        // ----------------------------------------------------
-
-        if (reset.used) {
-
-            throw new Error(
-                "This reset link has already been used."
-            );
-
-        }
-
-
-        // ----------------------------------------------------
-        // EXPIRED
-        // ----------------------------------------------------
-
-        if (
-
-            !reset.expiresAt ||
-
-            Date.now() >
-            Number(
-                reset.expiresAt
-            )
-
-        ) {
-
-            throw new Error(
-                "This reset link has expired. Request a new one."
-            );
-
-        }
-
-
-        // ----------------------------------------------------
-        // TOKEN CHECK
-        // ----------------------------------------------------
-
-        const candidate =
-            await sha256Hex(
-                value
-            );
-
-
-        if (
-
-            !constantTimeEquals(
-
-                candidate,
-
-                reset.tokenHash
-
-            )
-
-        ) {
-
-            throw new Error(
-                "This reset link is not valid."
-            );
-
-        }
-
-
-        return true;
+        };
 
     },
 
 
-    // ========================================================
-    // CANCEL RESET
-    // ========================================================
-
-    async cancelReset() {
-
-
-        const uid =
-            await requireUid();
-
-
-        await remove(
-
-            resetRef(uid)
-
-        );
-
-
-        invalidateCache();
-
-    },
-
-
-    // ========================================================
-    // MANUALLY CLEAR CACHE
-    // ========================================================
+    // --------------------------------------------------------
+    // FORCE REFRESH
+    // --------------------------------------------------------
 
     refresh() {
 
