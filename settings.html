@@ -111,6 +111,7 @@
         .form-field input[type="text"],
         .form-field input[type="tel"],
         .form-field input[type="password"],
+        .form-field input[type="email"],
         .form-field select {
             font-family: inherit; font-size: 14px; padding: 12px 14px;
             border: 2px solid var(--border); border-radius: var(--radius-md); background: #fafbfe;
@@ -184,6 +185,7 @@
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
@@ -351,7 +353,7 @@
     }
     const rtdb = firebase.database();
 
-    const activeUID = AGUtils.getActiveUID({ fallback: "global_terminal_user", persist: true });
+    let activeUID = "global_terminal_user";
 
     const MASTER_CONFIG = {
         backendUrl: "https://weathered-glade-c60b.assetguardinfo.workers.dev",
@@ -367,7 +369,7 @@
         businessName: "JCorp Kenya Inc", 
         tagline: "Transformation you need", 
         logoUrl: "",
-        salesConfigSkipped: true, // Default new accounts to skipped out of the box
+        salesConfigSkipped: true,
         salesDaraja: {
             environment: "production",
             accountType: "Paybill",
@@ -378,11 +380,19 @@
         }
     };
     
-    window.onload = function() {
-        resolveUserIdentity();
+    // Ensure Firebase Auth resolves the real UID before loading settings or passcodes
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            activeUID = user.uid;
+        } else {
+            activeUID = AGUtils.getActiveUID({ fallback: "global_terminal_user", persist: true });
+            if (activeUID === "global_terminal_user" && firebase.auth().currentUser) {
+                activeUID = firebase.auth().currentUser.uid;
+            }
+        }
         loadLocalSettings();
         initPasscodeSection();
-    };
+    });
 
     function resolveUserIdentity() {
         AGUtils.resolveActiveUID({ fallback: activeUID });
@@ -392,7 +402,6 @@
         document.getElementById('salesSection').classList.toggle('expanded');
     }
 
-    // Instantly saves and synchronizes when skipped
     async function skipSalesConfig(e) {
         e.stopPropagation();
         loadedSettings.salesConfigSkipped = true;
@@ -403,7 +412,6 @@
         document.getElementById('salesSection').classList.remove('expanded');
         updateSalesBadge();
         
-        // Instantly save to local storage and sync to Firebase
         await saveConfiguration(true);
     }
 
@@ -495,11 +503,9 @@
             consumerSecret: document.getElementById('salesConsumerSecret').value.trim()
         };
 
-        // 1. Save locally for instant offline UI rendering
         AGUtils.writeJSON(AGUtils.uidKey("ag_profile_cache", activeUID), loadedSettings);
         updateSalesBadge();
 
-        // 2. Push settings and initialize user status in Firebase Cloud
         let cloudSaved = true;
         try {
             await rtdb.ref(`user_settings/${activeUID}`).set({
