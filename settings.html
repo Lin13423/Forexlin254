@@ -311,7 +311,7 @@ body {
         20px;
 
     padding-bottom:
-        140px;
+        40px;
 
 }
 
@@ -1173,52 +1173,6 @@ body {
 }
 
 
-.settings-footer {
-
-    position:
-        fixed;
-
-    bottom:
-        0;
-
-    width:
-        100%;
-
-    max-width:
-        480px;
-
-    background:
-
-        rgba(
-            255,
-            255,
-            255,
-            0.96
-        );
-
-    backdrop-filter:
-        blur(12px);
-
-    padding:
-        16px 20px;
-
-    border-top:
-
-        1px solid
-        var(--border);
-
-    display:
-        flex;
-
-    gap:
-        12px;
-
-    z-index:
-        100;
-
-}
-
-
 .btn {
 
     flex:
@@ -1298,7 +1252,7 @@ body {
         fixed;
 
     bottom:
-        90px;
+        30px;
 
     left:
         50%;
@@ -2175,12 +2129,18 @@ Select image from device storage
 </div>
 
 
-</main>
 
+<!-- =====================================================
+     SAVE & CANCEL ACTION BUTTONS (MOVED BELOW LOGO)
+===================================================== -->
 
-
-<footer class="settings-footer">
-
+<div
+    style="
+        display: flex;
+        gap: 12px;
+        margin-top: 4px;
+    "
+>
 
 <button
 
@@ -2208,8 +2168,10 @@ Save Settings
 
 </button>
 
+</div>
 
-</footer>
+
+</main>
 
 
 </div>
