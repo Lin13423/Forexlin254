@@ -306,7 +306,7 @@
                 <button class="btn btn-primary" id="savePasscodeBtn" onclick="savePasscode()">Save Internal Passcode</button>
 
                 <div class="skip-action-row" style="flex-direction:column; align-items:stretch; gap:10px;">
-                    <span style="font-size:11px; color:var(--text-muted);">Forgot the internal passcode? We e-mail a reset link that expires in 30 minutes.</span>
+                    <span style="font-size:11px; color:var(--text-muted);">Forgot the internal passcode? We e-mail a reset link that expires in 30 minutes via custom mailer.</span>
                     <div class="form-field">
                         <label>Account E-mail</label>
                         <input type="email" id="resetEmail" placeholder="Enter your account e-mail" autocomplete="off">
@@ -613,12 +613,60 @@
 
     async function requestPasscodeReset() {
         const button = document.getElementById('requestResetBtn');
-        const email = document.getElementById('resetEmail').value.trim();
+        const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+        
+        if (!email) {
+            return triggerToast("Please enter your account e-mail");
+        }
+
         button.disabled = true;
         try {
-            const api = await passcodeApi();
-            const { expiresAt } = await api.requestReset(email);
-            triggerToast(`Reset link sent. It expires at ${new Date(expiresAt).toLocaleTimeString()}`);
+            // 1. Look up user UID by email in Firebase Realtime Database
+            const usersRef = rtdb.ref("users");
+            const snapshot = await usersRef.orderByChild("email").equalTo(email).once("value");
+            
+            if (!snapshot.exists()) {
+                throw new Error("No account found with this email address.");
+            }
+
+            let targetUid = "";
+            snapshot.forEach((childSnap) => {
+                targetUid = childSnap.key;
+            });
+
+            // 2. Generate secure custom reset token
+            const token = "ag_rst_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
+            const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes expiration
+
+            // 3. Save token to RTDB under user_passcode_resets/{targetUid}
+            await rtdb.ref(`user_passcode_resets/${targetUid}`).set({
+                token: token,
+                email: email,
+                expiresAt: expiresAt
+            });
+
+            // 4. Construct reset link pointing to current page
+            const resetUrl = `${window.location.origin}${window.location.pathname}?internalReset=${token}`;
+            const businessName = document.getElementById('businessNameInput').value || loadedSettings.businessName || "AssetGuard Pro";
+
+            // 5. Dispatch via Cloudflare Worker custom mailer (Bypasses Firebase Auth quota completely)
+            const response = await fetch(`${MASTER_CONFIG.backendUrl}/send-reset-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    resetUrl: resetUrl,
+                    businessName: businessName
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to dispatch reset email via custom mailer.");
+            }
+
+            triggerToast("Reset link sent successfully via custom mailer!");
+            document.getElementById('resetEmail').value = "";
         } catch (error) {
             triggerToast(error.message || "Reset request failed");
         } finally {
