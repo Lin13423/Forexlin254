@@ -1,447 +1,353 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="error-utils.js"></script>
-    <script src="ag-utils.js"></script>
-    <script src="ag-config.js"></script>
-    <script src="ag-context-guard.js"></script>
-    <script type="module" src="auth-guard.js"></script>
-    <script type="module" src="ag-passcode.js"></script>
+<script src="error-utils.js"></script>
+<script src="ag-utils.js"></script>
+<script src="ag-config.js"></script>
+<script src="ag-context-guard.js"></script>
+<script type="module" src="auth-guard.js"></script>
+<script type="module" src="ag-passcode.js"></script>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
+<title>AssetGuard Pro - Business Setup & Settings</title>
 
-    <title>AssetGuard Pro - Business Setup & Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;600;700&display=swap"
-        rel="stylesheet"
-    >
+<style>
+:root {
+    --primary: #0072CE;
+    --primary-light: #e6f0fa;
+    --dark: #001A35;
+    --bg: #f8f9fc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --mpesa: #00a859;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --shadow: 0 10px 25px -5px rgba(0,26,53,.05),
+              0 8px 10px -6px rgba(0,26,53,.05);
+}
 
-    <style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
 
-        :root {
-            --primary: #0072CE;
-            --primary-light: #e6f0fa;
-            --dark: #001A35;
-            --bg: #f8f9fc;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --success: #10b981;
-            --success-light: #d1fae5;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --danger-light: #fee2e2;
-            --mpesa: #00a859;
-            --radius-lg: 16px;
-            --radius-md: 12px;
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+}
 
-            --shadow:
-                0 10px 25px -5px rgba(0, 26, 53, 0.05),
-                0 8px 10px -6px rgba(0, 26, 53, 0.05);
-        }
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    background: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,.96);
+    backdrop-filter: blur(12px);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
 
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
+.header-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--dark);
+}
 
-        .app-container {
-            width: 100%;
-            max-width: 480px;
-            background: var(--card-bg);
-            min-height: 100vh;
-            box-shadow: 0 0 40px rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
+.header-title span {
+    color: var(--primary);
+}
 
-        .app-header {
-            position: sticky;
-            top: 0;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(12px);
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-            z-index: 100;
-        }
+.back-btn {
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 26px;
+    cursor: pointer;
+}
 
-        .header-title {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--dark);
-        }
+.settings-content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 110px;
+}
 
-        .header-title span {
-            color: var(--primary);
-        }
+.section-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 8px;
+}
 
-        .back-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
+.brand-preview-card {
+    background: linear-gradient(135deg,var(--dark),#002d5c);
+    color: white;
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 20px rgba(0,26,53,.15);
+}
 
-        .back-btn:active {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
+.card-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-        .settings-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding-bottom: 120px;
-        }
+.card-identity h3 {
+    font-family: 'Poppins',sans-serif;
+    font-size: 18px;
+}
 
-        .section-label {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-muted);
-            display: block;
-            margin-bottom: 8px;
-        }
+.card-identity p {
+    font-size: 10px;
+    opacity: .8;
+    margin-top: 3px;
+}
 
-        .brand-preview-card {
-            background:
-                linear-gradient(
-                    135deg,
-                    var(--dark) 0%,
-                    #002d5c 100%
-                );
+.card-logo-slot {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255,255,255,.1);
+}
 
-            color: white;
-            padding: 20px;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 10px 20px rgba(0,26,53,0.15);
-        }
+.card-logo-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-        .card-header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+.preview-badge {
+    margin-top: 15px;
+    display: inline-flex;
+    padding: 4px 9px;
+    font-size: 9px;
+    font-weight: 800;
+    background: rgba(255,255,255,.1);
+    border-radius: 100px;
+}
 
-        .card-identity h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-        }
+.input-group,
+.collapsible-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+}
 
-        .card-identity p {
-            font-size: 10px;
-            opacity: 0.8;
-            margin-top: 2px;
-            text-transform: uppercase;
-        }
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
 
-        .card-logo-slot {
-            width: 42px;
-            height: 42px;
-            border-radius: var(--radius-md);
-            background: rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255,255,255,0.15);
-            overflow: hidden;
-        }
+.form-field:last-child {
+    margin-bottom: 0;
+}
 
-        .card-logo-slot img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+.form-field label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--dark);
+}
 
-        .preview-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 100px;
-            font-size: 8px;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin-top: 15px;
-        }
+.form-field input,
+.form-field select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+}
 
-        .input-group {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
+.form-field input:focus,
+.form-field select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(0,114,206,.1);
+}
 
-        .form-field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+.section-toggle-header {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+}
 
-        .form-field label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--dark);
-            text-transform: uppercase;
-        }
+.collapsible-section {
+    padding: 0;
+    overflow: hidden;
+}
 
-        .form-field input,
-        .form-field select {
-            font-family: inherit;
-            font-size: 14px;
-            padding: 12px 14px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius-md);
-            background: #fafbfe;
-            outline: none;
-            transition: 0.2s;
-            color: var(--text-main);
-        }
+.section-toggle-header {
+    padding: 16px;
+    background: #f8fafc;
+}
 
-        .form-field input:focus,
-        .form-field select:focus {
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 4px rgba(0,114,206,0.1);
-        }
+.toggle-title-wrap h3 {
+    font-size: 14px;
+    color: var(--dark);
+}
 
-        .form-field input.mpesa-focus:focus {
-            border-color: var(--mpesa);
-            box-shadow: 0 0 0 4px rgba(0,168,89,0.1);
-        }
+.toggle-title-wrap p {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
 
-        .logo-upload-area {
-            border: 2px dashed var(--border);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-            background: #fafbfe;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            position: relative;
-        }
+.collapsible-body {
+    display: none;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+}
 
-        .logo-upload-area input[type="file"] {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
+.collapsible-section.expanded .collapsible-body {
+    display: block;
+}
 
-        .upload-icon {
-            color: var(--primary);
-        }
+.status-badge {
+    font-size: 9px;
+    padding: 4px 8px;
+    border-radius: 20px;
+}
 
-        .upload-text b {
-            color: var(--primary);
-            font-size: 12px;
-        }
+.badge-configured {
+    background: var(--success-light);
+    color: var(--success);
+}
 
-        .upload-text p {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
+.badge-skipped {
+    background: var(--danger-light);
+    color: var(--danger);
+}
 
-        .collapsible-section {
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            background: white;
-            overflow: hidden;
-        }
+.badge-pending {
+    background: #e2e8f0;
+    color: var(--text-muted);
+}
 
-        .collapsible-section.expanded {
-            box-shadow: var(--shadow);
-        }
+.skip-btn {
+    border: none;
+    background: none;
+    color: var(--danger);
+    font-weight: 700;
+    cursor: pointer;
+}
 
-        .section-toggle-header {
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            background: #f8fafc;
-        }
+.logo-upload-area {
+    border: 2px dashed var(--border);
+    padding: 20px;
+    border-radius: var(--radius-md);
+    text-align: center;
+    position: relative;
+}
 
-        .toggle-title-wrap h3 {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--dark);
-        }
+.logo-upload-area input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+}
 
-        .toggle-title-wrap p {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
+.settings-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 12px;
+    background: rgba(255,255,255,.97);
+    border-top: 1px solid var(--border);
+}
 
-        .status-badge {
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 100px;
-        }
+.btn {
+    flex: 1;
+    border: none;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
 
-        .badge-configured {
-            background: var(--success-light);
-            color: var(--success);
-        }
+.btn:disabled {
+    opacity: .6;
+}
 
-        .badge-skipped {
-            background: var(--danger-light);
-            color: #b91c1c;
-        }
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
 
-        .badge-pending {
-            background: #e2e8f0;
-            color: var(--text-muted);
-        }
+.btn-secondary {
+    background: #f1f5f9;
+    color: var(--text-muted);
+}
 
-        .chevron-icon {
-            transition: transform 0.3s ease;
-            color: var(--text-muted);
-        }
+.toast {
+    position: fixed;
+    z-index: 10000;
+    bottom: 90px;
+    left: 50%;
+    transform: translate(-50%,100px);
+    opacity: 0;
+    transition: .3s;
+    background: #0f172a;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+    max-width: 90%;
+    text-align: center;
+}
 
-        .collapsible-section.expanded .chevron-icon {
-            transform: rotate(180deg);
-        }
+.toast.show {
+    opacity: 1;
+    transform: translate(-50%,0);
+}
+</style>
 
-        .collapsible-body {
-            padding: 16px;
-            display: none;
-            flex-direction: column;
-            gap: 14px;
-            border-top: 1px solid var(--border);
-        }
-
-        .collapsible-section.expanded .collapsible-body {
-            display: flex;
-        }
-
-        .skip-action-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 6px;
-            padding-top: 10px;
-            border-top: 1px dashed var(--border);
-        }
-
-        .skip-btn {
-            background: none;
-            border: none;
-            color: var(--danger);
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            padding: 6px 12px;
-        }
-
-        .settings-footer {
-            position: sticky;
-            bottom: 0;
-            background: rgba(255,255,255,0.96);
-            backdrop-filter: blur(12px);
-            padding: 16px 20px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 12px;
-            z-index: 100;
-        }
-
-        .btn {
-            flex: 1;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 700;
-            padding: 14px;
-            border: none;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #f1f5f9;
-            color: var(--text-muted);
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #0f172a;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 700;
-            z-index: 10005;
-            opacity: 0;
-            transition: 0.3s;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-    </style>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 </head>
 
@@ -449,2073 +355,1111 @@
 
 <div class="app-container">
 
-    <header class="app-header">
+<header class="app-header">
+    <button class="back-btn" onclick="exitPortal()">←</button>
+    <div class="header-title">AssetGuard <span>Settings</span></div>
+    <div style="width:20px"></div>
+</header>
 
-        <button class="back-btn" onclick="exitPortal()">
-            ←
-        </button>
+<main class="settings-content">
 
-        <div class="header-title">
-            AssetGuard <span>Settings</span>
+<div>
+<span class="section-label">Branding Visualizer</span>
+
+<div class="brand-preview-card">
+    <div class="card-header-flex">
+        <div class="card-identity">
+            <h3 id="prevName">JCorp Kenya Inc</h3>
+            <p id="prevTag">Transformation you need</p>
         </div>
 
-        <div style="width:20px"></div>
-
-    </header>
-
-
-    <main class="settings-content">
-
-        <div>
-
-            <span class="section-label">
-                Branding Visualizer
-            </span>
-
-            <div class="brand-preview-card">
-
-                <div class="card-header-flex">
-
-                    <div class="card-identity">
-
-                        <h3 id="prevName">
-                            JCorp Kenya Inc
-                        </h3>
-
-                        <p id="prevTag">
-                            Transformation you need
-                        </p>
-
-                    </div>
-
-                    <div class="card-logo-slot">
-
-                        <img
-                            id="prevLogo"
-                            alt="Logo"
-                            src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='42' height='42' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5'><circle cx='12' cy='8' r='5'/><path d='M2 22c0-4 4-7 10-7s10 3 10 7'/></svg>"
-                        >
-
-                    </div>
-
-                </div>
-
-                <div class="preview-badge">
-                    ✓ Live Preview
-                </div>
-
-            </div>
-
+        <div class="card-logo-slot">
+            <img id="prevLogo" alt="Logo">
         </div>
+    </div>
 
+    <div class="preview-badge">✓ LIVE PREVIEW</div>
+</div>
+</div>
 
-        <div>
+<div>
+<span class="section-label">Corporate Settings</span>
 
-            <span class="section-label">
-                Corporate Settings
-            </span>
+<div class="input-group">
 
-            <div class="input-group">
+<div class="form-field">
+<label>Business Identity Name</label>
+<input type="text" id="businessNameInput"
+oninput="updatePreviewCard()">
+</div>
 
-                <div class="form-field">
+<div class="form-field">
+<label>Corporate Tagline / Address</label>
+<input type="text" id="taglineInput"
+oninput="updatePreviewCard()">
+</div>
 
-                    <label>
-                        Business Identity Name
-                    </label>
+</div>
+</div>
 
-                    <input
-                        type="text"
-                        id="businessNameInput"
-                        placeholder="Enter Business Name"
-                        oninput="updatePreviewCard()"
-                    >
+<div class="collapsible-section" id="salesSection">
 
-                </div>
+<div class="section-toggle-header" onclick="toggleSalesConfig()">
 
+<div class="toggle-title-wrap">
 
-                <div class="form-field">
+<h3>
+Accept Customer Payments (STK Push)
+<span id="salesStatusBadge"
+class="status-badge badge-pending">
+Optional
+</span>
+</h3>
 
-                    <label>
-                        Corporate Tagline / Address
-                    </label>
-
-                    <input
-                        type="text"
-                        id="taglineInput"
-                        placeholder="Enter Tagline/Address"
-                        oninput="updatePreviewCard()"
-                    >
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="collapsible-section" id="salesSection">
-
-            <div
-                class="section-toggle-header"
-                onclick="toggleSalesConfig()"
-            >
-
-                <div class="toggle-title-wrap">
-
-                    <h3>
-
-                        Accept Customer Payments (STK Push)
-
-                        <span
-                            id="salesStatusBadge"
-                            class="status-badge badge-pending"
-                        >
-                            Optional
-                        </span>
-
-                    </h3>
-
-                    <p>
-                        Configure your own Paybill/Till for customer sales
-                    </p>
-
-                </div>
-
-                <div class="chevron-icon">
-                    ▼
-                </div>
-
-            </div>
-
-
-            <div class="collapsible-body">
-
-                <div class="form-field">
-
-                    <label>Environment Mode</label>
-
-                    <select id="salesEnvironment">
-
-                        <option value="production">
-                            Production (Live)
-                        </option>
-
-                        <option value="sandbox">
-                            Sandbox (Testing)
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="form-field">
-
-                    <label>Account Type</label>
-
-                    <select id="salesAccountType">
-
-                        <option value="Paybill">
-                            Paybill
-                        </option>
-
-                        <option value="Till">
-                            Till Number
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="form-field">
-
-                    <label>
-                        Business Shortcode / Till Number
-                    </label>
-
-                    <input
-                        type="tel"
-                        id="salesShortcode"
-                        class="mpesa-focus"
-                        inputmode="numeric"
-                        oninput="handleShortcodeInput()"
-                    >
-
-                </div>
-
-
-                <div class="form-field">
-
-                    <label>
-                        M-Pesa Passkey
-                    </label>
-
-                    <input
-                        type="password"
-                        id="salesPasskey"
-                        class="mpesa-focus"
-                    >
-
-                </div>
-
-
-                <div class="form-field">
-
-                    <label>
-                        Consumer Key
-                    </label>
-
-                    <input
-                        type="text"
-                        id="salesConsumerKey"
-                    >
-
-                </div>
-
-
-                <div class="form-field">
-
-                    <label>
-                        Consumer Secret
-                    </label>
-
-                    <input
-                        type="password"
-                        id="salesConsumerSecret"
-                    >
-
-                </div>
-
-
-                <div class="skip-action-row">
-
-                    <span style="font-size:11px;color:var(--text-muted)">
-                        Don't have automated keys yet?
-                    </span>
-
-                    <button
-                        class="skip-btn"
-                        onclick="skipSalesConfig(event)"
-                    >
-                        Skip Configuration
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div>
-
-            <span class="section-label">
-                Internal Security Passcode
-            </span>
-
-            <div class="input-group">
-
-                <p style="font-size:11px;color:var(--text-muted)">
-
-                    One passcode unlocks protected AssetGuard areas.
-                    This passcode is separate from your login password.
-
-                </p>
-
-
-                <div
-                    id="passcodeStateRow"
-                    style="font-size:11px;font-weight:700;color:var(--text-muted)"
-                >
-                    Checking passcode status...
-                </div>
-
-
-                <div
-                    class="form-field"
-                    id="currentPasscodeField"
-                >
-
-                    <label>
-                        Current Passcode
-                    </label>
-
-                    <input
-                        type="password"
-                        id="currentPasscode"
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <div class="form-field">
-
-                    <label>
-                        New Passcode
-                    </label>
-
-                    <input
-                        type="password"
-                        id="newPasscode"
-                        placeholder="At least 4 characters"
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <div class="form-field">
-
-                    <label>
-                        Confirm New Passcode
-                    </label>
-
-                    <input
-                        type="password"
-                        id="confirmPasscode"
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <button
-                    class="btn btn-primary"
-                    id="savePasscodeBtn"
-                    onclick="savePasscode()"
-                >
-                    Save Internal Passcode
-                </button>
-
-
-                <div
-                    class="skip-action-row"
-                    style="flex-direction:column;align-items:stretch;gap:10px"
-                >
-
-                    <span
-                        style="font-size:11px;color:var(--text-muted)"
-                    >
-
-                        Forgot your internal passcode?
-                        Enter the email address of your currently
-                        logged-in account to receive a reset link.
-
-                    </span>
-
-
-                    <div class="form-field">
-
-                        <label>
-                            Account E-mail
-                        </label>
-
-                        <input
-                            type="email"
-                            id="resetEmail"
-                            placeholder="Enter your account e-mail"
-                            autocomplete="email"
-                        >
-
-                    </div>
-
-
-                    <button
-                        class="btn btn-secondary"
-                        id="requestResetBtn"
-                        onclick="requestPasscodeReset()"
-                    >
-                        Send Reset Link
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div>
-
-            <span class="section-label">
-                Corporate Emblem
-            </span>
-
-            <div class="input-group">
-
-                <div class="logo-upload-area">
-
-                    <input
-                        type="file"
-                        id="logoFileInput"
-                        accept="image/*"
-                        onchange="processLogoFile(this)"
-                    >
-
-                    <div class="upload-icon">
-                        🖼️
-                    </div>
-
-                    <div class="upload-text">
-
-                        <b>
-                            Upload Corporate Logo
-                        </b>
-
-                        <p>
-                            Select image from device storage
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </main>
-
-
-    <footer class="settings-footer">
-
-        <button
-            class="btn btn-secondary"
-            onclick="exitPortal()"
-        >
-            Cancel
-        </button>
-
-
-        <button
-            class="btn btn-primary"
-            onclick="saveConfiguration()"
-        >
-            Save Settings
-        </button>
-
-    </footer>
+<p>Configure your Paybill or Till Number</p>
 
 </div>
 
+<div>▼</div>
 
-<div
-    id="toastBox"
-    class="toast"
->
-    <span id="toastText">
-        Settings Updated Successfully
-    </span>
 </div>
 
+<div class="collapsible-body">
+
+<div class="form-field">
+<label>Environment</label>
+<select id="salesEnvironment">
+<option value="production">Production (Live)</option>
+<option value="sandbox">Sandbox (Testing)</option>
+</select>
+</div>
+
+<div class="form-field">
+<label>Account Type</label>
+<select id="salesAccountType">
+<option value="Paybill">Paybill</option>
+<option value="Till">Till Number</option>
+</select>
+</div>
+
+<div class="form-field">
+<label>Shortcode / Till Number</label>
+<input type="tel"
+id="salesShortcode"
+inputmode="numeric"
+oninput="handleShortcodeInput()">
+</div>
+
+<div class="form-field">
+<label>M-Pesa Passkey</label>
+<input type="password" id="salesPasskey">
+</div>
+
+<div class="form-field">
+<label>Consumer Key</label>
+<input type="text" id="salesConsumerKey">
+</div>
+
+<div class="form-field">
+<label>Consumer Secret</label>
+<input type="password" id="salesConsumerSecret">
+</div>
+
+<button class="skip-btn"
+onclick="skipSalesConfig(event)">
+Skip Configuration for Now
+</button>
+
+</div>
+</div>
+
+<div>
+
+<span class="section-label">Internal Security Passcode</span>
+
+<div class="input-group">
+
+<p style="font-size:11px;color:var(--text-muted);margin-bottom:14px">
+One passcode unlocks protected AssetGuard areas.
+This is separate from your login password.
+</p>
+
+<div id="passcodeStateRow"
+style="font-size:11px;font-weight:700;margin-bottom:12px">
+Checking passcode status...
+</div>
+
+<div class="form-field" id="currentPasscodeField">
+<label>Current Passcode</label>
+<input type="password" id="currentPasscode">
+</div>
+
+<div class="form-field">
+<label>New Passcode</label>
+<input type="password"
+id="newPasscode"
+placeholder="At least 4 characters">
+</div>
+
+<div class="form-field">
+<label>Confirm New Passcode</label>
+<input type="password" id="confirmPasscode">
+</div>
+
+<button class="btn btn-primary"
+id="savePasscodeBtn"
+onclick="savePasscode()">
+Save Internal Passcode
+</button>
+
+<hr style="border:none;border-top:1px dashed var(--border);margin:18px 0">
+
+<p style="font-size:11px;color:var(--text-muted);margin-bottom:10px">
+Forgot your internal passcode? Enter the email of your
+currently logged-in account.
+</p>
+
+<div class="form-field">
+<label>Account E-mail</label>
+<input type="email"
+id="resetEmail"
+placeholder="Enter your account e-mail">
+</div>
+
+<button class="btn btn-secondary"
+id="requestResetBtn"
+onclick="requestPasscodeReset()">
+Send Reset Link
+</button>
+
+</div>
+</div>
+
+<div>
+
+<span class="section-label">Corporate Emblem</span>
+
+<div class="input-group">
+
+<div class="logo-upload-area">
+
+<input type="file"
+id="logoFileInput"
+accept="image/*"
+onchange="processLogoFile(this)">
+
+<b>Upload Corporate Logo</b>
+
+<p style="font-size:11px;color:var(--text-muted)">
+Select an image from your device
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+<footer class="settings-footer">
+
+<button class="btn btn-secondary"
+onclick="exitPortal()">
+Cancel
+</button>
+
+<button class="btn btn-primary"
+id="saveSettingsBtn"
+onclick="saveConfiguration()">
+Save Settings
+</button>
+
+</footer>
+
+</div>
+
+<div id="toastBox" class="toast">
+<span id="toastText"></span>
+</div>
 
 <script>
 
-    /*
-    ---------------------------------------------------
-    FIREBASE INITIALIZATION
-    ---------------------------------------------------
-    */
+if (!firebase.apps.length) {
+    firebase.initializeApp(AG_FIREBASE_CONFIG);
+}
 
-    if (!firebase.apps.length) {
+const rtdb = firebase.database();
 
-        firebase.initializeApp(
-            AG_FIREBASE_CONFIG
+let activeUID = null;
+let passcodeResetToken = null;
+
+const MASTER_CONFIG = {
+    backendUrl:
+    "https://weathered-glade-c60b.assetguardinfo.workers.dev"
+};
+
+let loadedSettings = {
+    businessName: "JCorp Kenya Inc",
+    tagline: "Transformation you need",
+    logoUrl: "",
+    salesConfigSkipped: true,
+
+    salesDaraja: {
+        environment: "production",
+        accountType: "Paybill",
+        shortcode: "",
+        passkey: "",
+        consumerKey: "",
+        consumerSecret: ""
+    }
+};
+
+
+/* =========================
+   AUTH
+========================= */
+
+firebase.auth().onAuthStateChanged(async (user) => {
+
+    if (!user) {
+        window.location.replace("login.html");
+        return;
+    }
+
+    activeUID = user.uid;
+
+    loadLocalSettings();
+
+    try {
+        document.getElementById("resetEmail").value =
+            user.email || "";
+    } catch (_) {}
+
+    await initPasscodeSection();
+
+});
+
+
+/* =========================
+   SALES
+========================= */
+
+function toggleSalesConfig() {
+    document.getElementById("salesSection")
+        .classList.toggle("expanded");
+}
+
+function handleShortcodeInput() {
+
+    const value =
+        document.getElementById("salesShortcode")
+        .value.trim();
+
+    if (value) {
+        loadedSettings.salesConfigSkipped = false;
+    }
+
+    updateSalesBadge();
+}
+
+async function skipSalesConfig(event) {
+
+    event.stopPropagation();
+
+    loadedSettings.salesConfigSkipped = true;
+
+    document.getElementById("salesShortcode").value = "";
+    document.getElementById("salesPasskey").value = "";
+    document.getElementById("salesConsumerKey").value = "";
+    document.getElementById("salesConsumerSecret").value = "";
+
+    updateSalesBadge();
+
+    document.getElementById("salesSection")
+        .classList.remove("expanded");
+
+    await saveConfiguration(true);
+}
+
+function updateSalesBadge() {
+
+    const badge =
+        document.getElementById("salesStatusBadge");
+
+    const shortcode =
+        document.getElementById("salesShortcode")
+        .value.trim();
+
+    if (loadedSettings.salesConfigSkipped) {
+
+        badge.innerText = "Skipped";
+        badge.className =
+            "status-badge badge-skipped";
+
+    } else if (shortcode) {
+
+        badge.innerText = "Configured";
+        badge.className =
+            "status-badge badge-configured";
+
+    } else {
+
+        badge.innerText = "Optional";
+        badge.className =
+            "status-badge badge-pending";
+    }
+}
+
+
+/* =========================
+   LOAD SETTINGS
+========================= */
+
+function loadLocalSettings() {
+
+    if (!activeUID) return;
+
+    const cacheKey =
+        AGUtils.uidKey(
+            "ag_profile_cache",
+            activeUID
         );
 
+    const cached =
+        AGUtils.readJSON(cacheKey,null);
+
+    if (cached) {
+        loadedSettings = {
+            ...loadedSettings,
+            ...cached
+        };
     }
 
-    const rtdb = firebase.database();
+    if (!loadedSettings.salesDaraja) {
 
-
-    /*
-    ---------------------------------------------------
-    CONFIGURATION
-    ---------------------------------------------------
-    */
-
-    const MASTER_CONFIG = {
-
-        backendUrl:
-            "https://weathered-glade-c60b.assetguardinfo.workers.dev"
-
-    };
-
-
-    let activeUID = null;
-
-    let loadedSettings = {
-
-        businessName:
-            "JCorp Kenya Inc",
-
-        tagline:
-            "Transformation you need",
-
-        logoUrl:
-            "",
-
-        salesConfigSkipped:
-            true,
-
-        salesDaraja: {
-
-            environment:
-                "production",
-
-            accountType:
-                "Paybill",
-
-            shortcode:
-                "",
-
-            passkey:
-                "",
-
-            consumerKey:
-                "",
-
-            consumerSecret:
-                ""
-
-        }
-
-    };
-
-
-    /*
-    ---------------------------------------------------
-    AUTHENTICATION
-    ---------------------------------------------------
-    */
-
-    firebase.auth().onAuthStateChanged((user) => {
-
-        if (!user) {
-
-            window.location.replace(
-                "login.html"
-            );
-
-            return;
-
-        }
-
-        activeUID = user.uid;
-
-        loadLocalSettings();
-
-        initPasscodeSection();
-
-    });
-
-
-    /*
-    ---------------------------------------------------
-    SALES CONFIGURATION
-    ---------------------------------------------------
-    */
-
-    function toggleSalesConfig() {
-
-        document
-            .getElementById("salesSection")
-            .classList
-            .toggle("expanded");
-
+        loadedSettings.salesDaraja = {
+            environment: "production",
+            accountType: "Paybill",
+            shortcode: "",
+            passkey: "",
+            consumerKey: "",
+            consumerSecret: ""
+        };
     }
 
+    document.getElementById("businessNameInput").value =
+        loadedSettings.businessName || "";
 
-    async function skipSalesConfig(event) {
+    document.getElementById("taglineInput").value =
+        loadedSettings.tagline || "";
 
-        event.stopPropagation();
+    document.getElementById("salesEnvironment").value =
+        loadedSettings.salesDaraja.environment ||
+        "production";
 
-        loadedSettings.salesConfigSkipped = true;
+    document.getElementById("salesAccountType").value =
+        loadedSettings.salesDaraja.accountType ||
+        "Paybill";
 
-        document.getElementById(
-            "salesShortcode"
-        ).value = "";
+    document.getElementById("salesShortcode").value =
+        loadedSettings.salesDaraja.shortcode || "";
 
-        document.getElementById(
-            "salesPasskey"
-        ).value = "";
+    document.getElementById("salesPasskey").value =
+        loadedSettings.salesDaraja.passkey || "";
 
-        document.getElementById(
-            "salesConsumerKey"
-        ).value = "";
+    document.getElementById("salesConsumerKey").value =
+        loadedSettings.salesDaraja.consumerKey || "";
 
-        document.getElementById(
-            "salesConsumerSecret"
-        ).value = "";
+    document.getElementById("salesConsumerSecret").value =
+        loadedSettings.salesDaraja.consumerSecret || "";
 
-
-        document
-            .getElementById("salesSection")
-            .classList
-            .remove("expanded");
+    updatePreviewCard();
+    updateSalesBadge();
+}
 
 
-        updateSalesBadge();
+/* =========================
+   PREVIEW
+========================= */
 
-        await saveConfiguration(true);
+function updatePreviewCard() {
 
+    document.getElementById("prevName").innerText =
+        document.getElementById("businessNameInput").value ||
+        "JCorp Kenya Inc";
+
+    document.getElementById("prevTag").innerText =
+        document.getElementById("taglineInput").value ||
+        "Transformation you need";
+
+    if (loadedSettings.logoUrl) {
+        document.getElementById("prevLogo").src =
+            loadedSettings.logoUrl;
+    }
+}
+
+
+/* =========================
+   LOGO
+========================= */
+
+function processLogoFile(input) {
+
+    const file =
+        input.files &&
+        input.files[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+
+        triggerToast(
+            "Please select a valid image"
+        );
+
+        return;
     }
 
+    const reader = new FileReader();
 
-    function handleShortcodeInput() {
+    reader.onload = function(event) {
 
-        const shortcode =
-            document
-                .getElementById("salesShortcode")
-                .value
-                .trim();
-
-
-        if (shortcode) {
-
-            loadedSettings.salesConfigSkipped =
-                false;
-
-        }
-
-
-        updateSalesBadge();
-
-    }
-
-
-    function updateSalesBadge() {
-
-        const badge =
-            document.getElementById(
-                "salesStatusBadge"
-            );
-
-
-        const shortcode =
-            document
-                .getElementById(
-                    "salesShortcode"
-                )
-                .value
-                .trim();
-
-
-        if (
-            loadedSettings.salesConfigSkipped
-        ) {
-
-            badge.innerText =
-                "Skipped";
-
-            badge.className =
-                "status-badge badge-skipped";
-
-        }
-
-        else if (shortcode) {
-
-            badge.innerText =
-                "Configured";
-
-            badge.className =
-                "status-badge badge-configured";
-
-        }
-
-        else {
-
-            badge.innerText =
-                "Optional";
-
-            badge.className =
-                "status-badge badge-pending";
-
-        }
-
-    }
-
-
-    /*
-    ---------------------------------------------------
-    LOAD SETTINGS
-    ---------------------------------------------------
-    */
-
-    function loadLocalSettings() {
-
-        if (!activeUID) return;
-
-
-        const cacheKey =
-            AGUtils.uidKey(
-                "ag_profile_cache",
-                activeUID
-            );
-
-
-        const cached =
-            AGUtils.readJSON(
-                cacheKey,
-                null
-            );
-
-
-        if (cached) {
-
-            loadedSettings = {
-
-                ...loadedSettings,
-
-                ...cached
-
-            };
-
-
-            if (
-                !loadedSettings.salesDaraja
-            ) {
-
-                loadedSettings.salesDaraja = {
-
-                    environment:
-                        "production",
-
-                    accountType:
-                        "Paybill",
-
-                    shortcode:
-                        "",
-
-                    passkey:
-                        "",
-
-                    consumerKey:
-                        "",
-
-                    consumerSecret:
-                        ""
-
-                };
-
-            }
-
-        }
-
-
-        document
-            .getElementById(
-                "businessNameInput"
-            )
-            .value =
-                loadedSettings.businessName || "";
-
-
-        document
-            .getElementById(
-                "taglineInput"
-            )
-            .value =
-                loadedSettings.tagline || "";
-
-
-        document
-            .getElementById(
-                "salesEnvironment"
-            )
-            .value =
-                loadedSettings
-                    .salesDaraja
-                    .environment ||
-                "production";
-
-
-        document
-            .getElementById(
-                "salesAccountType"
-            )
-            .value =
-                loadedSettings
-                    .salesDaraja
-                    .accountType ||
-                "Paybill";
-
-
-        document
-            .getElementById(
-                "salesShortcode"
-            )
-            .value =
-                loadedSettings
-                    .salesDaraja
-                    .shortcode ||
-                "";
-
-
-        document
-            .getElementById(
-                "salesPasskey"
-            )
-            .value =
-                loadedSettings
-                    .salesDaraja
-                    .passkey ||
-                "";
-
-
-        document
-            .getElementById(
-                "salesConsumerKey"
-            )
-            .value =
-                loadedSettings
-                    .salesDaraja
-                    .consumerKey ||
-                "";
-
-
-        document
-            .getElementById(
-                "salesConsumerSecret"
-            )
-            .value =
-                loadedSettings
-                    .salesDaraja
-                    .consumerSecret ||
-                "";
-
+        loadedSettings.logoUrl =
+            event.target.result;
 
         updatePreviewCard();
 
-        updateSalesBadge();
+        triggerToast(
+            "Logo loaded successfully"
+        );
+    };
 
+    reader.onerror = function() {
+
+        console.error(
+            "FileReader error:",
+            reader.error
+        );
+
+        triggerToast(
+            "Unable to read selected image"
+        );
+    };
+
+    try {
+
+        reader.readAsDataURL(file);
+
+    } catch (error) {
+
+        console.error(
+            "Logo error:",
+            error
+        );
+
+        triggerToast(
+            error.message ||
+            "Unable to access selected image"
+        );
+    }
+}
+
+
+/* =========================
+   SAVE SETTINGS
+========================= */
+
+async function saveConfiguration(isSkipAction = false) {
+
+    if (!activeUID) {
+
+        triggerToast(
+            "User session is not authenticated"
+        );
+
+        return;
     }
 
+    const saveButton =
+        document.getElementById(
+            "saveSettingsBtn"
+        );
 
-    /*
-    ---------------------------------------------------
-    BRAND PREVIEW
-    ---------------------------------------------------
-    */
+    saveButton.disabled = true;
+    saveButton.innerText = "Saving...";
 
-    function updatePreviewCard() {
+    try {
 
-        document
-            .getElementById(
-                "prevName"
-            )
-            .innerText =
+        loadedSettings.businessName =
+            document.getElementById(
+                "businessNameInput"
+            ).value.trim();
 
-            document
-                .getElementById(
-                    "businessNameInput"
-                )
-                .value ||
+        loadedSettings.tagline =
+            document.getElementById(
+                "taglineInput"
+            ).value.trim();
 
-            "JCorp Kenya Inc";
+        const shortcode =
+            document.getElementById(
+                "salesShortcode"
+            ).value.trim();
 
-
-        document
-            .getElementById(
-                "prevTag"
-            )
-            .innerText =
-
-            document
-                .getElementById(
-                    "taglineInput"
-                )
-                .value ||
-
-            "Transformation you need";
-
-
-        if (
-            loadedSettings.logoUrl
-        ) {
-
-            document
-                .getElementById(
-                    "prevLogo"
-                )
-                .src =
-                    loadedSettings.logoUrl;
-
+        if (!isSkipAction && shortcode) {
+            loadedSettings.salesConfigSkipped = false;
         }
 
-    }
+        loadedSettings.salesDaraja = {
 
+            backendUrl:
+                MASTER_CONFIG.backendUrl,
 
-    /*
-    ---------------------------------------------------
-    LOGO UPLOAD
-    ---------------------------------------------------
-    */
+            environment:
+                document.getElementById(
+                    "salesEnvironment"
+                ).value,
 
-    function processLogoFile(uploader) {
+            accountType:
+                document.getElementById(
+                    "salesAccountType"
+                ).value,
 
-        const file =
-            uploader.files &&
-            uploader.files[0];
+            shortcode: shortcode,
 
+            passkey:
+                document.getElementById(
+                    "salesPasskey"
+                ).value.trim(),
 
-        if (!file) return;
+            consumerKey:
+                document.getElementById(
+                    "salesConsumerKey"
+                ).value.trim(),
 
+            consumerSecret:
+                document.getElementById(
+                    "salesConsumerSecret"
+                ).value.trim()
+        };
 
-        if (
-            !file.type ||
-            !file.type.startsWith("image/")
-        ) {
+        AGUtils.writeJSON(
+            AGUtils.uidKey(
+                "ag_profile_cache",
+                activeUID
+            ),
+            loadedSettings
+        );
 
-            triggerToast(
-                "Please select a valid image"
+        await rtdb.ref(
+            `user_settings/${activeUID}`
+        ).set({
+            ...loadedSettings,
+            updatedAt: Date.now()
+        });
+
+        const statusRef =
+            rtdb.ref(
+                `user_statuses/${activeUID}`
             );
 
-            uploader.value = "";
+        const status =
+            await statusRef.once("value");
 
-            return;
-
+        if (!status.exists()) {
+            await statusRef.set("Active");
         }
-
-
-        const reader =
-            new FileReader();
-
-
-        reader.onload = function(event) {
-
-            loadedSettings.logoUrl =
-                event.target.result;
-
-
-            updatePreviewCard();
-
-
-            triggerToast(
-                "Logo loaded successfully"
-            );
-
-        };
-
-
-        reader.onerror = function() {
-
-            console.error(
-                "Logo read error:",
-                reader.error
-            );
-
-
-            triggerToast(
-                "Unable to read the selected image"
-            );
-
-        };
-
 
         try {
 
-            reader.readAsDataURL(
-                file
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Logo upload error:",
-                error
-            );
-
-
-            triggerToast(
-                error.message ||
-                "Unable to access selected image"
-            );
-
-        }
-
-    }
-
-
-    /*
-    ---------------------------------------------------
-    SAVE SETTINGS
-    ---------------------------------------------------
-    */
-
-    async function saveConfiguration(
-        isSkipAction = false
-    ) {
-
-        if (!activeUID) {
-
-            triggerToast(
-                "User session not authenticated"
-            );
-
-            return;
-
-        }
-
-
-        const saveButton =
-            document.querySelector(
-                ".settings-footer .btn-primary"
-            );
-
-
-        if (saveButton) {
-
-            saveButton.disabled = true;
-
-            saveButton.innerText =
-                "Saving...";
-
-        }
-
-
-        try {
-
-            loadedSettings.businessName =
-                document
-                    .getElementById(
-                        "businessNameInput"
-                    )
-                    .value
-                    .trim();
-
-
-            loadedSettings.tagline =
-                document
-                    .getElementById(
-                        "taglineInput"
-                    )
-                    .value
-                    .trim();
-
-
-            const shortcode =
-                document
-                    .getElementById(
-                        "salesShortcode"
-                    )
-                    .value
-                    .trim();
-
-
-            if (
-                !isSkipAction &&
-                shortcode
-            ) {
-
-                loadedSettings.salesConfigSkipped =
-                    false;
-
-            }
-
-
-            loadedSettings.salesDaraja = {
-
-                backendUrl:
-                    MASTER_CONFIG.backendUrl,
-
-                environment:
-                    document
-                        .getElementById(
-                            "salesEnvironment"
-                        )
-                        .value,
-
-                accountType:
-                    document
-                        .getElementById(
-                            "salesAccountType"
-                        )
-                        .value,
-
-                shortcode:
-
-                    shortcode,
-
-                passkey:
-
-                    document
-                        .getElementById(
-                            "salesPasskey"
-                        )
-                        .value
-                        .trim(),
-
-                consumerKey:
-
-                    document
-                        .getElementById(
-                            "salesConsumerKey"
-                        )
-                        .value
-                        .trim(),
-
-                consumerSecret:
-
-                    document
-                        .getElementById(
-                            "salesConsumerSecret"
-                        )
-                        .value
-                        .trim()
-
-            };
-
-
-            AGUtils.writeJSON(
-
-                AGUtils.uidKey(
-                    "ag_profile_cache",
-                    activeUID
-                ),
-
-                loadedSettings
-
-            );
-
-
-            updateSalesBadge();
-
-
-            /*
-            SAVE USER SETTINGS
-            */
-
-            await rtdb
-                .ref(
-                    `user_settings/${activeUID}`
-                )
-                .set({
-
-                    ...loadedSettings,
-
-                    updatedAt:
-                        Date.now()
-
-                });
-
-
-            /*
-            CREATE USER STATUS IF MISSING
-            */
-
-            const statusRef =
-                rtdb.ref(
-                    `user_statuses/${activeUID}`
-                );
-
-
-            const statusSnapshot =
-                await statusRef.once(
-                    "value"
-                );
-
-
-            if (
-                !statusSnapshot.exists()
-            ) {
-
-                await statusRef.set(
-                    "Active"
-                );
-
-            }
-
-
-            /*
-            ACTIVITY LOG
-            */
-
-            try {
-
-                await rtdb
-                    .ref(
-                        "user_activity_logs"
-                    )
-                    .push({
-
-                        uid:
-                            activeUID,
-
-                        category:
-                            "SETTINGS",
-
-                        description:
-
-                            isSkipAction
-
-                                ? "POS Payment Setup Skipped"
-
-                                : "Corporate business and payment settings updated",
-
-                        timestamp:
-                            Date.now(),
-
-                        device:
-                            navigator.userAgent.substring(
-                                0,
-                                80
-                            )
-
-                    });
-
-            }
-
-            catch (logError) {
-
-                console.warn(
-                    "Activity log could not be saved:",
-                    logError
-                );
-
-            }
-
-
-            /*
-            APP INVENTOR BRIDGE
-            */
-
-            try {
-
-                if (
-
-                    window.AppInventor &&
-
-                    typeof
-                    window.AppInventor
-                        .setWebViewString ===
-                    "function"
-
-                ) {
-
-                    window.AppInventor
-                        .setWebViewString(
-
-                            JSON.stringify({
-
-                                action:
-                                    "settings_updated",
-
-                                uid:
-                                    activeUID,
-
-                                data:
-                                    loadedSettings
-
-                            })
-
-                        );
-
-                }
-
-            }
-
-            catch (bridgeError) {
-
-                console.warn(
-                    "App bridge error:",
-                    bridgeError
-                );
-
-            }
-
-
-            triggerToast(
-
-                isSkipAction
-
+            await rtdb.ref(
+                "user_activity_logs"
+            ).push({
+                uid: activeUID,
+                category: "SETTINGS",
+                description:
+                    isSkipAction
                     ? "POS Payment Setup Skipped"
-
-                    : "Settings Saved & Synchronized"
-
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Settings save error:",
-                error
-            );
-
-
-            if (
-
-                error.code ===
-                "PERMISSION_DENIED"
-
-            ) {
-
-                triggerToast(
-                    "Permission denied. Check Firebase database rules."
-                );
-
-            }
-
-            else {
-
-                triggerToast(
-
-                    error.message ||
-
-                    "Settings could not be saved"
-
-                );
-
-            }
-
-        }
-
-        finally {
-
-            if (saveButton) {
-
-                saveButton.disabled =
-                    false;
-
-                saveButton.innerText =
-                    "Save Settings";
-
-            }
-
-        }
-
-    }
-
-
-    /*
-    ---------------------------------------------------
-    PASSCODE SYSTEM
-    ---------------------------------------------------
-    */
-
-    let passcodeResetToken =
-        null;
-
-
-    async function passcodeApi() {
-
-        if (
-            globalThis.AGPasscode
-        ) {
-
-            return globalThis.AGPasscode;
-
-        }
-
-
-        await new Promise(
-            resolve =>
-                setTimeout(
-                    resolve,
-                    300
-                )
-        );
-
-
-        if (
-            !globalThis.AGPasscode
-        ) {
-
-            throw new Error(
-                "Security module is still loading. Please try again."
-            );
-
-        }
-
-
-        return globalThis.AGPasscode;
-
-    }
-
-
-    async function initPasscodeSection() {
-
-        const params =
-            new URLSearchParams(
-                window.location.search
-            );
-
-
-        passcodeResetToken =
-            params.get(
-                "internalReset"
-            );
-
-
-        const stateRow =
-            document.getElementById(
-                "passcodeStateRow"
-            );
-
-
-        const currentField =
-            document.getElementById(
-                "currentPasscodeField"
-            );
-
-
-        try {
-
-            const api =
-                await passcodeApi();
-
-
-            const configured =
-                await api.isConfigured();
-
-
-            if (
-                passcodeResetToken
-            ) {
-
-                await api.validateResetToken(
-                    passcodeResetToken
-                );
-
-
-                currentField.style.display =
-                    "none";
-
-
-                stateRow.style.color =
-                    "var(--success)";
-
-
-                stateRow.innerText =
-                    "Reset link verified. Choose a new internal passcode.";
-
-
-                return;
-
-            }
-
-
-            currentField.style.display =
-                configured
-                    ? "flex"
-                    : "none";
-
-
-            stateRow.style.color =
-                configured
-                    ? "var(--text-muted)"
-                    : "var(--warning)";
-
-
-            stateRow.innerText =
-
-                configured
-
-                    ? "An internal passcode is active on this account."
-
-                    : "No internal passcode has been created yet.";
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Passcode initialization error:",
-                error
-            );
-
-
-            passcodeResetToken =
-                null;
-
-
-            currentField.style.display =
-                "flex";
-
-
-            stateRow.style.color =
-                "var(--danger)";
-
-
-            stateRow.innerText =
-
-                error.message ||
-
-                "Internal passcode status unavailable.";
-
-        }
-
-    }
-
-
-    async function savePasscode() {
-
-        const button =
-            document.getElementById(
-                "savePasscodeBtn"
-            );
-
-
-        const current =
-            document
-                .getElementById(
-                    "currentPasscode"
-                )
-                .value
-                .trim();
-
-
-        const next =
-            document
-                .getElementById(
-                    "newPasscode"
-                )
-                .value
-                .trim();
-
-
-        const confirm =
-            document
-                .getElementById(
-                    "confirmPasscode"
-                )
-                .value
-                .trim();
-
-
-        if (
-            next.length < 4
-        ) {
-
-            triggerToast(
-                "Passcode must contain at least 4 characters"
-            );
-
-            return;
-
-        }
-
-
-        if (
-            next !== confirm
-        ) {
-
-            triggerToast(
-                "New passcodes do not match"
-            );
-
-            return;
-
-        }
-
-
-        button.disabled =
-            true;
-
-
-        try {
-
-            const api =
-                await passcodeApi();
-
-
-            await api.setPasscode(
-
-                next,
-
-                {
-
-                    currentPasscode:
-                        current,
-
-                    resetToken:
-                        passcodeResetToken
-
-                }
-
-            );
-
-
-            document
-                .getElementById(
-                    "currentPasscode"
-                )
-                .value =
-                    "";
-
-
-            document
-                .getElementById(
-                    "newPasscode"
-                )
-                .value =
-                    "";
-
-
-            document
-                .getElementById(
-                    "confirmPasscode"
-                )
-                .value =
-                    "";
-
-
-            passcodeResetToken =
-                null;
-
-
-            history.replaceState(
-
-                null,
-
-                "",
-
-                window.location.pathname
-
-            );
-
-
-            triggerToast(
-                "Internal passcode updated successfully"
-            );
-
-
-            await initPasscodeSection();
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Passcode save error:",
-                error
-            );
-
-
-            triggerToast(
-
-                error.message ||
-
-                "Passcode update failed"
-
-            );
-
-        }
-
-        finally {
-
-            button.disabled =
-                false;
-
-        }
-
-    }
-
-
-    /*
-    ---------------------------------------------------
-    PASSCODE RESET
-    ---------------------------------------------------
-    */
-
-    async function requestPasscodeReset() {
-
-        const button =
-            document.getElementById(
-                "requestResetBtn"
-            );
-
-
-        const email =
-            document
-                .getElementById(
-                    "resetEmail"
-                )
-                .value
-                .trim()
-                .toLowerCase();
-
-
-        if (!email) {
-
-            triggerToast(
-                "Please enter your account e-mail"
-            );
-
-            return;
-
-        }
-
-
-        const currentUser =
-            firebase
-                .auth()
-                .currentUser;
-
-
-        if (!currentUser) {
-
-            triggerToast(
-                "Your session has expired. Please log in again."
-            );
-
-            return;
-
-        }
-
-
-        const accountEmail =
-            (
-                currentUser.email ||
-                ""
-            )
-            .toLowerCase();
-
-
-        /*
-        IMPORTANT:
-        DO NOT SEARCH /users FROM THE BROWSER.
-
-        We use the currently authenticated UID.
-        */
-
-
-        if (
-            accountEmail !== email
-        ) {
-
-            triggerToast(
-                "Please enter the e-mail address of your currently logged-in account."
-            );
-
-            return;
-
-        }
-
-
-        button.disabled =
-            true;
-
-
-        try {
-
-            const token =
-
-                "ag_rst_" +
-
-                Math.random()
-                    .toString(36)
-                    .substring(2) +
-
-                Date.now()
-                    .toString(36);
-
-
-            const expiresAt =
-
-                Date.now() +
-
-                (
-                    30 *
-                    60 *
-                    1000
-                );
-
-
-            /*
-            THIS PATH REQUIRES
-            user_passcode_resets RULES
-            */
-
-            await rtdb
-
-                .ref(
-                    `user_passcode_resets/${activeUID}`
-                )
-
-                .set({
-
-                    token:
-                        token,
-
-                    email:
-                        email,
-
-                    expiresAt:
-                        expiresAt,
-
-                    createdAt:
-                        Date.now()
-
-                });
-
-
-            const resetUrl =
-
-                `${window.location.origin}` +
-
-                `${window.location.pathname}` +
-
-                `?internalReset=${encodeURIComponent(token)}`;
-
-
-            const businessName =
-
-                document
-                    .getElementById(
-                        "businessNameInput"
-                    )
-                    .value ||
-
-                loadedSettings.businessName ||
-
-                "AssetGuard Pro";
-
-
-            const response =
-
-                await fetch(
-
-                    `${MASTER_CONFIG.backendUrl}/send-reset-email`,
-
-                    {
-
-                        method:
-                            "POST",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json"
-
-                        },
-
-                        body:
-
-                            JSON.stringify({
-
-                                email:
-                                    email,
-
-                                resetUrl:
-                                    resetUrl,
-
-                                businessName:
-                                    businessName
-
-                            })
-
-                    }
-
-                );
-
-
-            let result = {};
-
-
-            try {
-
-                result =
-                    await response.json();
-
-            }
-
-            catch (_) {}
-
-
-            if (
-                !response.ok
-            ) {
-
-                throw new Error(
-
-                    result.error ||
-
-                    "Failed to send reset email."
-
-                );
-
-            }
-
-
-            triggerToast(
-                "Reset link sent successfully!"
-            );
-
-
-            document
-                .getElementById(
-                    "resetEmail"
-                )
-                .value =
-                    "";
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Passcode reset error:",
-                error
-            );
-
-
-            if (
-
-                error.code ===
-                "PERMISSION_DENIED"
-
-            ) {
-
-                triggerToast(
-                    "Permission denied. Add the user_passcode_resets Firebase rule."
-                );
-
-            }
-
-            else {
-
-                triggerToast(
-
-                    error.message ||
-
-                    "Reset request failed"
-
-                );
-
-            }
-
-        }
-
-        finally {
-
-            button.disabled =
-                false;
-
-        }
-
-    }
-
-
-    /*
-    ---------------------------------------------------
-    TOAST
-    ---------------------------------------------------
-    */
-
-    function triggerToast(message) {
-
-        const toast =
-            document.getElementById(
-                "toastBox"
-            );
-
-
-        document
-            .getElementById(
-                "toastText"
-            )
-            .innerText =
-                message;
-
-
-        toast.classList.add(
-            "show"
-        );
-
-
-        setTimeout(
-
-            () => {
-
-                toast.classList.remove(
-                    "show"
-                );
-
-            },
-
-            3500
-
-        );
-
-    }
-
-
-    /*
-    ---------------------------------------------------
-    EXIT
-    ---------------------------------------------------
-    */
-
-    function exitPortal() {
-
-        if (!activeUID) {
-
-            window.location.href =
-                "dashboard.html";
-
-            return;
-
-        }
-
-
-        try {
-
-            if (
-
-                window.AppInventor &&
-
-                typeof
-                window.AppInventor
-                    .setWebViewString ===
-                "function"
-
-            ) {
-
-                window.AppInventor
-                    .setWebViewString(
-
-                        JSON.stringify({
-
-                            action:
-                                "navigate_back",
-
-                            uid:
-                                activeUID
-
-                        })
-
-                    );
-
-            }
-
-        }
-
-        catch (error) {
+                    : "Settings Updated",
+                timestamp: Date.now()
+            });
+
+        } catch (logError) {
 
             console.warn(
-                "Navigation bridge error:",
-                error
+                "Activity log failed:",
+                logError
             );
-
         }
 
+        updateSalesBadge();
 
-        window.location.href =
+        triggerToast(
+            "Settings Saved & Synchronized"
+        );
 
-            `dashboard.html?uid=` +
+    } catch (error) {
 
-            encodeURIComponent(
-                activeUID
+        console.error(
+            "Settings save error:",
+            error
+        );
+
+        if (
+            error.code ===
+            "PERMISSION_DENIED"
+        ) {
+
+            triggerToast(
+                "Firebase permission denied. Check user_settings rules."
             );
 
+        } else {
+
+            triggerToast(
+                error.message ||
+                "Settings could not be saved"
+            );
+        }
+
+    } finally {
+
+        saveButton.disabled = false;
+        saveButton.innerText =
+            "Save Settings";
     }
+}
+
+
+/* =========================
+   PASSCODE API
+========================= */
+
+async function passcodeApi() {
+
+    if (globalThis.AGPasscode) {
+        return globalThis.AGPasscode;
+    }
+
+    await new Promise(
+        resolve => setTimeout(resolve,300)
+    );
+
+    if (!globalThis.AGPasscode) {
+        throw new Error(
+            "Security module is still loading"
+        );
+    }
+
+    return globalThis.AGPasscode;
+}
+
+
+/* =========================
+   INITIALIZE PASSCODE
+========================= */
+
+async function initPasscodeSection() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    passcodeResetToken =
+        params.get("internalReset");
+
+    const state =
+        document.getElementById(
+            "passcodeStateRow"
+        );
+
+    const currentField =
+        document.getElementById(
+            "currentPasscodeField"
+        );
+
+    try {
+
+        const api =
+            await passcodeApi();
+
+        const configured =
+            await api.isConfigured();
+
+        if (passcodeResetToken) {
+
+            await api.validateResetToken(
+                passcodeResetToken
+            );
+
+            currentField.style.display =
+                "none";
+
+            state.innerText =
+                "Reset link verified. Choose a new passcode.";
+
+            state.style.color =
+                "var(--success)";
+
+            return;
+        }
+
+        currentField.style.display =
+            configured
+            ? "flex"
+            : "none";
+
+        state.innerText =
+            configured
+            ? "An internal passcode is active."
+            : "No internal passcode set yet.";
+
+    } catch (error) {
+
+        console.error(
+            "Passcode initialization error:",
+            error
+        );
+
+        passcodeResetToken = null;
+
+        state.innerText =
+            error.message ||
+            "Passcode status unavailable.";
+
+        state.style.color =
+            "var(--danger)";
+    }
+}
+
+
+/* =========================
+   SAVE PASSCODE
+========================= */
+
+async function savePasscode() {
+
+    const button =
+        document.getElementById(
+            "savePasscodeBtn"
+        );
+
+    const current =
+        document.getElementById(
+            "currentPasscode"
+        ).value.trim();
+
+    const next =
+        document.getElementById(
+            "newPasscode"
+        ).value.trim();
+
+    const confirm =
+        document.getElementById(
+            "confirmPasscode"
+        ).value.trim();
+
+    if (next.length < 4) {
+
+        triggerToast(
+            "Passcode must have at least 4 characters"
+        );
+
+        return;
+    }
+
+    if (next !== confirm) {
+
+        triggerToast(
+            "New passcodes do not match"
+        );
+
+        return;
+    }
+
+    button.disabled = true;
+
+    try {
+
+        const api =
+            await passcodeApi();
+
+        await api.setPasscode(
+            next,
+            {
+                currentPasscode: current,
+                resetToken: passcodeResetToken
+            }
+        );
+
+        document.getElementById(
+            "currentPasscode"
+        ).value = "";
+
+        document.getElementById(
+            "newPasscode"
+        ).value = "";
+
+        document.getElementById(
+            "confirmPasscode"
+        ).value = "";
+
+        passcodeResetToken = null;
+
+        history.replaceState(
+            null,
+            "",
+            window.location.pathname
+        );
+
+        triggerToast(
+            "Internal passcode updated successfully"
+        );
+
+        await initPasscodeSection();
+
+    } catch (error) {
+
+        console.error(
+            "Passcode error:",
+            error
+        );
+
+        triggerToast(
+            error.message ||
+            "Passcode update failed"
+        );
+
+    } finally {
+
+        button.disabled = false;
+    }
+}
+
+
+/* =========================
+   RESET PASSCODE
+========================= */
+
+async function requestPasscodeReset() {
+
+    const button =
+        document.getElementById(
+            "requestResetBtn"
+        );
+
+    const email =
+        document.getElementById(
+            "resetEmail"
+        ).value.trim().toLowerCase();
+
+    if (!email) {
+
+        triggerToast(
+            "Enter your account e-mail"
+        );
+
+        return;
+    }
+
+    const user =
+        firebase.auth().currentUser;
+
+    if (!user) {
+
+        triggerToast(
+            "Your login session has expired"
+        );
+
+        return;
+    }
+
+    if (!activeUID || user.uid !== activeUID) {
+
+        triggerToast(
+            "Account verification failed. Please log in again."
+        );
+
+        return;
+    }
+
+    const accountEmail =
+        (user.email || "")
+        .trim()
+        .toLowerCase();
+
+    if (accountEmail !== email) {
+
+        triggerToast(
+            "Enter the e-mail address of the currently logged-in account."
+        );
+
+        return;
+    }
+
+    button.disabled = true;
+    button.innerText = "Sending...";
+
+    try {
+
+        const token =
+            "ag_rst_" +
+            Math.random()
+            .toString(36)
+            .substring(2) +
+            Date.now()
+            .toString(36);
+
+        const expiresAt =
+            Date.now() +
+            (30 * 60 * 1000);
+
+        /*
+         SAVE RESET TOKEN
+         Requires Firebase rule:
+         user_passcode_resets/$uid
+        */
+
+        await rtdb.ref(
+            `user_passcode_resets/${activeUID}`
+        ).set({
+
+            token: token,
+
+            email: email,
+
+            expiresAt: expiresAt,
+
+            createdAt: Date.now()
+
+        });
+
+        const resetUrl =
+            window.location.origin +
+            window.location.pathname +
+            "?internalReset=" +
+            encodeURIComponent(token);
+
+        const businessName =
+            loadedSettings.businessName ||
+            "AssetGuard Pro";
+
+        const response =
+            await fetch(
+                `${MASTER_CONFIG.backendUrl}/send-reset-email`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                        "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        email: email,
+                        resetUrl: resetUrl,
+                        businessName: businessName
+                    })
+                }
+            );
+
+        let result = {};
+
+        try {
+            result =
+                await response.json();
+        } catch (_) {}
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.error ||
+                "Failed to send reset email"
+            );
+        }
+
+        document.getElementById(
+            "resetEmail"
+        ).value = "";
+
+        triggerToast(
+            "Reset link sent successfully!"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Reset error:",
+            error
+        );
+
+        if (
+            error.code ===
+            "PERMISSION_DENIED"
+        ) {
+
+            triggerToast(
+                "Permission denied: add user_passcode_resets rules in Firebase."
+            );
+
+        } else {
+
+            triggerToast(
+                error.message ||
+                "Reset request failed"
+            );
+        }
+
+    } finally {
+
+        button.disabled = false;
+
+        button.innerText =
+            "Send Reset Link";
+    }
+}
+
+
+/* =========================
+   TOAST
+========================= */
+
+function triggerToast(message) {
+
+    const toast =
+        document.getElementById(
+            "toastBox"
+        );
+
+    document.getElementById(
+        "toastText"
+    ).innerText = message;
+
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    },3500);
+}
+
+
+/* =========================
+   EXIT
+========================= */
+
+function exitPortal() {
+
+    if (!activeUID) {
+        window.location.href =
+            "dashboard.html";
+        return;
+    }
+
+    window.location.href =
+        "dashboard.html?uid=" +
+        encodeURIComponent(activeUID);
+}
 
 </script>
 
