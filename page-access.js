@@ -19,10 +19,17 @@
         resetUrl.searchParams.set("expires", String(expiresAt));
         const firebaseAuth = getAuth();
         if (!firebaseAuth) return Promise.reject(new Error("Authentication is still loading."));
-        return firebaseAuth.sendPasswordResetEmail(email, {
+        const actionCodeSettings = {
             url: resetUrl.href,
             handleCodeInApp: false
-        });
+        };
+        return firebaseAuth.sendPasswordResetEmail(email, actionCodeSettings)
+            .then(() => ({ customHandler: true }))
+            .catch((error) => {
+                if (error.code !== "auth/unauthorized-continue-uri") throw error;
+                return firebaseAuth.sendPasswordResetEmail(email)
+                    .then(() => ({ customHandler: false }));
+            });
     }
 
     function addResetControl() {
@@ -36,7 +43,9 @@
             const email = window.prompt("Enter your account email");
             if (!email || !email.trim()) return;
             sendResetEmail(email.trim().toLowerCase())
-                .then(() => window.alert("Reset link sent. It expires in 30 minutes."))
+                .then((result) => window.alert(result.customHandler
+                    ? "Reset link sent. It expires in 30 minutes."
+                    : "Reset link sent. Firebase used its standard reset handler."))
                 .catch((error) => window.alert(formatResetError(error)));
         });
         document.body.appendChild(control);

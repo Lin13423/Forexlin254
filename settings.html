@@ -370,14 +370,21 @@
         button.disabled = true;
         button.textContent = 'Sending...';
         try {
-            await auth.sendPasswordResetEmail(email, { url: resetUrl.href, handleCodeInApp: false });
-            triggerToast('Reset link sent. It expires in 30 minutes.');
+            let customHandler = true;
+            try {
+                await auth.sendPasswordResetEmail(email, { url: resetUrl.href, handleCodeInApp: false });
+            } catch (error) {
+                if (error.code !== 'auth/unauthorized-continue-uri') throw error;
+                await auth.sendPasswordResetEmail(email);
+                customHandler = false;
+            }
+            triggerToast(customHandler
+                ? 'Reset link sent. It expires in 30 minutes.'
+                : 'Reset link sent using Firebase standard reset.');
         } catch (error) {
             triggerToast(error.code === 'auth/user-not-found'
                 ? 'No account is registered with that email.'
-                : error.code === 'auth/unauthorized-continue-uri'
-                    ? 'Add lin13423.github.io to Firebase Authorized domains.'
-                    : `Could not send reset link (${error.code || 'unknown error'}).`);
+                : `Could not send reset link (${error.code || 'unknown error'}).`);
         } finally {
             button.disabled = false;
             button.textContent = 'Send Reset Link';
