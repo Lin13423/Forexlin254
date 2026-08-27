@@ -2156,7 +2156,7 @@ Upload Corporate Logo
 </b>
 
 
-<p>
+<p id="logoSubText">
 
 Select image from device storage
 
@@ -2996,13 +2996,16 @@ function updatePreviewCard() {
         logo.src =
             loadedSettings.logoUrl;
 
+        // If a logo is already loaded from storage/cache on boot, update the text to show it's selected
+        document.getElementById("logoSubText").innerText = "Image selected";
+
     }
 
 }
 
 
 // ============================================================
-// LOGO
+// LOGO (UPDATED WITH TEXT & SELECTION TOAST)
 // ============================================================
 
 function processLogoFile(uploader) {
@@ -3031,6 +3034,12 @@ function processLogoFile(uploader) {
 
             updatePreviewCard();
 
+            // Update text inside upload box
+            document.getElementById("logoSubText").innerText = "Image selected";
+
+            // Notify image selected
+            triggerToast("Image selected");
+
         };
 
 
@@ -3042,7 +3051,7 @@ function processLogoFile(uploader) {
 
 
 // ============================================================
-// SAVE SETTINGS
+// SAVE SETTINGS (UPDATED WITH LOGO SAVED TOAST)
 // ============================================================
 
 async function saveConfiguration(
@@ -3307,7 +3316,7 @@ async function saveConfiguration(
 
                     :
 
-                    "Settings Saved & Synchronized"
+                    "Logo saved successfully"
 
             )
 
