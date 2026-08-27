@@ -2011,7 +2011,7 @@ autocomplete="new-password"
 
 
 
-<!-- ACTION BUTTONS: CANCEL & UPDATE PASSCODE -->
+<!-- ACTION BUTTONS: CANCEL & SAVE CHANGES -->
 
 <div
     style="
@@ -2042,15 +2042,15 @@ Cancel
 
 class="btn btn-primary"
 
-id="updatePasscodeBtn"
+id="saveChangesBtn"
 
-onclick="updatePasscodeOnly()"
+onclick="saveChangesAction()"
 
 style="flex: 1;"
 
 >
 
-Update Passcode
+Save Changes
 
 </button>
 
@@ -2997,7 +2997,7 @@ function processLogoFile(uploader) {
 
             await saveConfiguration(true);
 
-            triggerToast("Logo updated successfully");
+            triggerToast("Logo saved instantly");
 
         };
 
@@ -3019,7 +3019,7 @@ function queueAutoSave() {
     clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(async () => {
         await saveConfiguration(true);
-    }, 500);
+    }, 400);
 }
 
 
@@ -3451,54 +3451,53 @@ async function initPasscodeSection() {
 
 
 // ============================================================
-// UPDATE PASSCODE ONLY
+// SAVE CHANGES ACTION (UPDATES PASSCODE IF FILLED & CONFIRMS SAVED STATE)
 // ============================================================
 
-async function updatePasscodeOnly() {
+async function saveChangesAction() {
 
-    const button = document.getElementById("updatePasscodeBtn");
+    const button = document.getElementById("saveChangesBtn");
     button.disabled = true;
     const originalText = button.innerText;
-    button.innerText = "Updating...";
+    button.innerText = "Saving Changes...";
 
     try {
+        await saveConfiguration(true);
+
         const newPasscode = document.getElementById("newPasscode").value.trim();
         const confirmation = document.getElementById("confirmPasscode").value.trim();
         const currentPasscode = document.getElementById("currentPasscode").value.trim();
 
-        if (newPasscode === "" && confirmation === "") {
-            triggerToast("Please enter a new 4-digit passcode");
-            button.disabled = false;
-            button.innerText = originalText;
-            return;
+        if (newPasscode !== "" || confirmation !== "" || currentPasscode !== "") {
+            if (newPasscode.length !== 4) {
+                triggerToast("Passcode must be exactly 4 digits");
+                button.disabled = false;
+                button.innerText = originalText;
+                return;
+            }
+
+            if (newPasscode !== confirmation) {
+                triggerToast("New passcodes do not match");
+                button.disabled = false;
+                button.innerText = originalText;
+                return;
+            }
+
+            const api = await passcodeApi();
+            await api.setPasscode(newPasscode, { currentPasscode });
+
+            document.getElementById("currentPasscode").value = "";
+            document.getElementById("newPasscode").value = "";
+            document.getElementById("confirmPasscode").value = "";
+
+            await initPasscodeSection();
+            triggerToast("All changes & passcode updated successfully");
+        } else {
+            triggerToast("All changes saved successfully");
         }
-
-        if (newPasscode.length !== 4) {
-            triggerToast("Passcode must be exactly 4 digits");
-            button.disabled = false;
-            button.innerText = originalText;
-            return;
-        }
-
-        if (newPasscode !== confirmation) {
-            triggerToast("New passcodes do not match");
-            button.disabled = false;
-            button.innerText = originalText;
-            return;
-        }
-
-        const api = await passcodeApi();
-        await api.setPasscode(newPasscode, { currentPasscode });
-
-        document.getElementById("currentPasscode").value = "";
-        document.getElementById("newPasscode").value = "";
-        document.getElementById("confirmPasscode").value = "";
-
-        await initPasscodeSection();
-        triggerToast("Passcode updated successfully");
     }
     catch (error) {
-        triggerToast(error.message || "Passcode update failed");
+        triggerToast(error.message || "Save failed");
     }
     finally {
         button.disabled = false;
