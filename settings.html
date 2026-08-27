@@ -375,7 +375,9 @@
         } catch (error) {
             triggerToast(error.code === 'auth/user-not-found'
                 ? 'No account is registered with that email.'
-                : 'Could not send reset link.');
+                : error.code === 'auth/unauthorized-continue-uri'
+                    ? 'Add lin13423.github.io to Firebase Authorized domains.'
+                    : `Could not send reset link (${error.code || 'unknown error'}).`);
         } finally {
             button.disabled = false;
             button.textContent = 'Send Reset Link';

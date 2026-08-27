@@ -1,5 +1,5 @@
 (function () {
-    if (!firebase.apps.length) {
+    if (globalThis.firebase && !firebase.apps.length) {
         firebase.initializeApp(AG_FIREBASE_CONFIG);
     }
 
@@ -37,11 +37,17 @@
             if (!email || !email.trim()) return;
             sendResetEmail(email.trim().toLowerCase())
                 .then(() => window.alert("Reset link sent. It expires in 30 minutes."))
-                .catch((error) => window.alert(error.code === "auth/user-not-found"
-                    ? "No account is registered with that email."
-                    : "Could not send reset link."));
+                .catch((error) => window.alert(formatResetError(error)));
         });
         document.body.appendChild(control);
+    }
+
+    function formatResetError(error) {
+        if (error.code === "auth/user-not-found") return "No account is registered with that email.";
+        if (error.code === "auth/unauthorized-continue-uri") {
+            return "Reset email setup is blocked: add lin13423.github.io to Firebase Authentication > Settings > Authorized domains.";
+        }
+        return `Could not send reset link (${error.code || "unknown error"}).`;
     }
 
     window.AGPageAccess = {
