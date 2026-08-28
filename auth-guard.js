@@ -1,20 +1,14 @@
-// Shared authentication guard for AssetGuard pages (Optimized for instant navigation)
+// Strict and optimized authentication guard for AssetGuard pages
 import { getFirebaseApp } from "./ag-firebase.js";
 import { getAuth, onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-// 1. Check if session storage already knows the user is logged in
-const isLocallyAuthenticated = sessionStorage.getItem("ag_authenticated") === "true";
-
-// 2. Only hide the page if there's no local cache (prevents flashing on page navigation)
-if (!isLocallyAuthenticated) {
-  document.documentElement.style.visibility = "hidden";
-}
+// 1. ALWAYS hide the page immediately to prevent unauthorized viewing or content flashing
+document.documentElement.style.visibility = "hidden";
 
 const app = getFirebaseApp();
 const auth = getAuth(app);
 
-// Internal-passcode reset links arrive as Firebase e-mail links. Completing the
-// link here lets the reset finish on a device where the session is not cached.
+// Complete internal passcode reset link if present
 async function completeInternalResetLink() {
   const params = new URLSearchParams(window.location.search);
   if (!params.has("internalReset")) return;
@@ -35,20 +29,28 @@ async function completeInternalResetLink() {
 
 await completeInternalResetLink();
 
+let authResolved = false;
+
+// 2. Listen securely for Firebase Auth state
 onAuthStateChanged(auth, (user) => {
+  authResolved = true;
   if (user) {
-    // Save state locally so future page navigation opens instantly
-    sessionStorage.setItem("ag_authenticated", "true");
+    // User is fully authenticated by Firebase — safely reveal the page
     document.documentElement.style.visibility = "";
   } else {
-    // Clear cache and kick unauthenticated users out
-    sessionStorage.removeItem("ag_authenticated");
+    // User is NOT logged in — immediately redirect to login
     window.location.replace("index.html");
   }
 }, (error) => {
     if (typeof AGErrors !== 'undefined') {
         AGErrors.report("authentication initialization", error);
     }
-    document.documentElement.style.visibility = "";
     window.location.replace("index.html?authError=initialization");
 });
+
+// 3. Safety fallback: If Firebase takes longer than 4 seconds to respond, force a redirect
+setTimeout(() => {
+  if (!authResolved) {
+    window.location.replace("index.html?authError=timeout");
+  }
+}, 4000);
