@@ -15,10 +15,10 @@
         
         .container { max-width: 900px; margin: 0 auto; }
 
-        /* Sleek Responsive Modal */
+        /* Sleek Modern Expense Details Popup Modal */
         .modal-overlay { 
             display: none; position: fixed; inset: 0; 
-            background: rgba(0,26,53,0.5); backdrop-filter: blur(8px); z-index: 2000;
+            background: rgba(0,26,53,0.55); backdrop-filter: blur(8px); z-index: 2000;
             align-items: center; justify-content: center; padding: 20px;
         }
         .modal-card { 
@@ -29,9 +29,14 @@
         }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        .modal-card h3 { margin: 0 0 8px 0; font-size: 22px; color: var(--dark); font-weight: 800; }
-        .modal-card p { font-size: 13px; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+        .modal-header-flex { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .modal-card h3 { margin: 0; font-size: 22px; color: var(--dark); font-weight: 800; letter-spacing: -0.5px; }
+        .modal-card p { font-size: 13px; color: #64748b; margin: 0 0 20px 0; line-height: 1.5; }
         
+        .details-summary-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .details-metric label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .details-metric span { font-size: 15px; font-weight: 800; color: var(--dark); font-family: 'JetBrains Mono', monospace; }
+
         .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         .modal-input-group { text-align: left; margin-bottom: 16px; }
         .modal-input-group.full { grid-column: span 2; }
@@ -43,6 +48,10 @@
         }
         .modal-card input:focus, .modal-card select:focus { border-color: var(--primary); background: #fff; }
         
+        .payment-history-list { background: #f8fafc; border-radius: 12px; padding: 12px; margin-top: 6px; max-height: 140px; overflow-y: auto; border: 1px solid #f1f5f9; }
+        .payment-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #edf2f7; font-family: 'JetBrains Mono', monospace; }
+        .payment-item:last-child { border-bottom: none; }
+
         /* Sleek Button Toolbar inside Modal */
         .modal-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
         .btn-sleek { 
@@ -66,8 +75,8 @@
         
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { text-align: left; color: #94a3b8; padding: 12px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #f1f5f9; }
-        td { padding: 16px 8px; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
-        tr:hover td { background: #fafafa; }
+        td { padding: 16px 8px; border-bottom: 1px solid #f8fafc; vertical-align: middle; cursor: pointer; }
+        tr:hover td { background: #f8fafc; }
         
         .amount-cell { font-weight: 800; text-align: right; color: var(--dark); font-size: 14px; font-family: 'JetBrains Mono', monospace; }
         .badge-type { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -76,17 +85,13 @@
         
         .admin-actions { display: none; opacity: 0; }
         .unlocked .admin-actions { display: table-cell; opacity: 1; text-align: right; }
-        .btn-action { border: none; background: #f1f5f9; padding: 10px 12px; border-radius: 10px; cursor: pointer; margin-left: 4px; font-size: 14px; transition: 0.2s; }
+        .btn-action { border: none; background: #f1f5f9; padding: 8px 10px; border-radius: 8px; cursor: pointer; margin-left: 4px; font-size: 13px; transition: 0.2s; }
         .btn-action:hover { background: #e2e8f0; }
-        
-        .payment-history-list { background: #f8fafc; border-radius: 12px; padding: 12px; margin-top: 6px; max-height: 140px; overflow-y: auto; border: 1px solid #f1f5f9; }
-        .payment-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #edf2f7; font-family: 'JetBrains Mono', monospace; }
-        .payment-item:last-child { border-bottom: none; }
 
         .total-section { margin-top: 24px; text-align: right; font-size: 22px; font-weight: 800; padding: 20px; background: #f8fafc; border-radius: 16px; color: var(--dark); border: 1px dashed #cbd5e1; font-family: 'JetBrains Mono', monospace; }
         #syncStatus { font-size: 9px; color: #94a3b8; text-align: center; margin-top: 14px; display: block; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; }
 
-        /* Print Area Styles for Advanced Voucher */
+        /* Print Area Styles */
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
@@ -98,11 +103,27 @@
 </head>
 <body id="mainBody">
 
-<!-- EDIT / MANAGEMENT MODAL -->
+<!-- EXPENSE DETAILS & MANAGEMENT POPUP MODAL -->
 <div class="modal-overlay" id="editModal">
     <div class="modal-card">
-        <h3>Manage Entry & Vouchers</h3>
-        <p>Review details, record partial payments, print official logs, or analyze financial trends.</p>
+        <div class="modal-header-flex">
+            <div>
+                <h3>Expense Details</h3>
+                <p>Transaction audit, settlement history, and management console.</p>
+            </div>
+            <span id="modalTypeBadge" class="badge-type badge-expense">EXPENSE</span>
+        </div>
+
+        <div class="details-summary-box">
+            <div class="details-metric">
+                <label>Total Principal</label>
+                <span id="detTotalAmt" style="color:var(--dark);">0.00 KES</span>
+            </div>
+            <div class="details-metric">
+                <label>Outstanding Balance</label>
+                <span id="detBalanceAmt" style="color:var(--danger);">0.00 KES</span>
+            </div>
+        </div>
         
         <div class="modal-grid">
             <div class="modal-input-group full">
@@ -110,7 +131,7 @@
                 <input type="text" id="editItemName">
             </div>
             <div class="modal-input-group">
-                <label>Entry Classification</label>
+                <label>Classification</label>
                 <select id="editEntryType">
                     <option value="expense">Regular Expense (Paid)</option>
                     <option value="debt">Debt / Credit Account</option>
@@ -122,16 +143,16 @@
             </div>
         </div>
         
-        <div id="debtSection" class="modal-input-group full">
-            <hr style="border:0; border-top:1px solid #f1f5f9; margin: 10px 0 16px 0;">
+        <div id="debtSection" class="modal-input-group full" style="display:none;">
+            <hr style="border:0; border-top:1px solid #f1f5f9; margin: 6px 0 14px 0;">
             <label>Add Partial Payment Settlement (KES)</label>
             <input type="number" id="partialPayAmount" placeholder="0.00" style="font-family: 'JetBrains Mono', monospace; font-weight:700; margin-bottom: 12px;">
-            <label>Payment & Settlement History</label>
+            <label>Settlement Payment Logs</label>
             <div class="payment-history-list" id="modalPaymentLog"></div>
         </div>
 
         <div class="modal-toolbar">
-            <button class="btn-sleek btn-print" onclick="printReceiptLogs()">🖨️ Print Receipt Logs</button>
+            <button class="btn-sleek btn-print" onclick="printReceiptLogs()">🖨️ Print Receipt & Statement</button>
             <button class="btn-sleek btn-trends" onclick="openTrendsModal()">📈 View Trends & Advice</button>
             <button class="btn-sleek btn-save" id="confirmSaveBtn">💾 Save Changes</button>
             <button class="btn-sleek btn-close" onclick="closeModals()">✕ Close</button>
@@ -143,9 +164,9 @@
 <div class="modal-overlay" id="trendsModal">
     <div class="modal-card" style="max-width: 440px;">
         <h3>📈 Financial Trends & Advice</h3>
-        <p>Automated diagnostic insights based on your ledger activity.</p>
+        <p>Automated diagnostic insights based on this ledger entry.</p>
         <div id="trendsContent" style="background:#f8fafc; padding:16px; border-radius:14px; font-size:13px; line-height:1.6; color:#334155; margin-bottom:20px; border:1px solid #e2e8f0;"></div>
-        <button class="btn-sleek btn-close" style="width:100%; grid-column:span 2;" onclick="closeModals()">Got it</button>
+        <button class="btn-sleek btn-close" style="width:100%;" onclick="closeModals()">Got it</button>
     </div>
 </div>
 
@@ -283,11 +304,24 @@
     window.openEdit = (id) => {
         activeId = id;
         const item = localData.find(x => x.id === id);
+        if (!item) return;
+
         document.getElementById('editItemName').value = item.expense_name || '';
         document.getElementById('editItemAmount').value = item.amount || 0;
         const typeSelect = document.getElementById('editEntryType');
         typeSelect.value = item.entry_type || 'expense';
         document.getElementById('partialPayAmount').value = '';
+
+        const totalAmt = parseFloat(item.amount || 0);
+        const paidAmt = parseFloat(item.paid_amount || 0);
+        const balance = typeSelect.value === 'debt' ? (totalAmt - paidAmt) : 0;
+
+        document.getElementById('detTotalAmt').innerText = AGUtils.formatAmount(totalAmt) + " KES";
+        document.getElementById('detBalanceAmt').innerText = AGUtils.formatAmount(balance) + " KES";
+        
+        const badge = document.getElementById('modalTypeBadge');
+        badge.innerText = (item.entry_type || 'expense').toUpperCase();
+        badge.className = `badge-type ${item.entry_type === 'debt' ? 'badge-debt' : 'badge-expense'}`;
         
         toggleDebtSection();
 
@@ -313,7 +347,8 @@
         document.getElementById('debtSection').style.display = (type === 'debt') ? 'block' : 'none';
     }
 
-    window.openDelete = (id) => {
+    window.openDelete = (id, event) => {
+        if(event) event.stopPropagation();
         activeId = id;
         document.getElementById('deleteModal').style.display = 'flex';
     };
@@ -473,7 +508,7 @@
                 }
 
                 body.innerHTML += `
-                    <tr>
+                    <tr onclick="openEdit('${item.id}')">
                         <td style="color:#64748b; font-family:'JetBrains Mono',monospace;">${dateStr ? dateStr.split('-').slice(1).join('/') : 'N/A'}</td>
                         <td>
                             <b style="font-size:14px;">${item.expense_name}</b><br>
@@ -491,8 +526,7 @@
                         </td>
                         <td class="amount-cell" style="color:var(--success)">${AGUtils.formatAmount(paidAmt)}</td>
                         <td class="admin-actions">
-                            <button class="btn-action" onclick="openEdit('${item.id}')" title="Manage Record">✏️</button>
-                            <button class="btn-action" style="color:var(--danger)" onclick="openDelete('${item.id}')" title="Delete">🗑️</button>
+                            <button class="btn-action" onclick="openDelete('${item.id}', event)" title="Delete">🗑️</button>
                         </td>
                     </tr>`;
             }
