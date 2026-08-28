@@ -979,23 +979,22 @@
         await localSaveSingle(entry);  
         await loadAndRenderLocal();  
           
-        // Complete form & UI reset
+        // Complete form & UI reset for the next entry
         document.getElementById('expenseForm').reset();  
         document.getElementById('editId').value = "";  
         document.getElementById('payment_extra_container').style.display = 'none';  
         
-        const trustBadge = document.getElementById('trustScoreBadge');
-        if (trustBadge) {
-            trustBadge.style.display = 'none';
-            trustBadge.innerHTML = '';
-        }
+        const trustBadge = document.getElementById('trustScoreBadge');  
+        if (trustBadge) {  
+            trustBadge.style.display = 'none';  
+            trustBadge.innerHTML = '';  
+        }  
 
-        const now = new Date(); 
+        const now = new Date();   
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());  
         document.getElementById('expense_date').value = now.toISOString().slice(0, 16);  
         
-        validateForm(false);
-          
+        validateForm(false);  
         showToast();  
           
         try {  
