@@ -145,6 +145,14 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const rtdb = firebase.database();
 
+// SECURITY: Redirect already-authenticated users away from login page
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    // User is already logged in - redirect to dashboard
+    window.location.replace(DASHBOARD_URL);
+  }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   const rDateDisplay = document.getElementById("r_dateDisplay");

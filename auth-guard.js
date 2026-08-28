@@ -2,12 +2,18 @@
 import { getFirebaseApp } from "./ag-firebase.js";
 import { getAuth, onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-// 1. Check if session storage already knows the user is logged in
+// CRITICAL: Hide entire page until authentication is verified
+// This prevents any content from being visible to unauthenticated users
+document.documentElement.style.visibility = "hidden";
+document.body.style.opacity = "0";
+
+// 1. Check if session storage already knows the user is logged in (UX optimization only)
 const isLocallyAuthenticated = sessionStorage.getItem("ag_authenticated") === "true";
 
-// 2. Only hide the page if there's no local cache (prevents flashing on page navigation)
-if (!isLocallyAuthenticated) {
-  document.documentElement.style.visibility = "hidden";
+// 2. Only show page quickly if there's local cache (prevents re-login on navigation)
+if (isLocallyAuthenticated) {
+  document.documentElement.style.visibility = "visible";
+  document.body.style.opacity = "1";
 }
 
 const app = getFirebaseApp();
@@ -37,18 +43,28 @@ await completeInternalResetLink();
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // Save state locally so future page navigation opens instantly
+    // User is authenticated - show page and cache for UX
     sessionStorage.setItem("ag_authenticated", "true");
-    document.documentElement.style.visibility = "";
+    sessionStorage.setItem("ag_user_id", user.uid);
+    document.documentElement.style.visibility = "visible";
+    document.body.style.opacity = "1";
   } else {
-    // Clear cache and kick unauthenticated users out
+    // User is NOT authenticated - clear all session data and redirect to login
     sessionStorage.removeItem("ag_authenticated");
+    sessionStorage.removeItem("ag_user_id");
+    document.documentElement.style.visibility = "hidden";
+    document.body.style.opacity = "0";
+    // Force a hard redirect to prevent back-button access
     window.location.replace("index.html");
   }
 }, (error) => {
+    // Auth error - treat as unauthenticated for security
     if (typeof AGErrors !== 'undefined') {
         AGErrors.report("authentication initialization", error);
     }
-    document.documentElement.style.visibility = "";
+    sessionStorage.removeItem("ag_authenticated");
+    sessionStorage.removeItem("ag_user_id");
+    document.documentElement.style.visibility = "hidden";
+    document.body.style.opacity = "0";
     window.location.replace("index.html?authError=initialization");
 });
