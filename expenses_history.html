@@ -1,456 +1,3191 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
 <script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
-    <meta charset="utf-8">
-    <title>Expense & Debt Ledger - AssetGuard Mirror</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary:#0072CE; --dark:#001A35; --bg:#f5f7fa; --accent:#e06b3f; --success:#22c55e; --danger:#ef4444; --border:#e2e8f0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1f2937; -webkit-tap-highlight-color: transparent; }
-        
-        .container { max-width: 1050px; margin: 0 auto; }
 
-        /* Wide, Modern Expense Details Modal for Laptops & Desktops */
-        .modal-overlay { 
-            display: none; position: fixed; inset: 0; 
-            background: rgba(0,26,53,0.6); backdrop-filter: blur(8px); z-index: 2000;
-            align-items: center; justify-content: center; padding: 20px; overflow-y: auto;
-        }
-        .modal-card { 
-            background: white; width: 100%; max-width: 720px; padding: 36px; 
-            border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            box-sizing: border-box;
-        }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        .modal-header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 24px; }
-        .modal-card h3 { margin: 0; font-size: 24px; color: var(--dark); font-weight: 800; letter-spacing: -0.5px; }
-        
-        /* Two-Column Details Grid for Wide Laptop View */
-        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; margin-bottom: 30px; background: #f8fafc; padding: 28px; border-radius: 18px; border: 1px solid var(--border); }
-        .detail-row { display: flex; flex-direction: column; gap: 6px; }
-        .detail-row.full { grid-column: span 2; }
-        .detail-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; }
-        .detail-value { font-size: 15px; font-weight: 700; color: var(--dark); font-family: 'JetBrains Mono', monospace; }
+<meta charset="utf-8">
 
-        /* Sleek Button Toolbar */
-        .modal-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid var(--border); padding-top: 24px; }
-        .btn-sleek { 
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            padding: 16px 20px; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 13px; 
-            border: none; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.8px;
-        }
-        .btn-sleek:hover { transform: translateY(-1px); opacity: 0.95; }
-        .btn-print { background: #0284c7; color: white; grid-column: span 2; }
-        .btn-trends { background: #7c3aed; color: white; grid-column: span 2; }
-        .btn-close { background: #f1f5f9; color: #475569; grid-column: span 2; }
+<title>Expense & Debt Ledger - AssetGuard Mirror</title>
 
-        h2 { text-align: center; color: var(--accent); margin: 5px 0 20px 0; font-size: 24px; font-weight: 800; }
-        .security-bar { background: var(--dark); padding: 14px 20px; border-radius: 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .pin-input { width: 90px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: #fff; padding: 10px; text-align: center; outline: none; font-size: 15px; font-weight: 800; letter-spacing: 3px; font-family: 'JetBrains Mono', monospace; }
-        
-        .card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #edf2f7; }
-        .filters { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-        .filters input { padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; background: #f8fafc; font-family: inherit; }
-        
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { text-align: left; color: #94a3b8; padding: 14px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #f1f5f9; }
-        td { padding: 18px 10px; border-bottom: 1px solid #f8fafc; vertical-align: middle; cursor: pointer; }
-        tr:hover td { background: #f8fafc; }
-        
-        .amount-cell { font-weight: 800; text-align: right; color: var(--dark); font-size: 15px; font-family: 'JetBrains Mono', monospace; }
-        .badge-type { font-size: 10px; font-weight: 800; padding: 5px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-expense { background: #e0f2fe; color: #0369a1; }
-        .badge-debt { background: #fee2e2; color: #b91c1c; }
-        
-        .admin-actions { display: none; opacity: 0; }
-        .unlocked .admin-actions { display: table-cell; opacity: 1; text-align: right; }
-        .btn-action { border: none; background: #f1f5f9; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.2s; }
-        .btn-action:hover { background: #e2e8f0; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-        .total-section { margin-top: 24px; text-align: right; font-size: 24px; font-weight: 800; padding: 22px 26px; background: #f8fafc; border-radius: 16px; color: var(--dark); border: 1px dashed #cbd5e1; font-family: 'JetBrains Mono', monospace; }
-        #syncStatus { font-size: 10px; color: #94a3b8; text-align: center; margin-top: 16px; display: block; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; }
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-        /* Print Area Styles */
-        #printArea { display: none; }
-        @media print {
-            body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
-        .modern-receipt { background: white; padding: 45px; font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; max-width: 800px; margin: 0 auto; }
-    </style>
+<style>
+
+:root {
+    --primary: #0072CE;
+    --dark: #001A35;
+    --bg: #f4f7fb;
+    --accent: #e06b3f;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --purple: #7c3aed;
+    --border: #e2e8f0;
+    --muted: #64748b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    margin: 0;
+    padding: 20px;
+    color: #1f2937;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   PREMIUM TRANSACTION DETAILS MODAL
+========================================================= */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0, 26, 53, 0.82),
+            rgba(0, 55, 110, 0.62)
+        );
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    z-index: 5000;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+
+    overflow-y: auto;
+}
+
+
+.modal-card {
+
+    width: 100%;
+    max-width: 980px;
+
+    background: #ffffff;
+
+    border-radius: 26px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 35px 90px rgba(0,0,0,0.35),
+        0 5px 20px rgba(0,0,0,0.08);
+
+    animation: modalEnter .32s cubic-bezier(.16,1,.3,1);
+
+}
+
+
+@keyframes modalEnter {
+
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+}
+
+
+/* Modal Header */
+
+.transaction-modal-header {
+
+    padding: 28px 34px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--dark),
+            #003d78
+        );
+
+    color: white;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+}
+
+
+.transaction-title-area {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+}
+
+
+.transaction-icon {
+
+    width: 52px;
+    height: 52px;
+
+    border-radius: 16px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 24px;
+
+    background: rgba(255,255,255,.12);
+
+    border: 1px solid rgba(255,255,255,.15);
+
+}
+
+
+.transaction-modal-header h3 {
+
+    margin: 0;
+
+    font-size: 23px;
+
+    font-weight: 800;
+
+    letter-spacing: -.5px;
+
+}
+
+
+.transaction-modal-header p {
+
+    margin: 5px 0 0;
+
+    font-size: 12px;
+
+    opacity: .7;
+
+}
+
+
+.modal-header-right {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+}
+
+
+.modal-close-x {
+
+    width: 40px;
+
+    height: 40px;
+
+    border-radius: 12px;
+
+    border: 1px solid rgba(255,255,255,.15);
+
+    background: rgba(255,255,255,.08);
+
+    color: white;
+
+    font-size: 22px;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+}
+
+
+.modal-close-x:hover {
+
+    background: rgba(255,255,255,.18);
+
+    transform: rotate(90deg);
+
+}
+
+
+/* Type Badge */
+
+.badge-type {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    padding: 7px 12px;
+
+    border-radius: 8px;
+
+    text-transform: uppercase;
+
+    letter-spacing: .7px;
+
+}
+
+
+.badge-expense {
+
+    background: #e0f2fe;
+
+    color: #0369a1;
+
+}
+
+
+.badge-debt {
+
+    background: #fee2e2;
+
+    color: #b91c1c;
+
+}
+
+
+.modal-header-right .badge-expense {
+
+    background: rgba(56,189,248,.18);
+
+    color: #7dd3fc;
+
+    border: 1px solid rgba(125,211,252,.2);
+
+}
+
+
+.modal-header-right .badge-debt {
+
+    background: rgba(239,68,68,.18);
+
+    color: #fca5a5;
+
+    border: 1px solid rgba(252,165,165,.2);
+
+}
+
+
+/* Modal Body */
+
+.transaction-modal-body {
+
+    padding: 34px;
+
+    background: #f8fafc;
+
+}
+
+
+/* Transaction Summary */
+
+.transaction-summary {
+
+    display: grid;
+
+    grid-template-columns: 1.3fr 1fr 1fr;
+
+    gap: 18px;
+
+    margin-bottom: 28px;
+
+}
+
+
+.summary-card {
+
+    background: white;
+
+    border: 1px solid var(--border);
+
+    border-radius: 18px;
+
+    padding: 22px;
+
+    box-shadow: 0 5px 15px rgba(0,0,0,.025);
+
+}
+
+
+.summary-card.primary-summary {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #f0f7ff
+        );
+
+    border-color: #cfe5ff;
+
+}
+
+
+.summary-label {
+
+    display: block;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    color: #94a3b8;
+
+    margin-bottom: 10px;
+
+}
+
+
+.summary-value {
+
+    font-family: 'JetBrains Mono', monospace;
+
+    font-size: 21px;
+
+    font-weight: 800;
+
+    color: var(--dark);
+
+}
+
+
+.summary-value.danger {
+
+    color: var(--danger);
+
+}
+
+
+.summary-value.success {
+
+    color: var(--success);
+
+}
+
+
+.summary-value.small {
+
+    font-size: 15px;
+
+}
+
+
+/* Information Grid */
+
+.details-section {
+
+    background: white;
+
+    border: 1px solid var(--border);
+
+    border-radius: 20px;
+
+    padding: 28px;
+
+}
+
+
+.section-heading {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 24px;
+
+}
+
+
+.section-heading h4 {
+
+    margin: 0;
+
+    color: var(--dark);
+
+    font-size: 15px;
+
+    font-weight: 800;
+
+}
+
+
+.section-heading span {
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    color: #94a3b8;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+}
+
+
+.details-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 16px;
+
+}
+
+
+.detail-card {
+
+    min-height: 86px;
+
+    padding: 17px 18px;
+
+    border-radius: 14px;
+
+    background: #f8fafc;
+
+    border: 1px solid #edf2f7;
+
+    transition: .2s;
+
+}
+
+
+.detail-card:hover {
+
+    border-color: #cbd5e1;
+
+    transform: translateY(-1px);
+
+}
+
+
+.detail-card.full {
+
+    grid-column: span 2;
+
+}
+
+
+.detail-label {
+
+    display: block;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: .8px;
+
+    color: #94a3b8;
+
+    margin-bottom: 8px;
+
+}
+
+
+.detail-value {
+
+    display: block;
+
+    color: var(--dark);
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    word-break: break-word;
+
+}
+
+
+.mono {
+
+    font-family: 'JetBrains Mono', monospace;
+
+}
+
+
+/* Financial Status */
+
+.financial-panel {
+
+    margin-top: 24px;
+
+    border-radius: 18px;
+
+    padding: 24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--dark),
+            #00356a
+        );
+
+    color: white;
+
+}
+
+
+.financial-panel-title {
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
+
+    opacity: .65;
+
+    margin-bottom: 18px;
+
+}
+
+
+.financial-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 20px;
+
+}
+
+
+.financial-label {
+
+    display: block;
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: .8px;
+
+    opacity: .6;
+
+    margin-bottom: 7px;
+
+}
+
+
+.financial-value {
+
+    font-family: 'JetBrains Mono', monospace;
+
+    font-size: 17px;
+
+    font-weight: 800;
+
+}
+
+
+/* Modal Toolbar */
+
+.modal-toolbar {
+
+    display: flex;
+
+    gap: 12px;
+
+    padding: 22px 34px;
+
+    background: white;
+
+    border-top: 1px solid var(--border);
+
+}
+
+
+.btn-sleek {
+
+    flex: 1;
+
+    min-height: 50px;
+
+    border: none;
+
+    border-radius: 13px;
+
+    padding: 14px 18px;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: .6px;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+}
+
+
+.btn-sleek:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 8px 18px rgba(0,0,0,.12);
+
+}
+
+
+.btn-print {
+
+    background: #0284c7;
+
+    color: white;
+
+}
+
+
+.btn-trends {
+
+    background: var(--purple);
+
+    color: white;
+
+}
+
+
+.btn-close {
+
+    background: #f1f5f9;
+
+    color: #475569;
+
+}
+
+
+/* =========================================================
+   TRENDS MODAL
+========================================================= */
+
+.trends-card {
+
+    max-width: 600px;
+
+}
+
+
+.trends-content {
+
+    background: #f8fafc;
+
+    padding: 22px;
+
+    border-radius: 16px;
+
+    font-size: 14px;
+
+    line-height: 1.7;
+
+    color: #334155;
+
+    border: 1px solid var(--border);
+
+}
+
+
+/* =========================================================
+   MAIN PAGE
+========================================================= */
+
+h2 {
+
+    text-align: center;
+
+    color: var(--accent);
+
+    margin: 5px 0 20px;
+
+    font-size: 24px;
+
+    font-weight: 800;
+
+}
+
+
+.security-bar {
+
+    background: var(--dark);
+
+    padding: 14px 20px;
+
+    border-radius: 16px;
+
+    margin-bottom: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+
+}
+
+
+.pin-input {
+
+    width: 110px;
+
+    background: rgba(255,255,255,.1);
+
+    border: 1px solid rgba(255,255,255,.2);
+
+    border-radius: 10px;
+
+    color: white;
+
+    padding: 10px;
+
+    text-align: center;
+
+    outline: none;
+
+    font-size: 15px;
+
+    font-weight: 800;
+
+    letter-spacing: 3px;
+
+    font-family: 'JetBrains Mono', monospace;
+
+}
+
+
+.card {
+
+    background: white;
+
+    padding: 24px;
+
+    border-radius: 24px;
+
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,.05);
+
+    border: 1px solid #edf2f7;
+
+}
+
+
+.filters {
+
+    display: grid;
+
+    grid-template-columns: 2fr 1fr 1fr;
+
+    gap: 14px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.filters input {
+
+    padding: 14px;
+
+    border-radius: 12px;
+
+    border: 1px solid #e2e8f0;
+
+    font-size: 13px;
+
+    outline: none;
+
+    width: 100%;
+
+    background: #f8fafc;
+
+    font-family: inherit;
+
+}
+
+
+.filters input:focus {
+
+    border-color: var(--primary);
+
+    box-shadow: 0 0 0 3px rgba(0,114,206,.08);
+
+}
+
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    font-size: 14px;
+
+}
+
+
+th {
+
+    text-align: left;
+
+    color: #94a3b8;
+
+    padding: 14px 10px;
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    border-bottom: 2px solid #f1f5f9;
+
+}
+
+
+td {
+
+    padding: 18px 10px;
+
+    border-bottom: 1px solid #f8fafc;
+
+    vertical-align: middle;
+
+    cursor: pointer;
+
+}
+
+
+tr {
+
+    transition: .2s;
+
+}
+
+
+tr:hover td {
+
+    background: #f8fafc;
+
+}
+
+
+.amount-cell {
+
+    font-weight: 800;
+
+    text-align: right;
+
+    color: var(--dark);
+
+    font-size: 15px;
+
+    font-family: 'JetBrains Mono', monospace;
+
+}
+
+
+.admin-actions {
+
+    display: none;
+
+    opacity: 0;
+
+}
+
+
+.unlocked .admin-actions {
+
+    display: table-cell;
+
+    opacity: 1;
+
+    text-align: right;
+
+}
+
+
+.btn-action {
+
+    border: none;
+
+    background: #f1f5f9;
+
+    padding: 10px 14px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    transition: .2s;
+
+}
+
+
+.btn-action:hover {
+
+    background: #fee2e2;
+
+}
+
+
+.total-section {
+
+    margin-top: 24px;
+
+    text-align: right;
+
+    font-size: 24px;
+
+    font-weight: 800;
+
+    padding: 22px 26px;
+
+    background: #f8fafc;
+
+    border-radius: 16px;
+
+    color: var(--dark);
+
+    border: 1px dashed #cbd5e1;
+
+    font-family: 'JetBrains Mono', monospace;
+
+}
+
+
+#syncStatus {
+
+    font-size: 10px;
+
+    color: #94a3b8;
+
+    text-align: center;
+
+    margin-top: 16px;
+
+    display: block;
+
+    letter-spacing: 1px;
+
+    font-family: 'JetBrains Mono', monospace;
+
+}
+
+
+/* =========================================================
+   PRINT
+========================================================= */
+
+#printArea {
+
+    display: none;
+
+}
+
+
+@media print {
+
+    body > *:not(#printArea) {
+
+        display: none !important;
+
+    }
+
+    #printArea {
+
+        display: block !important;
+
+        position: absolute;
+
+        left: 0;
+
+        top: 0;
+
+        width: 100%;
+
+        background: white;
+
+    }
+
+    * {
+
+        -webkit-print-color-adjust: exact !important;
+
+        print-color-adjust: exact !important;
+
+    }
+
+}
+
+
+.modern-receipt {
+
+    background: white;
+
+    padding: 45px;
+
+    font-family: 'Plus Jakarta Sans', sans-serif;
+
+    color: #1e293b;
+
+    max-width: 800px;
+
+    margin: 0 auto;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 850px) {
+
+    .transaction-summary {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .financial-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    body {
+
+        padding: 12px;
+
+    }
+
+    .modal-overlay {
+
+        padding: 10px;
+
+        align-items: flex-end;
+
+    }
+
+    .modal-card {
+
+        border-radius: 24px 24px 16px 16px;
+
+        max-height: 94vh;
+
+        overflow-y: auto;
+
+    }
+
+    .transaction-modal-header {
+
+        padding: 22px;
+
+    }
+
+    .transaction-modal-body {
+
+        padding: 20px;
+
+    }
+
+    .modal-toolbar {
+
+        padding: 16px 20px;
+
+        flex-direction: column;
+
+    }
+
+    .details-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .detail-card.full {
+
+        grid-column: span 1;
+
+    }
+
+    .filters {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .transaction-modal-header h3 {
+
+        font-size: 18px;
+
+    }
+
+    .transaction-icon {
+
+        width: 45px;
+
+        height: 45px;
+
+    }
+
+}
+
+</style>
+
 </head>
+
+
 <body id="mainBody">
 
-<!-- WIDE EXPENSE DETAILS POPUP MODAL -->
+
+<!-- =========================================================
+     PREMIUM EXPENSE DETAILS MODAL
+========================================================= -->
+
 <div class="modal-overlay" id="editModal">
+
     <div class="modal-card">
-        <div class="modal-header-flex">
-            <h3>Expense Details</h3>
-            <span id="modalTypeBadge" class="badge-type badge-expense">EXPENSE</span>
+
+        <div class="transaction-modal-header">
+
+            <div class="transaction-title-area">
+
+                <div class="transaction-icon">
+                    📄
+                </div>
+
+                <div>
+
+                    <h3>Transaction Details</h3>
+
+                    <p>Expense & debt transaction information</p>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-header-right">
+
+                <span id="modalTypeBadge" class="badge-type badge-expense">
+                    EXPENSE
+                </span>
+
+                <button class="modal-close-x" onclick="closeModals()" title="Close">
+                    ×
+                </button>
+
+            </div>
+
         </div>
 
-        <div class="details-grid">
-            <div class="detail-row">
-                <span class="detail-label">Date & Time</span>
-                <span class="detail-value" id="detDateTime">-</span>
+
+        <div class="transaction-modal-body">
+
+
+            <!-- QUICK FINANCIAL SUMMARY -->
+
+            <div class="transaction-summary">
+
+                <div class="summary-card primary-summary">
+
+                    <span class="summary-label">
+                        Outstanding Balance
+                    </span>
+
+                    <span class="summary-value danger" id="summaryOutstanding">
+                        KES 0.00
+                    </span>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <span class="summary-label">
+                        Transaction Date
+                    </span>
+
+                    <span class="summary-value small mono" id="summaryDate">
+                        -
+                    </span>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <span class="summary-label">
+                        Interest Rate
+                    </span>
+
+                    <span class="summary-value small" id="summaryInterest">
+                        0%
+                    </span>
+
+                </div>
+
             </div>
-            <div class="detail-row">
-                <span class="detail-label">Item Name</span>
-                <span class="detail-value" id="detItemName">-</span>
+
+
+            <!-- TRANSACTION INFORMATION -->
+
+            <div class="details-section">
+
+                <div class="section-heading">
+
+                    <h4>Transaction Information</h4>
+
+                    <span>AssetGuard Ledger</span>
+
+                </div>
+
+
+                <div class="details-grid">
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            Date & Time
+                        </span>
+
+                        <span class="detail-value mono" id="detDateTime">
+                            -
+                        </span>
+
+                    </div>
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            Item Name
+                        </span>
+
+                        <span class="detail-value" id="detItemName">
+                            -
+                        </span>
+
+                    </div>
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            Category
+                        </span>
+
+                        <span class="detail-value" id="detCategory">
+                            -
+                        </span>
+
+                    </div>
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            Transaction Type
+                        </span>
+
+                        <span class="detail-value" id="detPaymentMethod">
+                            -
+                        </span>
+
+                    </div>
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            Debtor Name
+                        </span>
+
+                        <span class="detail-value" id="detDebtorName">
+                            -
+                        </span>
+
+                    </div>
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            Debtor Phone
+                        </span>
+
+                        <span class="detail-value mono" id="detDebtorPhone">
+                            -
+                        </span>
+
+                    </div>
+
+
+                    <div class="detail-card full">
+
+                        <span class="detail-label">
+                            Reason / Description
+                        </span>
+
+                        <span class="detail-value" id="detReason">
+                            -
+                        </span>
+
+                    </div>
+
+
+                </div>
+
             </div>
-            <div class="detail-row">
-                <span class="detail-label">Category</span>
-                <span class="detail-value" id="detCategory">-</span>
+
+
+            <!-- FINANCIAL BREAKDOWN -->
+
+            <div class="financial-panel">
+
+                <div class="financial-panel-title">
+
+                    Financial Breakdown
+
+                </div>
+
+
+                <div class="financial-grid">
+
+
+                    <div>
+
+                        <span class="financial-label">
+
+                            Total Amount
+
+                        </span>
+
+                        <span class="financial-value" id="finTotal">
+
+                            KES 0.00
+
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="financial-label">
+
+                            Amount Paid
+
+                        </span>
+
+                        <span class="financial-value" id="finPaid">
+
+                            KES 0.00
+
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="financial-label">
+
+                            Remaining Balance
+
+                        </span>
+
+                        <span class="financial-value" id="detTotalBalance">
+
+                            KES 0.00
+
+                        </span>
+
+                    </div>
+
+
+                </div>
+
             </div>
-            <div class="detail-row">
-                <span class="detail-label">Payment Method</span>
-                <span class="detail-value" id="detPaymentMethod">-</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Debtor Name</span>
-                <span class="detail-value" id="detDebtorName">-</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Debtor Phone</span>
-                <span class="detail-value" id="detDebtorPhone">-</span>
-            </div>
-            <div class="detail-row full">
-                <span class="detail-label">Reason</span>
-                <span class="detail-value" id="detReason">-</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Interest Rate</span>
-                <span class="detail-value" id="detInterestRate">0%</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Total Payable Balance</span>
-                <span class="detail-value" id="detTotalBalance" style="color:var(--danger);">KES 0.00</span>
-            </div>
+
+
         </div>
+
+
+        <!-- MODAL ACTIONS -->
 
         <div class="modal-toolbar">
-            <button class="btn-sleek btn-print" onclick="printReceiptLogs()">🖨️ Print Receipt Logs</button>
-            <button class="btn-sleek btn-trends" onclick="openTrendsModal()">📈 View Trends & Advice</button>
-            <button class="btn-sleek btn-close" onclick="closeModals()">Close</button>
+
+            <button class="btn-sleek btn-print" onclick="printReceiptLogs()">
+
+                🖨️ Print Statement
+
+            </button>
+
+
+            <button class="btn-sleek btn-trends" onclick="openTrendsModal()">
+
+                📈 Trends & Advice
+
+            </button>
+
+
+            <button class="btn-sleek btn-close" onclick="closeModals()">
+
+                Close
+
+            </button>
+
         </div>
+
+
     </div>
+
 </div>
 
-<!-- TRENDS & ADVICE MODAL -->
+
+
+<!-- =========================================================
+     TRENDS MODAL
+========================================================= -->
+
 <div class="modal-overlay" id="trendsModal">
-    <div class="modal-card" style="max-width: 480px;">
-        <div class="modal-header-flex">
-            <h3>📈 Financial Trends & Advice</h3>
+
+    <div class="modal-card trends-card">
+
+        <div class="transaction-modal-header">
+
+            <div class="transaction-title-area">
+
+                <div class="transaction-icon">
+
+                    📈
+
+                </div>
+
+                <div>
+
+                    <h3>Financial Trends</h3>
+
+                    <p>Transaction analysis and advice</p>
+
+                </div>
+
+            </div>
+
+            <button class="modal-close-x" onclick="closeModals()">
+                ×
+            </button>
+
         </div>
-        <div id="trendsContent" style="background:#f8fafc; padding:20px; border-radius:14px; font-size:14px; line-height:1.7; color:#334155; margin-bottom:24px; border:1px solid #e2e8f0;"></div>
-        <button class="btn-sleek btn-close" onclick="closeModals()">Got it</button>
+
+
+        <div class="transaction-modal-body">
+
+            <div id="trendsContent" class="trends-content"></div>
+
+        </div>
+
+
+        <div class="modal-toolbar">
+
+            <button class="btn-sleek btn-close" onclick="closeModals()">
+
+                Got It
+
+            </button>
+
+        </div>
+
     </div>
+
 </div>
 
-<!-- DELETE MODAL -->
+
+
+<!-- =========================================================
+     DELETE MODAL
+========================================================= -->
+
 <div class="modal-overlay" id="deleteModal">
-    <div class="modal-card" style="max-width: 400px; text-align: center;">
-        <div style="font-size: 48px; margin-bottom: 12px;">🗑️</div>
-        <h3>Delete Record?</h3>
-        <p style="color:#64748b; margin-bottom: 24px; font-size: 14px;">This will remove the entry permanently from the master ledger.</p>
-        <div class="modal-toolbar" style="border-top:none; padding-top:0;">
-            <button class="btn-sleek" style="background:var(--danger); color:white;" id="confirmDeleteBtn">Delete Permanently</button>
-            <button class="btn-sleek btn-close" onclick="closeModals()">Cancel</button>
+
+    <div class="modal-card" style="max-width:450px;">
+
+        <div class="transaction-modal-header">
+
+            <div class="transaction-title-area">
+
+                <div class="transaction-icon">
+
+                    🗑️
+
+                </div>
+
+                <div>
+
+                    <h3>Delete Record?</h3>
+
+                    <p>This action cannot be undone</p>
+
+                </div>
+
+            </div>
+
         </div>
+
+
+        <div class="transaction-modal-body">
+
+            <p style="color:#64748b;line-height:1.7;margin:0;">
+
+                This transaction will be permanently removed from the
+                AssetGuard master expense ledger.
+
+            </p>
+
+        </div>
+
+
+        <div class="modal-toolbar">
+
+            <button
+                class="btn-sleek"
+                style="background:var(--danger);color:white;"
+                id="confirmDeleteBtn">
+
+                Delete Permanently
+
+            </button>
+
+
+            <button class="btn-sleek btn-close" onclick="closeModals()">
+
+                Cancel
+
+            </button>
+
+        </div>
+
     </div>
+
 </div>
+
+
+
+<!-- =========================================================
+     MAIN APPLICATION
+========================================================= -->
 
 <div class="container" id="appContent">
+
     <h2>Expense & Debt Ledger</h2>
+
+
     <div class="security-bar" id="lockBar">
-        <span style="color:white; font-size:12px; font-weight:800; letter-spacing: 0.8px;" id="lockLabel">LOCKED (ADMIN)</span>
-        <input type="password" id="masterPin" class="pin-input" maxlength="32" placeholder="••••" oninput="handleSecurity()">
+
+        <span
+            style="
+                color:white;
+                font-size:12px;
+                font-weight:800;
+                letter-spacing:.8px;
+            "
+            id="lockLabel">
+
+            LOCKED (ADMIN)
+
+        </span>
+
+
+        <input
+            type="password"
+            id="masterPin"
+            class="pin-input"
+            maxlength="32"
+            placeholder="••••"
+            oninput="handleSecurity()">
+
     </div>
+
+
 
     <div class="card">
+
+
         <div class="filters">
-            <input type="text" id="searchInput" placeholder="Search description...">
-            <input type="date" id="startDate">
-            <input type="date" id="endDate">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search description...">
+
+
+            <input
+                type="date"
+                id="startDate">
+
+
+            <input
+                type="date"
+                id="endDate">
+
         </div>
+
+
+
         <div style="overflow-x:auto;">
+
+
             <table>
+
+
                 <thead>
+
                     <tr>
+
                         <th>Date</th>
+
                         <th>Item Details</th>
+
                         <th>Balance / Total</th>
-                        <th style="text-align: right;">Paid</th>
-                        <th class="admin-actions">Action</th>
+
+                        <th style="text-align:right;">
+
+                            Paid
+
+                        </th>
+
+                        <th class="admin-actions">
+
+                            Action
+
+                        </th>
+
                     </tr>
+
                 </thead>
+
+
                 <tbody id="tableBody"></tbody>
+
+
             </table>
+
+
         </div>
+
+
+
         <div class="total-section">
-            <span style="color:var(--accent); font-size:11px; display:block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">Total Outstanding Debt</span>
-            <span id="totalAmount">0.00</span> <small style="font-size:13px; opacity:0.6;">KES</small>
+
+            <span
+                style="
+                    color:var(--accent);
+                    font-size:11px;
+                    display:block;
+                    margin-bottom:6px;
+                    text-transform:uppercase;
+                    letter-spacing:1px;
+                ">
+
+                Total Outstanding Debt
+
+            </span>
+
+
+            <span id="totalAmount">
+
+                0.00
+
+            </span>
+
+
+            <small style="font-size:13px;opacity:.6;">
+
+                KES
+
+            </small>
+
         </div>
+
+
     </div>
-    <span id="syncStatus">MIRRORING ACTIVE (LOCAL-FIRST)</span>
+
+
+    <span id="syncStatus">
+
+        MIRRORING ACTIVE (LOCAL-FIRST)
+
+    </span>
+
+
 </div>
 
+
+
 <!-- PRINT CONTAINER -->
+
 <div id="printArea"></div>
 
-<script type="module">
-    import { getDb } from "./ag-firebase.js";
-    import { ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-    import AGPasscode from "./ag-passcode.js";
 
-    const db = getDb();
-    const currentUID = AGUtils.getActiveUID();
-    if (!currentUID) {
-        document.getElementById('appContent').innerHTML = "<h2 style='text-align:center; padding-top:50px;'>Authentication Required.</h2>";
+
+<script type="module">
+
+
+import { getDb } from "./ag-firebase.js";
+
+import {
+    ref,
+    onValue,
+    remove
+}
+from
+"https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+import AGPasscode from "./ag-passcode.js";
+
+
+const db = getDb();
+
+
+const currentUID = AGUtils.getActiveUID();
+
+
+if (!currentUID) {
+
+    document.getElementById('appContent').innerHTML = `
+        <h2 style="text-align:center;padding-top:50px;">
+            Authentication Required.
+        </h2>
+    `;
+
+}
+
+
+const cloudPath = AGUtils.userPath(
+    currentUID,
+    "expenses"
+);
+
+
+let localData = [];
+
+
+let activeId = null;
+
+
+let iDB;
+
+
+
+/* =========================================================
+   INDEXED DB
+========================================================= */
+
+const initIDB = () => {
+
+    return new Promise((resolve) => {
+
+        const request = indexedDB.open(
+            `AssetGuard_Mirror_${currentUID}`,
+            3
+        );
+
+
+        request.onupgradeneeded = (e) => {
+
+            const db = e.target.result;
+
+
+            if (!db.objectStoreNames.contains("expenses")) {
+
+                db.createObjectStore(
+                    "expenses",
+                    {
+                        keyPath: "id"
+                    }
+                );
+
+            }
+
+        };
+
+
+        request.onsuccess = (e) => {
+
+            iDB = e.target.result;
+
+            resolve();
+
+        };
+
+    });
+
+};
+
+
+
+const refreshUI = async () => {
+
+    if (!iDB) return;
+
+
+    const tx = iDB.transaction(
+        "expenses",
+        "readonly"
+    );
+
+
+    const store = tx.objectStore(
+        "expenses"
+    );
+
+
+    const request = store.getAll();
+
+
+    request.onsuccess = () => {
+
+        localData = request.result || [];
+
+        renderTable();
+
+    };
+
+};
+
+
+
+/* =========================================================
+   FIREBASE SYNC
+========================================================= */
+
+const startSync = () => {
+
+    onValue(
+
+        ref(db, cloudPath),
+
+        (snap) => {
+
+            const cloudData = snap.val() || {};
+
+
+            const tx = iDB.transaction(
+                "expenses",
+                "readwrite"
+            );
+
+
+            const store = tx.objectStore(
+                "expenses"
+            );
+
+
+            store.clear();
+
+
+            Object.entries(cloudData).forEach(
+                ([id, val]) => {
+
+                    store.put({
+                        id,
+                        ...val
+                    });
+
+                }
+            );
+
+
+            tx.oncomplete = () => {
+
+                refreshUI();
+
+            };
+
+        },
+
+        error => {
+
+            AGErrors.report(
+                "expense history live data",
+                error
+            );
+
+        }
+
+    );
+
+};
+
+
+
+await initIDB();
+
+await refreshUI();
+
+startSync();
+
+
+
+/* =========================================================
+   SECURITY
+========================================================= */
+
+window.handleSecurity = async () => {
+
+
+    const pin =
+        document.getElementById(
+            'masterPin'
+        ).value;
+
+
+    const body =
+        document.getElementById(
+            'mainBody'
+        );
+
+
+    const bar =
+        document.getElementById(
+            'lockBar'
+        );
+
+
+    const label =
+        document.getElementById(
+            'lockLabel'
+        );
+
+
+    if (
+
+        pin.length >= AGPasscode.MIN_LENGTH &&
+
+        (await AGPasscode.verify(pin)).ok
+
+    ) {
+
+
+        body.classList.add(
+            'unlocked'
+        );
+
+
+        bar.style.background =
+            "var(--success)";
+
+
+        label.innerText =
+            "UNLOCKED (ADMIN)";
+
+
+    } else {
+
+
+        body.classList.remove(
+            'unlocked'
+        );
+
+
+        bar.style.background =
+            "var(--dark)";
+
+
+        label.innerText =
+            "LOCKED (ADMIN)";
+
+
+        closeModals();
+
     }
 
-    const cloudPath = AGUtils.userPath(currentUID, "expenses");
-    let localData = [];
-    let activeId = null;
-    let iDB;
+};
 
-    const initIDB = () => {
-        return new Promise((resolve) => {
-            const request = indexedDB.open(`AssetGuard_Mirror_${currentUID}`, 3);
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains("expenses")) {
-                    db.createObjectStore("expenses", { keyPath: "id" });
-                }
-            };
-            request.onsuccess = (e) => {
-                iDB = e.target.result;
-                resolve();
-            };
-        });
-    };
 
-    const refreshUI = async () => {
-        if (!iDB) return;
-        const tx = iDB.transaction("expenses", "readonly");
-        const store = tx.objectStore("expenses");
-        const request = store.getAll();
-        request.onsuccess = () => {
-            localData = request.result;
-            renderTable();
-        };
-    };
 
-    const startSync = () => {
-        onValue(ref(db, cloudPath), (snap) => {
-            const cloudData = snap.val() || {};
-            const tx = iDB.transaction("expenses", "readwrite");
-            const store = tx.objectStore("expenses");
-            
-            store.clear();
-            Object.entries(cloudData).forEach(([id, val]) => {
-                store.put({ id, ...val });
-            });
-            
-            tx.oncomplete = () => refreshUI();
-        }, error => AGErrors.report("expense history live data", error));
-    };
+/* =========================================================
+   OPEN TRANSACTION
+========================================================= */
 
-    await initIDB();
-    await refreshUI(); 
-    startSync();      
+window.openEdit = (id) => {
 
-    window.handleSecurity = async () => {
-        const pin = document.getElementById('masterPin').value;
-        const body = document.getElementById('mainBody');
-        const bar = document.getElementById('lockBar');
-        const label = document.getElementById('lockLabel');
 
-        if(pin.length >= AGPasscode.MIN_LENGTH && (await AGPasscode.verify(pin)).ok) {
-            body.classList.add('unlocked');
-            bar.style.background = "var(--success)";
-            label.innerText = "UNLOCKED (ADMIN)";
-        } else {
-            body.classList.remove('unlocked');
-            bar.style.background = "var(--dark)";
-            label.innerText = "LOCKED (ADMIN)";
-            closeModals(); 
-        }
-    };
+    activeId = id;
 
-    window.openEdit = (id) => {
-        activeId = id;
-        const item = localData.find(x => x.id === id);
-        if (!item) return;
 
-        const dateFormatted = item.expense_date ? new Date(item.expense_date).toLocaleString() : 'N/A';
-        const totalAmt = parseFloat(item.amount || 0);
-        const paidAmt = parseFloat(item.paid_amount || 0);
-        const entryType = item.entry_type || 'expense';
-        const balance = entryType === 'debt' ? (totalAmt - paidAmt) : totalAmt;
+    const item =
+        localData.find(
+            x => x.id === id
+        );
 
-        document.getElementById('detDateTime').innerText = dateFormatted;
-        document.getElementById('detItemName').innerText = item.expense_name || 'N/A';
-        document.getElementById('detCategory').innerText = item.category || 'General Expense';
-        document.getElementById('detPaymentMethod').innerText = entryType.toUpperCase();
-        document.getElementById('detDebtorName').innerText = item.debtor_name || 'N/A';
-        document.getElementById('detDebtorPhone').innerText = item.debtor_phone || 'N/A';
-        document.getElementById('detReason').innerText = item.reason || item.expense_name || 'N/A';
-        document.getElementById('detInterestRate').innerText = (item.interest_rate || 0) + '%';
-        document.getElementById('detTotalBalance').innerText = `KES ${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 
-        const badge = document.getElementById('modalTypeBadge');
-        badge.innerText = entryType.toUpperCase();
-        badge.className = `badge-type ${entryType === 'debt' ? 'badge-debt' : 'badge-expense'}`;
+    if (!item) return;
 
-        document.getElementById('editModal').style.display = 'flex';
-    };
 
-    window.openDelete = (id, event) => {
-        if(event) event.stopPropagation();
-        activeId = id;
-        document.getElementById('deleteModal').style.display = 'flex';
-    };
+    const dateFormatted =
+        item.expense_date
 
-    window.printReceiptLogs = () => {
-        const item = localData.find(x => x.id === activeId);
-        if (!item) return;
-        const total = parseFloat(item.amount || 0);
-        const paid = parseFloat(item.paid_amount || 0);
-        const balance = total - paid;
+        ? new Date(
+            item.expense_date
+          ).toLocaleString()
 
-        const receiptHTML = `
-            <div class="modern-receipt">
-                <div style="display:flex; justify-content:space-between; border-bottom:2px solid #001A35; padding-bottom:20px; margin-bottom:24px;">
-                    <div>
-                        <h1 style="margin:0; font-size:24px; color:#001A35; font-weight:800;">ASSETGUARD PRO</h1>
-                        <p style="margin:4px 0 0 0; font-size:12px; color:#64748b; font-weight:600;">Official Requisition & Statement</p>
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="background:#e0f2fe; color:#0369a1; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:800; text-transform:uppercase;">Verified Statement</span>
-                    </div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; font-size:13px;">
-                    <div><strong>Date & Time:</strong> ${new Date(item.expense_date || Date.now()).toLocaleString()}</div>
-                    <div><strong>Item Name:</strong> ${item.expense_name || 'N/A'}</div>
-                    <div><strong>Category:</strong> ${item.category || 'General'}</div>
-                    <div><strong>Payment Method:</strong> ${(item.entry_type || 'expense').toUpperCase()}</div>
-                    <div><strong>Debtor Name:</strong> ${item.debtor_name || 'N/A'}</div>
-                    <div><strong>Debtor Phone:</strong> ${item.debtor_phone || 'N/A'}</div>
-                    <div><strong>Reason:</strong> ${item.reason || 'N/A'}</div>
-                    <div><strong>Interest Rate:</strong> ${item.interest_rate || 0}%</div>
-                </div>
-                <div style="background:#f8fafc; padding:20px; border-radius:12px; text-align:right; font-size:15px; font-weight:800;">
-                    <div>Total Principal: KES ${total.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
-                    <div style="color:${balance > 0 ? '#ef4444' : '#22c55e'}; margin-top:6px;">Total Payable Balance: KES ${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
-                </div>
-                <div style="text-align:center; margin-top:40px; font-size:10px; color:#94a3b8; font-family:'JetBrains Mono',monospace;">
-                    ASSETGUARD MIRROR LEDGER • RECORD ID: ${item.id}
-                </div>
-            </div>
-        `;
-        document.getElementById('printArea').innerHTML = receiptHTML;
-        window.print();
-    };
+        : 'N/A';
 
-    window.openTrendsModal = () => {
-        const item = localData.find(x => x.id === activeId);
-        if (!item) return;
-        const total = parseFloat(item.amount || 0);
-        const paid = parseFloat(item.paid_amount || 0);
-        const balance = total - paid;
-        
-        let advice = "";
-        if (item.entry_type === 'debt') {
-            if (balance <= 0) {
-                advice = `✅ This credit account is <strong>fully settled</strong>. No remaining balance is due. Excellent cash-flow discipline.`;
-            } else {
-                advice = `⚠️ This debt account has KES ${AGUtils.formatAmount(balance)} outstanding at an interest rate of ${item.interest_rate || 0}%. Consider planning payments to clear this liability.`;
+
+    const totalAmt =
+        parseFloat(
+            item.amount || 0
+        );
+
+
+    const paidAmt =
+        parseFloat(
+            item.paid_amount || 0
+        );
+
+
+    const entryType =
+        item.entry_type || 'expense';
+
+
+    const balance =
+
+        entryType === 'debt'
+
+        ? Math.max(
+            0,
+            totalAmt - paidAmt
+          )
+
+        : 0;
+
+
+    const formattedBalance =
+        `KES ${balance.toLocaleString(
+            undefined,
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
             }
+        )}`;
+
+
+    /* DETAILS */
+
+
+    document.getElementById(
+        'detDateTime'
+    ).innerText =
+        dateFormatted;
+
+
+    document.getElementById(
+        'detItemName'
+    ).innerText =
+        item.expense_name || 'N/A';
+
+
+    document.getElementById(
+        'detCategory'
+    ).innerText =
+        item.category || 'General Expense';
+
+
+    document.getElementById(
+        'detPaymentMethod'
+    ).innerText =
+        entryType.toUpperCase();
+
+
+    document.getElementById(
+        'detDebtorName'
+    ).innerText =
+        item.debtor_name || 'N/A';
+
+
+    document.getElementById(
+        'detDebtorPhone'
+    ).innerText =
+        item.debtor_phone || 'N/A';
+
+
+    document.getElementById(
+        'detReason'
+    ).innerText =
+        item.reason ||
+        item.expense_name ||
+        'N/A';
+
+
+    /* SUMMARY */
+
+
+    document.getElementById(
+        'summaryOutstanding'
+    ).innerText =
+        formattedBalance;
+
+
+    document.getElementById(
+        'summaryDate'
+    ).innerText =
+        item.expense_date
+
+        ? item.expense_date.split('T')[0]
+
+        : 'N/A';
+
+
+    document.getElementById(
+        'summaryInterest'
+    ).innerText =
+        `${item.interest_rate || 0}%`;
+
+
+    /* FINANCIAL */
+
+
+    document.getElementById(
+        'finTotal'
+    ).innerText =
+        `KES ${totalAmt.toLocaleString(
+            undefined,
+            {
+                minimumFractionDigits: 2
+            }
+        )}`;
+
+
+    document.getElementById(
+        'finPaid'
+    ).innerText =
+        `KES ${paidAmt.toLocaleString(
+            undefined,
+            {
+                minimumFractionDigits: 2
+            }
+        )}`;
+
+
+    document.getElementById(
+        'detTotalBalance'
+    ).innerText =
+        formattedBalance;
+
+
+    /* COLOR */
+
+
+    const outstandingElement =
+        document.getElementById(
+            'summaryOutstanding'
+        );
+
+
+    outstandingElement.className =
+        `summary-value ${
+            balance > 0
+            ? 'danger'
+            : 'success'
+        }`;
+
+
+    /* BADGE */
+
+
+    const badge =
+        document.getElementById(
+            'modalTypeBadge'
+        );
+
+
+    badge.innerText =
+        entryType.toUpperCase();
+
+
+    badge.className =
+        `badge-type ${
+            entryType === 'debt'
+            ? 'badge-debt'
+            : 'badge-expense'
+        }`;
+
+
+    document.getElementById(
+        'editModal'
+    ).style.display =
+        'flex';
+
+};
+
+
+
+/* =========================================================
+   DELETE
+========================================================= */
+
+window.openDelete = (id, event) => {
+
+
+    if (event) {
+
+        event.stopPropagation();
+
+    }
+
+
+    activeId = id;
+
+
+    document.getElementById(
+        'deleteModal'
+    ).style.display =
+        'flex';
+
+};
+
+
+
+/* =========================================================
+   PRINT
+========================================================= */
+
+window.printReceiptLogs = () => {
+
+
+    const item =
+        localData.find(
+            x => x.id === activeId
+        );
+
+
+    if (!item) return;
+
+
+    const total =
+        parseFloat(
+            item.amount || 0
+        );
+
+
+    const paid =
+        parseFloat(
+            item.paid_amount || 0
+        );
+
+
+    const balance =
+        Math.max(
+            0,
+            total - paid
+        );
+
+
+    const receiptHTML = `
+
+        <div class="modern-receipt">
+
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    border-bottom:2px solid #001A35;
+                    padding-bottom:20px;
+                    margin-bottom:24px;
+                ">
+
+
+                <div>
+
+                    <h1
+                        style="
+                            margin:0;
+                            font-size:24px;
+                            color:#001A35;
+                            font-weight:800;
+                        ">
+
+                        ASSETGUARD PRO
+
+                    </h1>
+
+
+                    <p
+                        style="
+                            margin:4px 0 0;
+                            font-size:12px;
+                            color:#64748b;
+                            font-weight:600;
+                        ">
+
+                        Official Expense & Debt Statement
+
+                    </p>
+
+                </div>
+
+
+                <div
+                    style="
+                        text-align:right;
+                    ">
+
+                    <span
+                        style="
+                            background:#e0f2fe;
+                            color:#0369a1;
+                            padding:6px 12px;
+                            border-radius:6px;
+                            font-size:11px;
+                            font-weight:800;
+                        ">
+
+                        VERIFIED STATEMENT
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                style="
+                    display:grid;
+                    grid-template-columns:1fr 1fr;
+                    gap:20px;
+                    margin-bottom:24px;
+                    font-size:13px;
+                ">
+
+
+                <div>
+                    <strong>Date & Time:</strong>
+                    ${new Date(
+                        item.expense_date || Date.now()
+                    ).toLocaleString()}
+                </div>
+
+
+                <div>
+                    <strong>Item Name:</strong>
+                    ${item.expense_name || 'N/A'}
+                </div>
+
+
+                <div>
+                    <strong>Category:</strong>
+                    ${item.category || 'General'}
+                </div>
+
+
+                <div>
+                    <strong>Type:</strong>
+                    ${(item.entry_type || 'expense').toUpperCase()}
+                </div>
+
+
+                <div>
+                    <strong>Debtor Name:</strong>
+                    ${item.debtor_name || 'N/A'}
+                </div>
+
+
+                <div>
+                    <strong>Debtor Phone:</strong>
+                    ${item.debtor_phone || 'N/A'}
+                </div>
+
+
+                <div>
+                    <strong>Reason:</strong>
+                    ${item.reason || 'N/A'}
+                </div>
+
+
+                <div>
+                    <strong>Interest Rate:</strong>
+                    ${item.interest_rate || 0}%
+                </div>
+
+
+            </div>
+
+
+            <div
+                style="
+                    background:#f8fafc;
+                    padding:20px;
+                    border-radius:12px;
+                    text-align:right;
+                    font-size:15px;
+                    font-weight:800;
+                ">
+
+
+                <div>
+
+                    Total Amount:
+
+                    KES ${total.toLocaleString(
+                        undefined,
+                        {
+                            minimumFractionDigits: 2
+                        }
+                    )}
+
+                </div>
+
+
+                <div style="margin-top:6px;color:#22c55e;">
+
+                    Paid:
+
+                    KES ${paid.toLocaleString(
+                        undefined,
+                        {
+                            minimumFractionDigits: 2
+                        }
+                    )}
+
+                </div>
+
+
+                <div
+                    style="
+                        margin-top:6px;
+                        color:${
+                            balance > 0
+                            ? '#ef4444'
+                            : '#22c55e'
+                        };
+                    ">
+
+                    Outstanding Balance:
+
+                    KES ${balance.toLocaleString(
+                        undefined,
+                        {
+                            minimumFractionDigits: 2
+                        }
+                    )}
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                style="
+                    text-align:center;
+                    margin-top:40px;
+                    font-size:10px;
+                    color:#94a3b8;
+                    font-family:monospace;
+                ">
+
+                ASSETGUARD MIRROR LEDGER • RECORD ID:
+                ${item.id}
+
+            </div>
+
+
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        'printArea'
+    ).innerHTML =
+        receiptHTML;
+
+
+    window.print();
+
+};
+
+
+
+/* =========================================================
+   TRENDS
+========================================================= */
+
+window.openTrendsModal = () => {
+
+
+    const item =
+        localData.find(
+            x => x.id === activeId
+        );
+
+
+    if (!item) return;
+
+
+    const total =
+        parseFloat(
+            item.amount || 0
+        );
+
+
+    const paid =
+        parseFloat(
+            item.paid_amount || 0
+        );
+
+
+    const balance =
+        Math.max(
+            0,
+            total - paid
+        );
+
+
+    let advice = "";
+
+
+    if (item.entry_type === 'debt') {
+
+
+        if (balance <= 0) {
+
+            advice = `
+                <strong>✅ Debt Fully Settled</strong>
+                <br><br>
+                This account has no outstanding balance.
+                The recorded amount has been fully paid.
+            `;
+
         } else {
-            advice = `💡 This is logged as a <strong>regular settled expense</strong> of KES ${AGUtils.formatAmount(total)}.`;
+
+            const percentPaid =
+                total > 0
+                ? Math.round(
+                    (paid / total) * 100
+                  )
+                : 0;
+
+
+            advice = `
+                <strong>⚠️ Outstanding Debt Detected</strong>
+                <br><br>
+
+                Remaining balance:
+                <strong>
+                    KES ${AGUtils.formatAmount(balance)}
+                </strong>
+
+                <br><br>
+
+                Amount paid:
+                <strong>
+                    ${percentPaid}%
+                </strong>
+
+                <br><br>
+
+                Interest rate:
+                <strong>
+                    ${item.interest_rate || 0}%
+                </strong>
+
+                <br><br>
+
+                Consider scheduling payments to reduce the
+                outstanding liability and improve business
+                cash-flow.
+            `;
+
         }
 
-        document.getElementById('trendsContent').innerHTML = advice;
-        document.getElementById('trendsModal').style.display = 'flex';
-    };
 
-    document.getElementById('confirmDeleteBtn').onclick = () => {
-        remove(ref(db, `${cloudPath}/${activeId}`))
-            .catch(error => AGErrors.report("expense deletion", error));
-        
-        const tx = iDB.transaction("expenses", "readwrite");
-        tx.objectStore("expenses").delete(activeId);
-        
-        closeModals();
-        refreshUI();
-    };
+    } else {
 
-    function renderTable() {
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        const start = document.getElementById('startDate').value;
-        const end = document.getElementById('endDate').value;
-        let totalDebt = 0;
-        const body = document.getElementById('tableBody');
-        body.innerHTML = "";
 
-        const sorted = [...localData].sort((a,b) => (b.expense_date || '').localeCompare(a.expense_date || ''));
+        advice = `
+            <strong>💡 Regular Expense Record</strong>
+            <br><br>
 
-        sorted.forEach((item) => {
-            const dateStr = (item.expense_date || '').split('T')[0];
-            if ((item.expense_name || '').toLowerCase().includes(search) && (!start || dateStr >= start) && (!end || dateStr <= end)) {
-                const totalAmt = parseFloat(item.amount || 0);
-                const paidAmt = parseFloat(item.paid_amount || 0);
-                const entryType = item.entry_type || 'expense';
-                const balance = entryType === 'debt' ? (totalAmt - paidAmt) : 0;
-                
-                if (entryType === 'debt') {
+            This transaction is recorded as a settled business expense.
+
+            <br><br>
+
+            Total expense:
+            <strong>
+                KES ${AGUtils.formatAmount(total)}
+            </strong>
+
+            <br><br>
+
+            Monitor similar expenses over time to identify
+            categories where business costs can be reduced.
+        `;
+
+    }
+
+
+    document.getElementById(
+        'trendsContent'
+    ).innerHTML =
+        advice;
+
+
+    document.getElementById(
+        'trendsModal'
+    ).style.display =
+        'flex';
+
+};
+
+
+
+/* =========================================================
+   CONFIRM DELETE
+========================================================= */
+
+document.getElementById(
+    'confirmDeleteBtn'
+).onclick = () => {
+
+
+    if (!activeId) return;
+
+
+    remove(
+        ref(
+            db,
+            `${cloudPath}/${activeId}`
+        )
+    )
+    .catch(error => {
+
+        AGErrors.report(
+            "expense deletion",
+            error
+        );
+
+    });
+
+
+    if (iDB) {
+
+
+        const tx =
+            iDB.transaction(
+                "expenses",
+                "readwrite"
+            );
+
+
+        tx.objectStore(
+            "expenses"
+        ).delete(
+            activeId
+        );
+
+    }
+
+
+    closeModals();
+
+    refreshUI();
+
+};
+
+
+
+/* =========================================================
+   RENDER TABLE
+========================================================= */
+
+function renderTable() {
+
+
+    const search =
+        document.getElementById(
+            'searchInput'
+        ).value.toLowerCase();
+
+
+    const start =
+        document.getElementById(
+            'startDate'
+        ).value;
+
+
+    const end =
+        document.getElementById(
+            'endDate'
+        ).value;
+
+
+    let totalDebt = 0;
+
+
+    const body =
+        document.getElementById(
+            'tableBody'
+        );
+
+
+    body.innerHTML = "";
+
+
+    const sorted =
+        [...localData].sort(
+            (a,b) =>
+                (b.expense_date || '')
+                .localeCompare(
+                    a.expense_date || ''
+                )
+        );
+
+
+    sorted.forEach(
+        (item) => {
+
+
+            const dateStr =
+                (
+                    item.expense_date || ''
+                ).split('T')[0];
+
+
+            const searchableText =
+                `${item.expense_name || ''} ${
+                    item.category || ''
+                } ${
+                    item.reason || ''
+                } ${
+                    item.debtor_name || ''
+                }`.toLowerCase();
+
+
+            if (
+
+                searchableText.includes(search)
+
+                &&
+
+                (!start || dateStr >= start)
+
+                &&
+
+                (!end || dateStr <= end)
+
+            ) {
+
+
+                const totalAmt =
+                    parseFloat(
+                        item.amount || 0
+                    );
+
+
+                const paidAmt =
+                    parseFloat(
+                        item.paid_amount || 0
+                    );
+
+
+                const entryType =
+                    item.entry_type || 'expense';
+
+
+                const balance =
+
+                    entryType === 'debt'
+
+                    ? Math.max(
+                        0,
+                        totalAmt - paidAmt
+                    )
+
+                    : 0;
+
+
+                if (
+                    entryType === 'debt'
+                ) {
+
                     totalDebt += balance;
+
                 }
+
 
                 body.innerHTML += `
-                    <tr onclick="openEdit('${item.id}')">
-                        <td style="color:#64748b; font-family:'JetBrains Mono',monospace;">${dateStr ? dateStr.split('-').slice(1).join('/') : 'N/A'}</td>
-                        <td>
-                            <b style="font-size:14px;">${item.expense_name}</b><br>
-                            <span class="badge-type ${entryType === 'debt' ? 'badge-debt' : 'badge-expense'}">${entryType}</span>
-                        </td>
-                        <td>
-                            ${entryType === 'debt' ? `
-                                <span style="color:${balance > 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:800; font-family:'JetBrains Mono',monospace;">
-                                    ${AGUtils.formatAmount(balance)}
-                                </span><br>
-                                <span style="font-size:10px; color:#94a3b8; font-family:'JetBrains Mono',monospace;">Total: ${AGUtils.formatAmount(totalAmt)}</span>
-                            ` : `
-                                <span style="font-weight:800; color:var(--dark); font-family:'JetBrains Mono',monospace;">${AGUtils.formatAmount(totalAmt)}</span>
-                            `}
-                        </td>
-                        <td class="amount-cell" style="color:var(--success)">${AGUtils.formatAmount(paidAmt)}</td>
-                        <td class="admin-actions">
-                            <button class="btn-action" onclick="openDelete('${item.id}', event)" title="Delete">🗑️</button>
-                        </td>
-                    </tr>`;
-            }
-        });
-        document.getElementById('totalAmount').innerText = AGUtils.formatAmount(totalDebt);
-    }
 
-    window.closeModals = () => {
-        document.getElementById('editModal').style.display = 'none';
-        document.getElementById('deleteModal').style.display = 'none';
-        document.getElementById('trendsModal').style.display = 'none';
-        activeId = null;
-    };
-    
-    document.querySelectorAll('.filters input').forEach(el => el.addEventListener('input', renderTable));
+                    <tr
+                        onclick="openEdit('${item.id}')"
+                    >
+
+
+                        <td
+                            style="
+                                color:#64748b;
+                                font-family:
+                                'JetBrains Mono',
+                                monospace;
+                            "
+                        >
+
+                            ${
+                                dateStr
+
+                                ? dateStr
+                                    .split('-')
+                                    .slice(1)
+                                    .join('/')
+
+                                : 'N/A'
+                            }
+
+                        </td>
+
+
+                        <td>
+
+                            <b
+                                style="
+                                    font-size:14px;
+                                "
+                            >
+
+                                ${item.expense_name || 'Unnamed Transaction'}
+
+                            </b>
+
+                            <br>
+
+
+                            <span
+                                class="
+                                    badge-type
+                                    ${
+                                        entryType === 'debt'
+
+                                        ? 'badge-debt'
+
+                                        : 'badge-expense'
+                                    }
+                                "
+                            >
+
+                                ${entryType}
+
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            ${
+                                entryType === 'debt'
+
+                                ?
+
+                                `
+
+                                <span
+                                    style="
+                                        color:
+                                        ${
+                                            balance > 0
+
+                                            ? 'var(--danger)'
+
+                                            : 'var(--success)'
+                                        };
+
+                                        font-weight:800;
+
+                                        font-family:
+                                        'JetBrains Mono',
+                                        monospace;
+                                    "
+                                >
+
+                                    ${AGUtils.formatAmount(balance)}
+
+                                </span>
+
+                                <br>
+
+                                <span
+                                    style="
+                                        font-size:10px;
+                                        color:#94a3b8;
+                                        font-family:
+                                        'JetBrains Mono',
+                                        monospace;
+                                    "
+                                >
+
+                                    Total:
+                                    ${AGUtils.formatAmount(totalAmt)}
+
+                                </span>
+
+                                `
+
+                                :
+
+                                `
+
+                                <span
+                                    style="
+                                        font-weight:800;
+                                        color:var(--dark);
+                                        font-family:
+                                        'JetBrains Mono',
+                                        monospace;
+                                    "
+                                >
+
+                                    ${AGUtils.formatAmount(totalAmt)}
+
+                                </span>
+
+                                `
+
+                            }
+
+                        </td>
+
+
+                        <td
+                            class="amount-cell"
+                            style="
+                                color:var(--success);
+                            "
+                        >
+
+                            ${AGUtils.formatAmount(paidAmt)}
+
+                        </td>
+
+
+                        <td class="admin-actions">
+
+                            <button
+                                class="btn-action"
+
+                                onclick="
+                                    openDelete(
+                                        '${item.id}',
+                                        event
+                                    )
+                                "
+
+                                title="Delete"
+                            >
+
+                                🗑️
+
+                            </button>
+
+                        </td>
+
+
+                    </tr>
+
+                `;
+
+            }
+
+        }
+    );
+
+
+    document.getElementById(
+        'totalAmount'
+    ).innerText =
+        AGUtils.formatAmount(
+            totalDebt
+        );
+
+}
+
+
+
+/* =========================================================
+   CLOSE MODALS
+========================================================= */
+
+window.closeModals = () => {
+
+
+    document.getElementById(
+        'editModal'
+    ).style.display =
+        'none';
+
+
+    document.getElementById(
+        'deleteModal'
+    ).style.display =
+        'none';
+
+
+    document.getElementById(
+        'trendsModal'
+    ).style.display =
+        'none';
+
+
+    activeId = null;
+
+};
+
+
+
+/* =========================================================
+   CLOSE ON OUTSIDE CLICK
+========================================================= */
+
+document.querySelectorAll(
+    '.modal-overlay'
+).forEach(
+    modal => {
+
+        modal.addEventListener(
+            'click',
+            event => {
+
+                if (
+                    event.target === modal
+                ) {
+
+                    closeModals();
+
+                }
+
+            }
+        );
+
+    }
+);
+
+
+
+/* =========================================================
+   CLOSE ON ESC
+========================================================= */
+
+document.addEventListener(
+    'keydown',
+    event => {
+
+        if (
+            event.key === 'Escape'
+        ) {
+
+            closeModals();
+
+        }
+
+    }
+);
+
+
+
+/* =========================================================
+   FILTER EVENTS
+========================================================= */
+
+document.querySelectorAll(
+    '.filters input'
+).forEach(
+    element => {
+
+        element.addEventListener(
+            'input',
+            renderTable
+        );
+
+    }
+);
+
+
 </script>
+
+
 </body>
+
 </html>
