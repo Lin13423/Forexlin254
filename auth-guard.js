@@ -1,14 +1,9 @@
-// Optimized Hybrid Authentication Guard for AssetGuard
+// Strict and optimized authentication guard for AssetGuard pages
 import { getFirebaseApp } from "./ag-firebase.js";
 import { getAuth, onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-// 1. Check if the browser session already knows the user is logged in
-const isLocallyCached = sessionStorage.getItem("ag_authenticated") === "true";
-
-// Only hide the page if there is NO local cache (prevents delays on page-to-page navigation)
-if (!isLocallyCached) {
-  document.documentElement.style.visibility = "hidden";
-}
+// 1. ALWAYS hide the page immediately to prevent unauthorized viewing or content flashing
+document.documentElement.style.visibility = "hidden";
 
 const app = getFirebaseApp();
 const auth = getAuth(app);
@@ -34,18 +29,16 @@ async function completeInternalResetLink() {
 
 await completeInternalResetLink();
 
-let authChecked = false;
+let authResolved = false;
 
-// 2. Listen to Firebase Auth state in the background
+// 2. Listen securely for Firebase Auth state
 onAuthStateChanged(auth, (user) => {
-  authChecked = true;
+  authResolved = true;
   if (user) {
-    // Valid user confirmed by Firebase — cache the state and ensure page is visible
-    sessionStorage.setItem("ag_authenticated", "true");
+    // User is fully authenticated by Firebase — safely reveal the page
     document.documentElement.style.visibility = "";
   } else {
-    // Not logged in — clear cache and immediately eject
-    sessionStorage.removeItem("ag_authenticated");
+    // User is NOT logged in — immediately redirect to login
     window.location.replace("index.html");
   }
 }, (error) => {
@@ -55,9 +48,9 @@ onAuthStateChanged(auth, (user) => {
     window.location.replace("index.html?authError=initialization");
 });
 
-// 3. Fallback timeout if offline or Firebase hangs
+// 3. Safety fallback: If Firebase takes longer than 4 seconds to respond, force a redirect
 setTimeout(() => {
-  if (!authChecked && !isLocallyCached) {
+  if (!authResolved) {
     window.location.replace("index.html?authError=timeout");
   }
 }, 4000);
