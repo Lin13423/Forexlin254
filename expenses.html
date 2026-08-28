@@ -979,10 +979,27 @@
         await localSaveSingle(entry);  
         await loadAndRenderLocal();  
           
-        // Complete form & UI reset for the next entry
-        document.getElementById('expenseForm').reset();  
+        // ==========================================
+        // EXPLICIT MANUAL RESET FOR EVERY FIELD & UI
+        // ==========================================
         document.getElementById('editId').value = "";  
+        document.getElementById('expense_name').value = "";  
+        document.getElementById('category').value = "";  
+        document.getElementById('amount').value = "";  
+        document.getElementById('payment_method').value = "Cash";  
+        document.getElementById('mpesa_ref').value = "";  
+        document.getElementById('bank_ref').value = "";  
+        document.getElementById('creditor_name').value = "";  
+        document.getElementById('debtor_phone').value = "";  
+        document.getElementById('debt_reason').value = "";  
+        document.getElementById('interest_rate').value = "0";  
+        document.getElementById('total_payable_display').value = "";  
+
+        // Hide extra containers and reset trust badge
         document.getElementById('payment_extra_container').style.display = 'none';  
+        document.getElementById('mpesa_ref').style.display = 'none';  
+        document.getElementById('bank_ref').style.display = 'none';  
+        document.getElementById('debt_fields').style.display = 'none';  
         
         const trustBadge = document.getElementById('trustScoreBadge');  
         if (trustBadge) {  
@@ -990,11 +1007,12 @@
             trustBadge.innerHTML = '';  
         }  
 
+        // Restore current date and time
         const now = new Date();   
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());  
         document.getElementById('expense_date').value = now.toISOString().slice(0, 16);  
         
-        validateForm(false);  
+        togglePaymentExtra(false);  
         showToast();  
           
         try {  
