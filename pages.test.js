@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 // index.html is the login page itself, so it must stay reachable without a session.
-const UNGUARDED = new Set(["index.html", "reset-password.html"]);
+const UNGUARDED = new Set(["index.html"]);
 
 const pages = readdirSync(repoRoot).filter((file) => file.endsWith(".html"));
 

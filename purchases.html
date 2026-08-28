@@ -3,11 +3,7 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
-<script src="ag-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="page-access.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
 <meta charset="utf-8">
 <title>AssetGuard Pro - Unified Purchase Terminal & Analytics</title>
@@ -191,6 +187,19 @@
 </head>
 <body>
 
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal">
+            <h3 style="margin-top:0; color:var(--dark);">Secure Access</h3>
+            <p style="font-size: 11px; color: var(--muted); margin-bottom: 15px;">Enter Admin PIN to continue</p>
+            <input type="password" id="pinInput" placeholder="PIN" maxlength="32" style="text-align:center; font-size: 20px; letter-spacing: 5px;">
+            <div id="pinError" style="color:var(--danger); font-size:11px; margin-top:10px; font-weight:700;"></div>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+                <button class="btn-small" style="background:#64748b; flex:1;" onclick="closePinModal()">Cancel</button>
+                <button class="btn-small" style="background:var(--primary); flex:1;" onclick="submitPin()">Submit</button>
+            </div>
+        </div>
+    </div>
+    
     <header class="header-nav">
         <div class="brand">AssetGuard <span>Purchase Terminal</span></div>
         <button class="toggle-view-btn" id="toggleViewBtn" onclick="toggleView()">View Ledger</button>
@@ -309,6 +318,7 @@
     <script type="module">
         import { getDb } from "./ag-firebase.js";
         import { ref, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import AGPasscode from "./ag-passcode.js";
 
         if (navigator.storage && navigator.storage.persist) {
             navigator.storage.persist().then(granted => {
@@ -323,6 +333,7 @@
         const db = getDb();
         const currentUID = AGUtils.getActiveUID({ fallback: "global_user" });
         const cloudPath = AGUtils.userPath(currentUID, "purchases");
+
         let localPurchases = [];
 
         const idbRequest = indexedDB.open(`AssetGuard_Purchases_${currentUID}`, 1);
@@ -444,6 +455,12 @@
 
         window.toggleView = () => (document.getElementById('view-entry').classList.contains('active')) ? showView('view-ledger') : showView('view-entry');
         
+        window.closePinModal = () => {
+            document.getElementById('pinModal').style.display = 'none';
+            document.getElementById('pinError').innerText = "";
+            document.getElementById('pinInput').value = "";
+        };
+
         window.refreshLedger = (data) => {
             if (data) {
                 localPurchases = Array.isArray(data) ? data : Object.entries(data).map(([id, val]) => ({ id, ...val }));
@@ -479,33 +496,52 @@
                 <div class="detail-row"><label>Quantity</label><b>${item.quantity} ${item.unit}</b></div>
                 <div class="detail-row"><label>Cost</label><b style="color:var(--primary);">${AGUtils.formatCurrency(item.amount)}</b></div>`;
             
-            document.getElementById('delBtn').onclick = async () => {
-                item.deleted = true;
-                await localSaveSingle(item);
-                await loadAndRenderLocal();
-                showView('view-ledger');
+            document.getElementById('delBtn').onclick = () => {
+                document.getElementById('pinModal').style.display = 'flex';
+                window.submitPin = async () => {
+                    const attempt = await AGPasscode.verify(document.getElementById('pinInput').value);
+                    if(attempt.ok) {
+                        closePinModal();
 
-                try {
-                    await remove(ref(db, `${cloudPath}/${id}`));
-                    if (idbRequest.result) {
-                        const tx = idbRequest.result.transaction("purchases", "readwrite");
-                        tx.objectStore("purchases").delete(id);
+                        item.deleted = true;
+                        await localSaveSingle(item);
+                        await loadAndRenderLocal();
+                        showView('view-ledger');
+
+                        try {
+                            await remove(ref(db, `${cloudPath}/${id}`));
+                            if (idbRequest.result) {
+                                const tx = idbRequest.result.transaction("purchases", "readwrite");
+                                tx.objectStore("purchases").delete(id);
+                            }
+                        } catch (e) {
+                            if (!AGErrors.isOffline(e)) AGErrors.report("purchase cloud deletion", e);
+                            else console.log("Offline: Deleted registered locally. Syncing deletion later.");
+                        }
+                    } else { 
+                        document.getElementById('pinError').innerText = attempt.message; 
                     }
-                } catch (e) {
-                    if (!AGErrors.isOffline(e)) AGErrors.report("purchase cloud deletion", e);
-                    else console.log("Offline: Deleted registered locally. Syncing deletion later.");
                 };
             };
             
             document.getElementById('editBtn').onclick = () => {
-                document.getElementById('editId').value = id;
-                document.getElementById('item_name').value = item.item_name;
-                document.getElementById('supplier').value = item.supplier;
-                document.getElementById('qty').value = item.quantity;
-                document.getElementById('amount').value = item.amount;
-                document.getElementById('unit').value = item.unit;
-                document.getElementById('formTitle').innerText = "Edit Entry";
-                showView('view-entry');
+                document.getElementById('pinModal').style.display = 'flex';
+                window.submitPin = async () => {
+                    const attempt = await AGPasscode.verify(document.getElementById('pinInput').value);
+                    if(attempt.ok) {
+                        document.getElementById('editId').value = id;
+                        document.getElementById('item_name').value = item.item_name;
+                        document.getElementById('supplier').value = item.supplier;
+                        document.getElementById('qty').value = item.quantity;
+                        document.getElementById('amount').value = item.amount;
+                        document.getElementById('unit').value = item.unit;
+                        document.getElementById('formTitle').innerText = "Edit Entry";
+                        showView('view-entry');
+                        closePinModal();
+                    } else { 
+                        document.getElementById('pinError').innerText = attempt.message; 
+                    }
+                };
             };
             showView('view-detail');
         };

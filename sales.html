@@ -3,8 +3,7 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
-<script src="ag-config.js"></script>
-<script src="page-access.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
 <meta charset="utf-8">
 <title>AssetGuard Pro - Unified Terminal & Sales Analytics</title>
@@ -403,7 +402,7 @@
 <body>
 
 <header class="header-nav">
-                <div class="brand" onclick="authorizeAction('settings')">
+    <div class="brand" onclick="promptPin('settings')">
         AssetGuard <span>Terminal</span>
         <span id="user-badge" style="display:none; font-size:10px; color:var(--muted); font-weight:600; margin-top:2px;">Detecting Session...</span>
     </div>
@@ -692,9 +691,21 @@
     </div>
 </div>
 
+<div id="pinModal" class="modal" style="z-index: 5000;">
+    <div class="modal-content" style="max-width: 300px; text-align: center; background: white;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; color: var(--dark);">Secure Access</h3>
+        <p style="font-size: 11px; color: var(--muted); margin-bottom: 20px;">Enter Admin PIN to manage record</p>
+        <input type="password" id="pinInput" placeholder="Enter Internal Passcode" maxlength="32" style="margin-bottom: 10px; text-align: center; border: 1px solid #e2e8f0;">
+        <div id="pinError" style="color: var(--danger); font-size: 10px; font-weight: 700; margin-bottom: 10px; display: none;">Incorrect PIN. Please try again.</div>
+        <button class="btn btn-dark" onclick="verifyPin()">Unlock</button>
+        <button class="btn" style="background:transparent; color:var(--muted); margin-top:10px; font-size: 11px;" onclick="closePinModal()">Cancel</button>
+    </div>
+</div>
+
 <script type="module">
 import { getDb } from "./ag-firebase.js";
 import { ref, onValue, push, set, runTransaction, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import AGPasscode from "./ag-passcode.js";
 
 const db = getDb();
 const currentUID = AGUtils.resolveActiveUID();
@@ -706,8 +717,8 @@ const userSettingsPath = `user_settings/${currentUID}`;
 
 let cart = [];
 let editIndex = -1;
-let actionTargetId = null;
-let actionType = null;
+let pinTargetId = null;
+let pinAction = null;
 let currentActiveLedgerId = null;
 let runtimeActiveLedgerSalesMap = new Map();
 let alertCallback = null;
@@ -758,14 +769,48 @@ window.closeCustomAlert = () => {
     }
 };
 
-window.authorizeAction = async (action, id = null) => {
-    actionType = action;
-    actionTargetId = id;
-    if (await window.AGPageAccess.authorize("sales")) {
-        if (action === 'settings') openSettingsDirectly();
-        else openManager(actionTargetId);
+window.promptPin = (action, id = null) => {
+    pinAction = action;
+    pinTargetId = id;
+    document.getElementById('pinInput').value = "";
+    document.getElementById('pinError').style.display = "none";
+    
+    const title = document.querySelector('#pinModal h3');
+    const desc = document.querySelector('#pinModal p');
+    if (action === 'settings') {
+        title.innerText = "Settings Access";
+        desc.innerText = "Enter Admin PIN to edit Business Profile";
     } else {
-        showAlertModal("Access denied", "Your account is not authorized for this action.");
+        title.innerText = "Secure Access";
+        desc.innerText = "Enter Admin PIN to manage record";
+    }
+    
+    document.getElementById('pinModal').style.display = "flex";
+};
+
+window.closePinModal = () => {
+    document.getElementById('pinModal').style.display = "none";
+    pinTargetId = null;
+    pinAction = null;
+};
+
+window.verifyPin = async () => {
+    const input = document.getElementById('pinInput').value;
+    const attempt = await AGPasscode.verify(input);
+    if (attempt.ok) {
+        document.getElementById('pinModal').style.display = "none";
+        setTimeout(() => {
+            if (pinAction === 'settings') {
+                openSettingsDirectly();
+            } else {
+                openManager(pinTargetId);
+            }
+        }, 100);
+    } else {
+        const err = document.getElementById('pinError');
+        err.style.display = "block";
+        err.innerText = attempt.message;
+        document.getElementById('pinInput').value = "";
     }
 };
 
@@ -773,8 +818,8 @@ window.openSettingsDirectly = () => {
     window.location.href = 'settings.html';
 };
 
-window.showManager = (id) => {
-    authorizeAction('manage', id);
+window.showPinModal = (id) => {
+    promptPin('manage', id);
 };
 
 window.openManager = (id) => {
@@ -1944,7 +1989,7 @@ window.renderSales = () => {
                         </div>
                     ` : ''}
                     <div style="display:flex; gap:8px; margin-top:12px;">
-                        <button class="btn btn-dark" style="flex:1;" onclick="event.stopPropagation(); showManager('${s.id}')" ${isPending ? 'disabled' : ''}>MANAGE / PAY</button>
+                        <button class="btn btn-dark" style="flex:1;" onclick="event.stopPropagation(); showPinModal('${s.id}')" ${isPending ? 'disabled' : ''}>MANAGE / PAY</button>
                         <button class="btn" style="flex:1; background:var(--primary); color:white;" onclick="event.stopPropagation(); reprintReceipt('${s.id}')">INVOICE</button>
                     </div>
                 </div>

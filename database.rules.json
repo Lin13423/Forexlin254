@@ -26,6 +26,13 @@
       }
     },
 
+    "internal_security": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+
     "user_notifications": {
       ".read": "auth != null && auth.token.email == 'forexlin254@gmail.com'",
       "$uid": {

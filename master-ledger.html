@@ -3,11 +3,7 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
-<script src="ag-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="page-access.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>Accounts Audit Pro - AssetGuard Ultimate</title>
@@ -195,6 +191,7 @@
         /* Modals and Overlays */
         .overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
         .modal { background: white; padding: 24px; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .pin-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 12px; font-size: 22px; text-align: center; letter-spacing: 6px; margin-bottom: 14px; outline: none; }
         
         /* Detail Modal specific styling */
         .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
@@ -319,6 +316,15 @@
     </div>
 </div>
 
+<div id="pinModal" class="overlay">
+    <div class="modal" style="text-align: center;">
+        <h3 style="margin:0 0 10px 0; color: var(--primary);">Admin Override</h3>
+        <p style="font-size:11px; color:var(--text-muted); margin-bottom:16px;">Input security configuration pin</p>
+        <input type="password" id="adminPin" class="pin-input" placeholder="••••" maxlength="32" oninput="verifyPin()">
+        <button style="border:none; background:none; color:var(--text-muted); font-weight:700; cursor:pointer;" onclick="closeModals()">CANCEL</button>
+    </div>
+</div>
+
 <div id="detailsModal" class="overlay" onclick="closeDetailsModal(event)">
     <div class="modal" onclick="event.stopPropagation()">
         <h3 style="margin:0 0 6px 0; color:var(--primary);" id="det-title">Transaction Details</h3>
@@ -345,6 +351,7 @@
 <script type="module">
     import { getDb } from "./ag-firebase.js";
     import { ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import AGPasscode from "./ag-passcode.js";
 
     // Setup Month and Year dropdown options instantly before anything else
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -659,18 +666,23 @@
             isAdmin = false; 
             document.getElementById('lock-icon-svg').innerHTML = '<path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-5V9c0-3.31-2.69-6-6-6S6 5.69 6 9v3c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7c0-1.1-.9-2-2-2zm-3.1 0H9.1V9c0-1.6 1.3-2.9 2.9-2.9 1.6 0 2.9 1.3 2.9 2.9v3z"/>';
             filterAndRender(); 
-        else window.authorizeAdmin();
+        } else { 
+            document.getElementById('pinModal').style.display = 'flex'; 
+            document.getElementById('adminPin').focus(); 
+        }
     };
     
-    window.authorizeAdmin = async () => {
-        if(await window.AGPageAccess.authorize("master-ledger")) {
+    window.verifyPin = async () => {
+        const entered = document.getElementById('adminPin').value;
+        if(entered.length < AGPasscode.MIN_LENGTH) return;
+        if((await AGPasscode.verify(entered)).ok) {
             isAdmin = true; 
             document.getElementById('lock-icon-svg').innerHTML = '<path d="M12 13c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6-1V9c0-3.31-2.69-6-6-6S6 5.69 6 9v3H4v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9h-2zm-2 0H8V9c0-2.21 1.79-4 4-4s4 1.79 4 4v3z"/>';
             closeModals(); filterAndRender();
         }
     };
     
-    window.closeModals = () => {};
+    window.closeModals = () => { document.getElementById('pinModal').style.display = 'none'; document.getElementById('adminPin').value = ''; };
     window.deleteEntry = async (path) => {
         if (!confirm("Permanently remove this cash record?")) return;
         try {

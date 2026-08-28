@@ -3,11 +3,7 @@
 <head>
 <script src="error-utils.js"></script>
 <script src="ag-utils.js"></script>
-<script src="ag-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="page-access.js"></script>
+<script src="ag-context-guard.js"></script>
 <script type="module" src="auth-guard.js"></script>
     <meta charset="utf-8">
     <title>Cash Audit - AssetGuard Pro</title>
@@ -55,6 +51,7 @@
         
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
         .modal { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; }
+        .pin-input { width: 100%; padding: 12px; border: 2px solid #f1f5f9; border-radius: 12px; font-size: 24px; text-align: center; letter-spacing: 8px; margin-bottom: 15px; outline: none; }
     </style>
 </head>
 <body>
@@ -88,9 +85,18 @@
     <p>Please log in to view the Cash Audit.</p>
 </div>
 
+<div id="pinModal" class="overlay">
+    <div class="modal">
+        <h3 style="margin:0 0 10px 0;">Admin Access</h3>
+        <input type="password" id="adminPin" class="pin-input" placeholder="••••" maxlength="32" oninput="verifyPin()">
+        <button style="border:none; background:none; color:#94a3b8; font-weight:600;" onclick="closeModals()">CANCEL</button>
+    </div>
+</div>
+
 <script type="module">
     import { getDb } from "./ag-firebase.js";
     import { ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import AGPasscode from "./ag-passcode.js";
 
     const db = getDb();
 
@@ -201,15 +207,18 @@
     // --- SECURITY ---
     window.toggleAdmin = () => {
         if(isAdmin) { isAdmin = false; document.getElementById('lock-icon').innerText = "🔒"; filterAndRender(); }
-        else window.authorizeAdmin();
+        else { document.getElementById('pinModal').style.display = 'flex'; document.getElementById('adminPin').focus(); }
     };
-    window.authorizeAdmin = async () => {
-        if(await window.AGPageAccess.authorize("cash-report")) {
+    window.verifyPin = async () => {
+        const entered = document.getElementById('adminPin').value;
+        if(entered.length < AGPasscode.MIN_LENGTH) return;
+        const result = await AGPasscode.verify(entered);
+        if(result.ok) {
             isAdmin = true; document.getElementById('lock-icon').innerText = "🔓";
             closeModals(); filterAndRender();
         }
     };
-    window.closeModals = () => {};
+    window.closeModals = () => { document.getElementById('pinModal').style.display = 'none'; document.getElementById('adminPin').value = ''; };
     window.deleteEntry = async (path) => { if(confirm("Permanently remove this cash record?")) { await remove(ref(db, path)); } };
 
     // Init Filters
