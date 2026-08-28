@@ -973,39 +973,44 @@
                 deleted: false
             };
 
+            // Save to local storage immediately
             await localSaveSingle(entry);
-            await loadAndRenderLocal();
             
+            // INSTANT form clear on submit
             document.getElementById('expenseForm').reset();
             document.getElementById('payment_extra_container').style.display = 'none';
             const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('expense_date').value = now.toISOString().slice(0, 16);
             
+            // Render and show toast immediately
+            await loadAndRenderLocal();
             showToast();
             
-            try {
-                await update(ref(db, `${cloudPath}/${id}`), {
-                    id: entry.id,
-                    expense_name: entry.expense_name,
-                    category: entry.category,
-                    amount: entry.amount,
-                    expense_date: entry.expense_date,
-                    payment_method: entry.payment_method,
-                    mpesa_ref: entry.mpesa_ref,
-                    bank_ref: entry.bank_ref,
-                    creditor_name: entry.creditor_name,
-                    debtor_phone: entry.debtor_phone,
-                    debt_reason: entry.debt_reason,
-                    interest_rate: entry.interest_rate,
-                    timestamp: entry.timestamp
-                });
-                entry.synced = true;
-                await localSaveSingle(entry);
-                await loadAndRenderLocal();
-            } catch(err) {
-                if (!AGErrors.isOffline(err)) AGErrors.report("expense cloud save", err);
-                else console.log("Offline: Expense saved locally. Will sync when connection is restored.");
-            }
+            // Sync to cloud in background (non-blocking)
+            (async () => {
+                try {
+                    await update(ref(db, `${cloudPath}/${id}`), {
+                        id: entry.id,
+                        expense_name: entry.expense_name,
+                        category: entry.category,
+                        amount: entry.amount,
+                        expense_date: entry.expense_date,
+                        payment_method: entry.payment_method,
+                        mpesa_ref: entry.mpesa_ref,
+                        bank_ref: entry.bank_ref,
+                        creditor_name: entry.creditor_name,
+                        debtor_phone: entry.debtor_phone,
+                        debt_reason: entry.debt_reason,
+                        interest_rate: entry.interest_rate,
+                        timestamp: entry.timestamp
+                    });
+                    entry.synced = true;
+                    await localSaveSingle(entry);
+                } catch(err) {
+                    if (!AGErrors.isOffline(err)) AGErrors.report("expense cloud save", err);
+                    else console.log("Offline: Expense saved locally. Will sync when connection is restored.");
+                }
+            })();
         };
 
         window.renderTable = () => {

@@ -13,59 +13,65 @@
         return auth;
     }
 
-    function sendResetEmail(email) {
-        const expiresAt = Date.now() + (30 * 60 * 1000);
-        const resetUrl = new URL("reset-password.html", window.location.href);
-        resetUrl.searchParams.set("expires", String(expiresAt));
-        const firebaseAuth = getAuth();
-        if (!firebaseAuth) return Promise.reject(new Error("Authentication is still loading."));
-        const actionCodeSettings = {
-            url: resetUrl.href,
-            handleCodeInApp: false
-        };
-        return firebaseAuth.sendPasswordResetEmail(email, actionCodeSettings)
-            .then(() => ({ customHandler: true }))
-            .catch((error) => {
-                if (error.code !== "auth/unauthorized-continue-uri") throw error;
-                return firebaseAuth.sendPasswordResetEmail(email)
-                    .then(() => ({ customHandler: false }));
-            });
+    const pageNames = {
+        "sales.html": "Sales Ledger", "purchases.html": "Purchases",
+        "expenses.html": "Expenses", "expenses_history.html": "Expense History",
+        "master-ledger.html": "Master Ledger", "cash-report.html": "Cash Report",
+        "credit-report.html": "Credit Report", "bank-report.html": "Bank Report",
+        "mpesa-report.html": "M-Pesa Report", "stock.html": "Stock",
+        "crm.html": "CRM", "marketing-team.html": "Marketing Team",
+        "live-tracking.html": "Live Tracking", "dispatched.html": "Dispatch",
+        "notebook.html": "Notebook", "local_db.html": "Local Database",
+        "bi_dashboard.html": "BI Dashboard", "admin.html": "Admin"
+    };
+
+    function getPageKey(page = window.location.pathname.split("/").pop()) {
+        if (page === "sales.html") return "sales";
+        if (page === "purchases.html") return "purchases";
+        return "other";
     }
 
-    function addResetControl() {
-        if (!document.body || document.getElementById("ag-reset-control")) return;
-        const control = document.createElement("button");
-        control.id = "ag-reset-control";
-        control.type = "button";
-        control.textContent = "Reset password";
-        control.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:9998;border:0;border-radius:8px;padding:10px 14px;background:#001A35;color:#fff;font:600 12px system-ui;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);";
-        control.addEventListener("click", () => {
-            const email = window.prompt("Enter your account email");
-            if (!email || !email.trim()) return;
-            sendResetEmail(email.trim().toLowerCase())
-                .then((result) => window.alert(result.customHandler
-                    ? "Reset link sent. It expires in 30 minutes."
-                    : "Reset link sent. Firebase used its standard reset handler."))
-                .catch((error) => window.alert(formatResetError(error)));
-        });
-        document.body.appendChild(control);
-    }
-
-    function formatResetError(error) {
-        if (error.code === "auth/user-not-found") return "No account is registered with that email.";
-        if (error.code === "auth/unauthorized-continue-uri") {
-            return "Reset email setup is blocked: add lin13423.github.io to Firebase Authentication > Settings > Authorized domains.";
+    async function getPagePasswords(user) {
+        const cacheKey = globalThis.AGUtils?.uidKey("ag_profile_cache", user.uid);
+        const cached = cacheKey ? globalThis.AGUtils.readJSON(cacheKey, null) : null;
+        if (cached?.pagePasswords) return cached.pagePasswords;
+        try {
+            const settings = await firebase.database().ref(`user_settings/${user.uid}`).once("value");
+            return settings.val()?.pagePasswords || {};
+        } catch (error) {
+            if (globalThis.AGErrors) AGErrors.report("page password lookup", error);
+            return {};
         }
-        return `Could not send reset link (${error.code || "unknown error"}).`;
+    }
+
+    async function authorizePage(page = window.location.pathname.split("/").pop()) {
+        const user = getAuth()?.currentUser;
+        if (!user) return false;
+        const passwords = await getPagePasswords(user);
+        const password = passwords[getPageKey(page)];
+        if (!password) return true;
+        const unlockKey = `ag_page_unlocked_${user.uid}_${getPageKey(page)}`;
+        if (sessionStorage.getItem(unlockKey) === "true") return true;
+        const entered = window.prompt(`Enter the ${pageNames[page] || "page"} access password`);
+        if (entered === password) {
+            sessionStorage.setItem(unlockKey, "true");
+            return true;
+        }
+        window.alert("Incorrect page access password.");
+        return false;
+    }
+
+    function protectCurrentPage() {
+        const page = window.location.pathname.split("/").pop();
+        if (!pageNames[page]) return;
+        getAuth()?.onAuthStateChanged?.(async (user) => {
+            if (user && !(await authorizePage(page))) window.location.replace("index.html");
+        });
     }
 
     window.AGPageAccess = {
-        async authorize() {
-            return Boolean(getAuth()?.currentUser);
-        },
-        sendResetEmail
+        authorize: authorizePage
     };
 
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addResetControl);
-    else addResetControl();
+    protectCurrentPage();
 }());
