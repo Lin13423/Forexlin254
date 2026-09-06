@@ -34,3 +34,83 @@
     `;
     (document.head || document.documentElement).appendChild(style);
 })();
+
+
+// Keep the current page visible while the next protected page loads.
+(function installFastShellNavigation() {
+    if (window.top !== window) return;
+
+    function install() {
+        const first = document.getElementById("content-frame");
+        if (!first || document.getElementById("content-frame-next")) return;
+
+        const host = first.parentElement;
+        const stack = document.createElement("div");
+        stack.style.cssText = "position:relative;flex:1;min-height:0;background:#f0f2f5";
+        host.replaceChild(stack, first);
+        first.style.cssText += ";position:absolute;inset:0;width:100%;height:100%;border:0;background:#f0f2f5;opacity:1;transition:opacity .12s ease";
+        stack.appendChild(first);
+
+        const second = document.createElement("iframe");
+        second.id = "content-frame-next";
+        second.title = "AssetGuard page preview";
+        second.setAttribute("aria-hidden", "true");
+        second.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;background:#f0f2f5;opacity:0;pointer-events:none;transition:opacity .12s ease";
+        stack.appendChild(second);
+
+        let active = first;
+        let standby = second;
+        let activePage = first.getAttribute("src") || "dashboard.html";
+        let navigationId = 0;
+        active.dataset.page = activePage;
+
+        function swapToReadyFrame(frame, page) {
+            if (frame !== standby || frame.dataset.page !== page) return;
+            const oldFrame = active;
+            frame.style.opacity = "1";
+            frame.style.pointerEvents = "auto";
+            frame.removeAttribute("aria-hidden");
+            oldFrame.style.opacity = "0";
+            oldFrame.style.pointerEvents = "none";
+            oldFrame.setAttribute("aria-hidden", "true");
+            active = frame;
+            standby = oldFrame;
+            activePage = page;
+        }
+
+        window.addEventListener("message", function (event) {
+            if (event.origin !== window.location.origin) return;
+            const frame = event.source === active.contentWindow ? active : event.source === standby.contentWindow ? standby : null;
+            if (!frame || !event.data || event.data.type !== "assetguard:page-ready") return;
+            if (frame === standby) swapToReadyFrame(frame, frame.dataset.page);
+        });
+
+        window.loadPage = function (page, title) {
+            document.getElementById("view-title").innerText = title;
+            window.toggleMenu();
+            if (page === activePage) return;
+
+            const frame = standby;
+            const requestId = ++navigationId;
+            frame.dataset.page = page;
+            frame.dataset.ready = "false";
+            frame.style.opacity = "0";
+            frame.style.pointerEvents = "none";
+            frame.setAttribute("aria-hidden", "true");
+            frame.onload = function () {
+                window.setTimeout(function () {
+                    if (requestId !== navigationId || frame.dataset.page !== page || frame.dataset.ready === "true") return;
+                    const child = frame.contentDocument;
+                    if (child && child.readyState === "complete" && child.documentElement.style.visibility !== "hidden") {
+                        frame.dataset.ready = "true";
+                        swapToReadyFrame(frame, page);
+                    }
+                }, 1200);
+            };
+            frame.src = page;
+        };
+    }
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", install, { once: true });
+    else install();
+})();
