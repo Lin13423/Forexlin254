@@ -114,3 +114,31 @@
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", install, { once: true });
     else install();
 })();
+
+
+// Settings writes must merge into user_settings so internal_passcode is never deleted.
+(function protectInternalPasscodeDuringSettingsSave() {
+    if (window.top !== window || !/\/settings\.html$/.test(window.location.pathname)) return;
+
+    function install() {
+        if (!globalThis.firebase || !firebase.database) return;
+        const reference = firebase.database().ref();
+        const prototype = Object.getPrototypeOf(reference);
+        if (!prototype || prototype.__agSettingsSetProtected) return;
+        if (typeof prototype.set !== "function" || typeof prototype.update !== "function") return;
+
+        const originalSet = prototype.set;
+        prototype.set = function (value) {
+            const url = typeof this.toString === "function" ? this.toString() : "";
+            if (/\/user_settings\/[^/]+$/.test(url)) return this.update(value);
+            return originalSet.call(this, value);
+        };
+        prototype.__agSettingsSetProtected = true;
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () { setTimeout(install, 0); }, { once: true });
+    } else {
+        setTimeout(install, 0);
+    }
+})();
