@@ -3,10 +3,45 @@ const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
-app.use(express.json());
-app.use(cors());
+const allowedOrigins = new Set(
+    (process.env.ALLOWED_ORIGINS || 'https://lin13423.github.io')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+);
+const requestBuckets = new Map();
 
-app.post('/stk-push', async (req, res) => {
+app.use(express.json({ limit: '32kb' }));
+app.use(cors({
+    origin(origin, callback) {
+        // Non-browser clients do not send Origin. Keep those requests usable,
+        // while browsers are limited to explicitly trusted origins.
+        if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+        return callback(null, false);
+    }
+}));
+
+function rateLimit(req, res, next) {
+    const now = Date.now();
+    const key = req.ip || req.socket.remoteAddress || 'unknown';
+    const bucket = requestBuckets.get(key) || { startedAt: now, count: 0 };
+
+    if (now - bucket.startedAt >= 60_000) {
+        bucket.startedAt = now;
+        bucket.count = 0;
+    }
+
+    bucket.count += 1;
+    requestBuckets.set(key, bucket);
+
+    if (bucket.count > 20) {
+        return res.status(429).json({ error: 'Too many payment requests. Try again later.' });
+    }
+
+    return next();
+}
+
+app.post('/stk-push', rateLimit, async (req, res) => {
     try {
         const { environment, shortcode, passkey, consumerKey, consumerSecret, accountType, amount, phoneNumber } = req.body;
         const required = { environment, shortcode, passkey, consumerKey, consumerSecret, accountType, amount, phoneNumber };
@@ -15,6 +50,27 @@ app.post('/stk-push', async (req, res) => {
             .map(([key]) => key);
         if (missing.length > 0) {
             return res.status(400).json({ error: `Missing required fields: ${missing.join(', ')}` });
+        }
+
+        if (!['production', 'sandbox'].includes(environment)) {
+            return res.status(400).json({ error: 'Invalid payment environment.' });
+        }
+
+        if (!['Paybill', 'Buy Goods'].includes(accountType)) {
+            return res.status(400).json({ error: 'Invalid account type.' });
+        }
+
+        const numericAmount = Number(amount);
+        if (!Number.isInteger(numericAmount) || numericAmount < 1 || numericAmount > 150000) {
+            return res.status(400).json({ error: 'Amount must be a whole number between 1 and 150000.' });
+        }
+
+        if (!/^\d{5,10}$/.test(String(shortcode)) || !/^\d{9,12}$/.test(String(phoneNumber))) {
+            return res.status(400).json({ error: 'Invalid shortcode or phone number.' });
+        }
+
+        if (String(passkey).length > 256 || String(consumerKey).length > 256 || String(consumerSecret).length > 512) {
+            return res.status(400).json({ error: 'Payment credential format is invalid.' });
         }
         
         const baseUrl = environment === 'production' 
@@ -52,7 +108,7 @@ app.post('/stk-push', async (req, res) => {
             Password: password,
             Timestamp: timestamp,
             TransactionType: transactionType,
-            Amount: amount,
+            Amount: numericAmount,
             PartyA: phoneNumber,
             PartyB: shortcode,
             PhoneNumber: phoneNumber,
@@ -69,8 +125,8 @@ app.post('/stk-push', async (req, res) => {
         const status = error.response?.status || error.upstreamStatus || 500;
         console.error('STK push failed:', upstreamPayload || error.message);
         res.status(status).json({
-            error: error.message,
-            upstream: upstreamPayload || undefined
+            error: 'Payment request failed.',
+            upstreamStatus: status
         });
     }
 });
