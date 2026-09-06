@@ -3,7 +3,14 @@ import { getFirebaseApp } from "./ag-firebase.js";
 import { getAuth, onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
 // 1. ALWAYS hide the page immediately to prevent unauthorized viewing or content flashing
-document.documentElement.style.visibility = "hidden";
+const hasVerifiedSession = sessionStorage.getItem("ag_auth_verified") === "1";
+if (!hasVerifiedSession) document.documentElement.style.visibility = "hidden";
+
+function notifyPageReady() {
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: "assetguard:page-ready", page: window.location.pathname.split("/").pop() }, window.location.origin);
+  }
+}
 
 const app = getFirebaseApp();
 const auth = getAuth(app);
@@ -35,13 +42,17 @@ let authResolved = false;
 onAuthStateChanged(auth, (user) => {
   authResolved = true;
   if (user) {
-    // User is fully authenticated by Firebase — safely reveal the page
+    // Firebase remains the source of truth; this marker only avoids a blank repaint
+    // while the next protected page confirms the same session.
+    sessionStorage.setItem("ag_auth_verified", "1");
     document.documentElement.style.visibility = "";
+    notifyPageReady();
   } else {
-    // User is NOT logged in — immediately redirect to login
+    sessionStorage.removeItem("ag_auth_verified");
     window.location.replace("index.html");
   }
 }, (error) => {
+    sessionStorage.removeItem("ag_auth_verified");
     if (typeof AGErrors !== 'undefined') {
         AGErrors.report("authentication initialization", error);
     }
@@ -51,6 +62,7 @@ onAuthStateChanged(auth, (user) => {
 // 3. Safety fallback: If Firebase takes longer than 4 seconds to respond, force a redirect
 setTimeout(() => {
   if (!authResolved) {
+    sessionStorage.removeItem("ag_auth_verified");
     window.location.replace("index.html?authError=timeout");
   }
 }, 4000);
