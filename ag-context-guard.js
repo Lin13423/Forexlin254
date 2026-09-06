@@ -118,7 +118,7 @@
 
 // Settings writes must merge into user_settings so internal_passcode is never deleted.
 (function protectInternalPasscodeDuringSettingsSave() {
-    if (window.top !== window || !/\/settings\.html$/.test(window.location.pathname)) return;
+    if (!/\/settings\.html$/.test(window.location.pathname)) return;
 
     function install() {
         if (!globalThis.firebase || !firebase.database) return;
