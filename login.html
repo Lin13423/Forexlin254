@@ -145,6 +145,19 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const rtdb = firebase.database();
 
+// --- KODULAR GPS BRIDGE VARIABLES & FUNCTION ---
+let kodularLat = null;
+let kodularLng = null;
+
+function receiveLocation(lat, lng) {
+  kodularLat = parseFloat(lat);
+  kodularLng = parseFloat(lng);
+  localStorage.setItem("ag_last_lat", kodularLat);
+  localStorage.setItem("ag_last_lng", kodularLng);
+  console.log("Location successfully received from Kodular app:", kodularLat, kodularLng);
+}
+// ----------------------------------------------
+
 document.addEventListener("DOMContentLoaded", () => {
   const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   const rDateDisplay = document.getElementById("r_dateDisplay");
@@ -204,13 +217,11 @@ async function doLogin() {
     const userCredential = await auth.signInWithEmailAndPassword(email, pass);
     const user = userCredential.user;
     
-    // Fetch user profile from Firebase to verify account role separation
     const userSnap = await rtdb.ref(`users/${user.uid}`).once('value');
     const userData = userSnap.val() || {};
 
     const registeredRole = userData.role || "fixed_area";
 
-    // Strict validation: Ensure selected login type matches account registration type
     if (registeredRole !== role) {
       await auth.signOut();
       btn.disabled = false;
@@ -227,37 +238,54 @@ async function doLogin() {
     const currentDate = new Date().toISOString().split('T')[0];
 
     if (role === "marketing_team") {
-      if (!("geolocation" in navigator)) {
-        btn.disabled = false;
-        btn.innerText = "Sign In";
-        return msg("Geolocation is not supported by your browser.");
-      }
-
-      btn.innerText = "Acquiring GPS Location...";
-
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
-        });
-        lat = position.coords.latitude;
-        lng = position.coords.longitude;
-        accuracy = position.coords.accuracy;
+      // --- MODIFIED GEOLOCATION CHECK FOR KODULAR APP WRAPPER ---
+      if (kodularLat !== null && kodularLng !== null) {
+        // Use location sent directly from Kodular native LocationSensor
+        lat = kodularLat;
+        lng = kodularLng;
+        accuracy = 10;
         gpsTimestamp = Date.now();
-
-        localStorage.setItem("ag_last_lat", lat);
-        localStorage.setItem("ag_last_lng", lng);
-      } catch (gpsErr) {
-        console.error("GPS Error:", gpsErr);
-        btn.disabled = false;
-        btn.innerText = "Sign In";
-        let errMsg = "Mandatory GPS location is required for Marketing Team. Please enable device location.";
-        if (gpsErr.code === gpsErr.PERMISSION_DENIED) {
-          errMsg = "Location permission denied in browser settings.";
-        } else if (gpsErr.code === gpsErr.TIMEOUT) {
-          errMsg = "GPS request timed out.";
+      } else if (localStorage.getItem("ag_last_lat")) {
+        // Fallback to locally stored coordinates
+        lat = parseFloat(localStorage.getItem("ag_last_lat"));
+        lng = parseFloat(localStorage.getItem("ag_last_lng"));
+        accuracy = 10;
+        gpsTimestamp = Date.now();
+      } else {
+        // Standard browser fallback if tested in a web browser
+        if (!("geolocation" in navigator)) {
+          btn.disabled = false;
+          btn.innerText = "Sign In";
+          return msg("Geolocation is not supported by your browser.");
         }
-        return msg(errMsg);
+
+        btn.innerText = "Acquiring GPS Location...";
+
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+          });
+          lat = position.coords.latitude;
+          lng = position.coords.longitude;
+          accuracy = position.coords.accuracy;
+          gpsTimestamp = Date.now();
+
+          localStorage.setItem("ag_last_lat", lat);
+          localStorage.setItem("ag_last_lng", lng);
+        } catch (gpsErr) {
+          console.error("GPS Error:", gpsErr);
+          btn.disabled = false;
+          btn.innerText = "Sign In";
+          let errMsg = "Mandatory GPS location is required for Marketing Team. Please enable device location.";
+          if (gpsErr.code === gpsErr.PERMISSION_DENIED) {
+            errMsg = "Location permission denied in app settings.";
+          } else if (gpsErr.code === gpsErr.TIMEOUT) {
+            errMsg = "GPS request timed out.";
+          }
+          return msg(errMsg);
+        }
       }
+      // ---------------------------------------------------------
 
       localStorage.setItem("ag_car_reg", userData.carRegistration || "");
       localStorage.setItem("ag_team_role", userData.teamRole || "");
