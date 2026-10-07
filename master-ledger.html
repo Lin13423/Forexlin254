@@ -135,20 +135,25 @@
         .dropdown-content a:last-child { border-bottom: none; }
         .dropdown-content a:hover { background-color: #f8fafc; color: var(--accent); }
 
-        /* Modern Donut Trigger Widget */
-        .action-row { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 8px 14px; border-radius: 14px; border: 1px solid var(--border); margin: 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.01); }
-        .analytics-donut-info { display: flex; flex-direction: column; }
-        .analytics-donut-title { font-size: 11px; font-weight: 800; color: var(--primary); }
-        .analytics-donut-desc { font-size: 9px; color: var(--text-muted); font-weight: 500; }
+        /* Growing Pulsing Donut Widget Animation */
+        @keyframes donutPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 114, 206, 0.4); }
+            50% { transform: scale(1.09); box-shadow: 0 0 0 8px rgba(0, 114, 206, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 114, 206, 0); }
+        }
+
+        .action-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; background: transparent; padding: 4px 2px; margin: 10px 0; border: none; box-shadow: none; }
+        
+        .tap-pointer-label { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; animation: fadeInOut 2s infinite ease-in-out; }
 
         .analytics-donut-btn { 
             width: 42px; height: 42px; border-radius: 50%; 
             background: linear-gradient(135deg, #001A35 0%, #002d5c 100%); 
             border: 3px solid #e0f2fe; color: #fff; display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; box-shadow: 0 4px 12px rgba(0, 114, 206, 0.25); 
+            cursor: pointer; animation: donutPulse 2s infinite ease-in-out;
             transition: transform 0.2s ease, box-shadow 0.2s ease; flex-shrink: 0;
         }
-        .analytics-donut-btn:hover { transform: scale(1.08); box-shadow: 0 6px 16px rgba(0, 114, 206, 0.35); }
+        .analytics-donut-btn:hover { transform: scale(1.15); animation: none; }
         .analytics-donut-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
         .scroll-container { padding-bottom: 40px; }
@@ -289,12 +294,9 @@
             </div>
         </div>
 
-        <!-- Modern Donut Trigger Widget -->
+        <!-- Growing Donut Trigger Widget with Pointer Label -->
         <div class="action-row no-print">
-            <div class="analytics-donut-info">
-                <span class="analytics-donut-title">Advanced Analytics & Market Suite</span>
-                <span class="analytics-donut-desc">Tap donut to review product margins & net profit</span>
-            </div>
+            <span class="tap-pointer-label">Tap to view &rarr;</span>
             <button class="analytics-donut-btn" onclick="requestAnalyticsAccess()" title="Open Advanced Analytics Dashboard & Market Suite">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
             </button>
