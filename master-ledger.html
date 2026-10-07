@@ -46,10 +46,10 @@
             .filter-row { gap: 14px !important; }
             select, .search-input, .dropdown-btn { height: 48px !important; font-size: 15px !important; border-radius: 14px !important; padding: 12px 18px !important; }
             button.btn-action { height: 48px !important; padding: 12px 24px !important; font-size: 15px !important; border-radius: 14px !important; }
-            .desktop-audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; width: 100%; }
+            .desktop-audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; width: 100%; }
             .full-width { grid-column: span 2; width: 100%; }
-            .chart-card { padding: 30px !important; border-radius: 24px !important; }
-            .chart-wrap { height: 340px !important; }
+            .chart-card { padding: 20px 24px !important; border-radius: 20px !important; }
+            .chart-wrap { height: 200px !important; }
             .entry-card { padding: 20px 24px !important; border-radius: 18px !important; margin-bottom: 14px !important; }
             .entry-name { font-size: 16px !important; }
             .val-amt { font-size: 20px !important; }
@@ -90,12 +90,12 @@
         .filter-row { display: flex; gap: 6px; align-items: center; width: 100%; }
         
         .select-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
-        select { 
+        select, input[type="date"] { 
             width: 100%; padding: 8px 28px 8px 10px; border-radius: 10px; border: 1px solid var(--border); 
             font-size: 11px; font-weight: 600; color: var(--text-main); background: #fff; cursor: pointer;
             appearance: none; -webkit-appearance: none; transition: all 0.2s; height: 36px;
         }
-        select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0, 114, 206, 0.1); }
+        select:focus, input[type="date"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0, 114, 206, 0.1); }
         .select-wrapper::after {
             content: ""; position: absolute; right: 10px; pointer-events: none;
             width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--text-muted);
@@ -136,28 +136,23 @@
         .dropdown-content a:hover { background-color: #f8fafc; color: var(--accent); }
 
         .action-row { display: flex; gap: 8px; margin: 12px 0; }
-        .analytics-trigger-btn { flex: 1; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(0, 114, 206, 0.2); }
+        .analytics-trigger-btn { flex: 1; background: var(--accent); color: white; border: none; padding: 11px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 114, 206, 0.2); font-size: 12px; transition: opacity 0.2s; }
         .analytics-trigger-btn:hover { opacity: 0.9; }
 
         .scroll-container { padding-bottom: 40px; }
 
-        .chart-card { background: white; padding: 18px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.02); margin-bottom: 14px; }
-        .chart-card h4 { margin: 0 0 14px 0; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .chart-wrap { position: relative; height: 220px; width: 100%; }
+        .chart-card { background: white; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.01); margin-bottom: 12px; }
+        .chart-card h4 { margin: 0 0 10px 0; font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .chart-wrap { position: relative; height: 160px; width: 100%; }
 
         /* Product Market Table Styling */
-        .product-table-wrapper { overflow-x: auto; margin-top: 14px; }
+        .product-table-wrapper { overflow-x: auto; margin-top: 10px; }
         .product-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 11px; text-align: left; }
-        .product-table th, .product-table td { padding: 10px; border-bottom: 1px solid var(--border); }
-        .product-table th { background: #f8fafc; font-weight: 800; color: var(--primary); text-transform: uppercase; font-size: 10px; }
+        .product-table th, .product-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+        .product-table th { background: #f8fafc; font-weight: 800; color: var(--primary); text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; }
         .profit-tag { font-weight: 700; padding: 3px 8px; border-radius: 6px; font-size: 10px; }
         .profit-pos { background: #dcfce7; color: #15803d; }
         .profit-neg { background: #fee2e2; color: #b91c1c; }
-
-        .advice-card { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 1px solid #7dd3fc; border-radius: 16px; padding: 18px; margin-top: 14px; }
-        .advice-card h4 { margin: 0 0 10px 0; color: #0369a1; font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .advice-list { margin: 0; padding-left: 18px; font-size: 11px; color: #0c4a6e; font-weight: 600; }
-        .advice-list li { margin-bottom: 6px; }
 
         .entry-card {
             background: white; padding: 12px 14px; border-radius: 12px; margin-bottom: 10px;
@@ -187,10 +182,14 @@
         .modal { background: white; padding: 24px; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         
         /* Fullscreen Analytics Modal Styling */
-        .analytics-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); display: none; z-index: 2500; overflow-y: auto; padding: 20px; }
-        .analytics-modal-card { background: var(--bg); width: 100%; max-width: 1100px; margin: 20px auto; border-radius: 24px; padding: 30px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative; }
-        .analytics-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
-        .close-analytics { background: var(--primary); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .analytics-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); display: none; z-index: 2500; overflow-y: auto; padding: 15px; }
+        .analytics-modal-card { background: var(--bg); width: 100%; max-width: 1100px; margin: 10px auto; border-radius: 20px; padding: 20px 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative; }
+        .analytics-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .close-analytics { background: var(--primary); color: white; border: none; width: 34px; height: 34px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+
+        /* Analytics Timeframe Filter Toolbar */
+        .analytics-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: #fff; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; }
+        .analytics-toolbar select, .analytics-toolbar input { height: 34px; font-size: 11px; padding: 6px 10px; border-radius: 8px; }
 
         .pin-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 12px; font-size: 22px; text-align: center; letter-spacing: 6px; margin-bottom: 14px; outline: none; }
         
@@ -270,8 +269,8 @@
         </div>
 
         <div class="action-row no-print">
-            <button class="analytics-trigger-btn" onclick="openAnalyticsModal()">
-                📊 Open Advanced Analytics Dashboard & Market Suite
+            <button class="analytics-trigger-btn" onclick="requestAnalyticsAccess()">
+                🔒 Open Advanced Analytics Dashboard & Market Suite
             </button>
         </div>
 
@@ -281,15 +280,36 @@
     </div>
 </div>
 
-<!-- Fullscreen Analytics Modal -->
+<!-- Password-Protected Analytics Modal -->
 <div id="analyticsModal" class="analytics-modal-overlay" onclick="closeAnalyticsModal(event)">
     <div class="analytics-modal-card" onclick="event.stopPropagation()">
         <div class="analytics-header">
             <div>
-                <h2 style="margin:0; font-size:20px; color:var(--primary);">Advanced Analytics & Profit Intelligence Suite</h2>
-                <p style="margin:4px 0 0 0; font-size:12px; color:var(--text-muted);">Real-time production cost tracking, product margins, and cash flow proportions</p>
+                <h2 style="margin:0; font-size:16px; color:var(--primary);">Advanced Analytics & Profit Intelligence Suite</h2>
+                <p style="margin:2px 0 0 0; font-size:11px; color:var(--text-muted);">Real-time production cost tracking, product margins, and cash flow proportions</p>
             </div>
             <button class="close-analytics" onclick="document.getElementById('analyticsModal').style.display='none'">✕</button>
+        </div>
+
+        <!-- Analytics Timeframe Filter Toolbar (Per Day / Per Month / Per Year) -->
+        <div class="analytics-toolbar">
+            <span style="font-size:11px; font-weight:700; color:var(--primary);">Analysis Period:</span>
+            <div style="flex: 1; max-width: 140px;">
+                <select id="analyticsPeriodType" onchange="toggleAnalyticsPeriodMode()">
+                    <option value="day">Per Day</option>
+                    <option value="month" selected>Per Month</option>
+                    <option value="year">Per Year</option>
+                </select>
+            </div>
+            
+            <div id="analyticsDaySelector" style="display:none; flex: 1; max-width: 160px;">
+                <input type="date" id="analyticsDateVal" onchange="renderAnalyticsModalData()">
+            </div>
+
+            <div id="analyticsMonthSelector" style="display:flex; gap:6px; flex:2;">
+                <select id="analyticsMonthVal" onchange="renderAnalyticsModalData()"></select>
+                <select id="analyticsYearVal" onchange="renderAnalyticsModalData()"></select>
+            </div>
         </div>
 
         <div class="desktop-audit-grid">
@@ -308,8 +328,8 @@
         </div>
 
         <!-- Product Line Performance Analytics Table -->
-        <div class="chart-card full-width">
-            <h4>Product Line Market & Production Cost Analytics (Per Selected Period)</h4>
+        <div class="chart-card full-width" style="margin-top: 12px;">
+            <h4>Product Line Market & Production Cost Analytics</h4>
             <div class="product-table-wrapper">
                 <table class="product-table">
                     <thead>
@@ -323,25 +343,18 @@
                         </tr>
                     </thead>
                     <tbody id="product-analytics-tbody">
-                        <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No sales items recorded for this period.</td></tr>
+                        <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No sales items recorded for this timeframe.</td></tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div class="advice-card full-width">
-            <h4>Financial Intelligence Report</h4>
-            <ul id="advice-list" class="advice-list">
-                <li>Dynamic diagnostic reporting pending evaluation metrics loop.</li>
-            </ul>
         </div>
     </div>
 </div>
 
 <div id="pinModal" class="overlay">
     <div class="modal" style="text-align: center;">
-        <h3 style="margin:0 0 10px 0; color: var(--primary);">Admin Override</h3>
-        <p style="font-size:11px; color:var(--text-muted); margin-bottom:16px;">Input security configuration pin</p>
+        <h3 style="margin:0 0 10px 0; color: var(--primary);" id="pinModalTitle">Security Verification</h3>
+        <p style="font-size:11px; color:var(--text-muted); margin-bottom:16px;" id="pinModalDesc">Input security configuration pin</p>
         <input type="password" id="adminPin" class="pin-input" placeholder="••••" maxlength="32" oninput="verifyPin()">
         <button style="border:none; background:none; color:var(--text-muted); font-weight:700; cursor:pointer;" onclick="closeModals()">CANCEL</button>
     </div>
@@ -377,8 +390,15 @@
 
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const now = new Date();
+    
+    // Setup Main Filter selectors
     document.getElementById('fMonth').innerHTML = months.map((m, i) => `<option value="${i}" ${i===now.getMonth()?'selected':''}>${m}</option>`).join('');
     document.getElementById('fYear').innerHTML = [2024, 2025, 2026].map(y => `<option value="${y}" ${y===now.getFullYear()?'selected':''}>${y}</option>`).join('');
+
+    // Setup Analytics Modal Selectors
+    document.getElementById('analyticsMonthVal').innerHTML = months.map((m, i) => `<option value="${i}" ${i===now.getMonth()?'selected':''}>${m}</option>`).join('');
+    document.getElementById('analyticsYearVal').innerHTML = [2024, 2025, 2026].map(y => `<option value="${y}" ${y===now.getFullYear()?'selected':''}>${y}</option>`).join('');
+    document.getElementById('analyticsDateVal').value = now.toISOString().split('T')[0];
 
     const db = getDb();
     const currentUID = AGUtils.resolveActiveUID();
@@ -387,6 +407,7 @@
     const invCacheKey = AGUtils.uidKey("ag_inv_cache", currentUID);
 
     let isAdmin = false;
+    let authContext = 'admin'; // 'admin' or 'analytics'
     let cloudRecords = [];
     let combinedRecords = [];
     let activeCategoryFilter = 'ALL';
@@ -397,7 +418,6 @@
     let debounceTimer = null;
     let isDataLoaded = false;
 
-    // Load inventory data from Firebase as well for actual production costs
     if (currentUID) {
         onValue(ref(db, AGUtils.userPath(currentUID, "inventory")), (snap) => {
             if (snap.exists()) {
@@ -499,53 +519,12 @@
         document.getElementById('print-period-range').innerText = `Audit Period: ${activeMonthName} ${y}` + (activeCategoryFilter !== 'ALL' ? ` | Category: ${activeCategoryFilter}` : '');
 
         let tin = 0, tout = 0;
-        let catTotals = { 'SALE': 0, 'EXPENSE': 0, 'PURCHASE': 0 };
-        let productMap = {};
         const htmlChunks = [];
 
         for (let i = 0; i < combinedRecords.length; i++) {
             const r = combinedRecords[i];
             const dt = new Date(r.date);
             if(dt.getMonth().toString() !== m || dt.getFullYear().toString() !== y) continue;
-            
-            // Product Line Performance breakdown incorporating actual production cost lookup
-            if(r.cat === 'SALE' && r.rawItems && Array.isArray(r.rawItems)) {
-                r.rawItems.forEach(item => {
-                    const itemName = (
-                        item.name || 
-                        item.productName || 
-                        item.product || 
-                        item.item_name || 
-                        item.title || 
-                        item.item || 
-                        item.description || 
-                        (typeof item === 'string' ? item : 'Unnamed Product')
-                    ).trim();
-
-                    const qty = parseFloat(item.quantity || item.qty || item.count || 1);
-                    const price = parseFloat(item.price || item.unitPrice || item.sellingPrice || 0);
-                    const rev = parseFloat(item.total || item.subtotal || (qty * price));
-                    
-                    // Match with actual inventory production cost
-                    const productKey = itemName.replace(/\s+/g, '_').toLowerCase();
-                    const invMatch = inventoryData[productKey] || Object.values(inventoryData).find(iv => iv.name && iv.name.toLowerCase() === itemName.toLowerCase());
-                    
-                    const unitCost = invMatch && invMatch.productionCost !== undefined 
-                        ? parseFloat(invMatch.productionCost) 
-                        : parseFloat(item.cost || item.unitCost || item.buyPrice || 0);
-
-                    const totCost = qty * unitCost;
-                    const profit = rev - totCost;
-
-                    if (!productMap[itemName]) {
-                        productMap[itemName] = { qty: 0, revenue: 0, cost: 0, profit: 0 };
-                    }
-                    productMap[itemName].qty += qty;
-                    productMap[itemName].revenue += rev;
-                    productMap[itemName].cost += totCost;
-                    productMap[itemName].profit += profit;
-                });
-            }
 
             if(activeCategoryFilter !== 'ALL' && r.cat !== activeCategoryFilter) continue;
             
@@ -555,7 +534,6 @@
             }
             
             if(r.type==='IN') { tin += r.amt; } else { tout += r.amt; }
-            if(catTotals[r.cat] !== undefined) { catTotals[r.cat] += r.amt; }
 
             htmlChunks.push(`
                 <div class="entry-card ${r.type.toLowerCase()} ${r.isPending ? 'pending' : ''}" onclick="window.viewDetails('${r.id}')">
@@ -580,16 +558,92 @@
         const netElement = document.getElementById('net-cash');
         const netAmt = tin - tout;
         netElement.innerText = (netAmt >= 0 ? '+Ksh ' : '-Ksh ') + AGUtils.formatAmount(Math.abs(netAmt));
-
-        // Update modal analytics data in background
-        renderCharts(tin, tout, catTotals);
-        renderProductTable(productMap);
-        generateAlgorithmicAdvice(tin, tout, catTotals);
     };
 
-    window.openAnalyticsModal = () => {
-        document.getElementById('analyticsModal').style.display = 'block';
-        filterAndRender();
+    // Password Protection for Analytics Suite
+    window.requestAnalyticsAccess = () => {
+        authContext = 'analytics';
+        document.getElementById('pinModalTitle').innerText = "Analytics Security";
+        document.getElementById('pinModalDesc').innerText = "Enter passcode to open Analytics Suite";
+        document.getElementById('pinModal').style.display = 'flex';
+        document.getElementById('adminPin').focus();
+    };
+
+    window.toggleAnalyticsPeriodMode = () => {
+        const mode = document.getElementById('analyticsPeriodType').value;
+        document.getElementById('analyticsDaySelector').style.display = mode === 'day' ? 'block' : 'none';
+        document.getElementById('analyticsMonthSelector').style.display = mode === 'month' ? 'flex' : 'none';
+        renderAnalyticsModalData();
+    };
+
+    window.renderAnalyticsModalData = () => {
+        const periodType = document.getElementById('analyticsPeriodType').value;
+        const targetDateStr = document.getElementById('analyticsDateVal').value;
+        const targetMonth = document.getElementById('analyticsMonthVal').value;
+        const targetYear = document.getElementById('analyticsYearVal').value;
+
+        let tin = 0, tout = 0;
+        let catTotals = { 'SALE': 0, 'EXPENSE': 0, 'PURCHASE': 0 };
+        let productMap = {};
+
+        for (let i = 0; i < combinedRecords.length; i++) {
+            const r = combinedRecords[i];
+            const dt = new Date(r.date);
+
+            // Timeframe filtering check
+            if (periodType === 'day') {
+                const rDateStr = dt.toISOString().split('T')[0];
+                if (rDateStr !== targetDateStr) continue;
+            } else if (periodType === 'month') {
+                if (dt.getMonth().toString() !== targetMonth || dt.getFullYear().toString() !== targetYear) continue;
+            } else if (periodType === 'year') {
+                if (dt.getFullYear().toString() !== targetYear) continue;
+            }
+
+            // Aggregate products for sales items
+            if(r.cat === 'SALE' && r.rawItems && Array.isArray(r.rawItems)) {
+                r.rawItems.forEach(item => {
+                    const itemName = (
+                        item.name || 
+                        item.productName || 
+                        item.product || 
+                        item.item_name || 
+                        item.title || 
+                        item.item || 
+                        item.description || 
+                        (typeof item === 'string' ? item : 'Unnamed Product')
+                    ).trim();
+
+                    const qty = parseFloat(item.quantity || item.qty || item.count || 1);
+                    const price = parseFloat(item.price || item.unitPrice || item.sellingPrice || 0);
+                    const rev = parseFloat(item.total || item.subtotal || (qty * price));
+                    
+                    const productKey = itemName.replace(/\s+/g, '_').toLowerCase();
+                    const invMatch = inventoryData[productKey] || Object.values(inventoryData).find(iv => iv.name && iv.name.toLowerCase() === itemName.toLowerCase());
+                    
+                    const unitCost = invMatch && invMatch.productionCost !== undefined 
+                        ? parseFloat(invMatch.productionCost) 
+                        : parseFloat(item.cost || item.unitCost || item.buyPrice || 0);
+
+                    const totCost = qty * unitCost;
+                    const profit = rev - totCost;
+
+                    if (!productMap[itemName]) {
+                        productMap[itemName] = { qty: 0, revenue: 0, cost: 0, profit: 0 };
+                    }
+                    productMap[itemName].qty += qty;
+                    productMap[itemName].revenue += rev;
+                    productMap[itemName].cost += totCost;
+                    productMap[itemName].profit += profit;
+                });
+            }
+
+            if(r.type === 'IN') { tin += r.amt; } else { tout += r.amt; }
+            if(catTotals[r.cat] !== undefined) { catTotals[r.cat] += r.amt; }
+        }
+
+        renderCharts(tin, tout, catTotals);
+        renderProductTable(productMap);
     };
 
     window.closeAnalyticsModal = (e) => {
@@ -604,7 +658,7 @@
 
         const keys = Object.keys(productMap);
         if (keys.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:16px;">No product sales recorded in this period.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:16px;">No product sales recorded in this timeframe.</td></tr>`;
             return;
         }
 
@@ -693,8 +747,8 @@
                 maintainAspectRatio: false,
                 cutout: '72%',
                 plugins: { 
-                    tooltip: { backgroundColor: '#001A35', padding: 10, cornerRadius: 6 },
-                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, padding: 10, font: { family: 'Poppins', size: 10, weight: 600 } } } 
+                    tooltip: { backgroundColor: '#001A35', padding: 8, cornerRadius: 6 },
+                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, padding: 8, font: { family: 'Poppins', size: 9, weight: 600 } } } 
                 } 
             }
         });
@@ -707,7 +761,7 @@
                     data: [catTotals['SALE'], catTotals['EXPENSE'], catTotals['PURCHASE']],
                     backgroundColor: ['#0072CE', '#f59e0b', '#64748b'],
                     borderRadius: 6,
-                    barThickness: 28
+                    barThickness: 24
                 }]
             },
             options: { 
@@ -715,43 +769,22 @@
                 maintainAspectRatio: false,
                 plugins: { 
                     legend: { display: false },
-                    tooltip: { backgroundColor: '#001A35', padding: 10, cornerRadius: 6 }
+                    tooltip: { backgroundColor: '#001A35', padding: 8, cornerRadius: 6 }
                 },
                 scales: { 
                     y: { beginAtZero: true, border: {display: false}, grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Poppins', size: 9 } } }, 
-                    x: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: 10, weight: 600 } } } 
+                    x: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: 9, weight: 600 } } } 
                 }
             }
         });
     };
 
-    const generateAlgorithmicAdvice = (income, outflow, catTotals) => {
-        const adviceContainer = document.getElementById('advice-list');
-        if(!adviceContainer) return;
-        let insights = [];
-        const net = income - outflow;
-        const profitMargin = income > 0 ? (net / income) * 100 : 0;
-
-        if (income === 0 && outflow === 0) {
-            insights.push("No transaction history recorded within the selected parameters.");
-        } else {
-            if(net < 0) {
-                insights.push("Critical Running Deficit Detected: Operational liabilities have exceeded incoming revenue.");
-            } else if(profitMargin < 20) {
-                insights.push(`Low Liquidity Margin (${profitMargin.toFixed(1)}%): Cash conversion is vulnerable to market shifts.`);
-            } else {
-                insights.push(`Robust Conversion Threshold (${profitMargin.toFixed(1)}%): Balance infrastructure indicates strong capital retention.`);
-            }
-            if(catTotals['PURCHASE'] > catTotals['SALE']) {
-                insights.push("Excess Capital Allocation to Inventory: Direct purchases exceed immediate sales velocity.");
-            }
-        }
-        adviceContainer.innerHTML = insights.map(ins => `<li>${ins}</li>`).join('');
-    };
-
     window.printReport = () => { window.print(); };
 
     window.toggleAdmin = () => {
+        authContext = 'admin';
+        document.getElementById('pinModalTitle').innerText = "Admin Override";
+        document.getElementById('pinModalDesc').innerText = "Input security configuration pin";
         if(isAdmin) { 
             isAdmin = false; 
             document.getElementById('lock-icon-svg').innerHTML = '<path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-5V9c0-3.31-2.69-6-6-6S6 5.69 6 9v3c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7c0-1.1-.9-2-2-2zm-3.1 0H9.1V9c0-1.6 1.3-2.9 2.9-2.9 1.6 0 2.9 1.3 2.9 2.9v3z"/>';
@@ -765,10 +798,17 @@
     window.verifyPin = async () => {
         const entered = document.getElementById('adminPin').value;
         if(entered.length < AGPasscode.MIN_LENGTH) return;
-        if((await AGPasscode.verify(entered)).ok) {
-            isAdmin = true; 
-            document.getElementById('lock-icon-svg').innerHTML = '<path d="M12 13c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6-1V9c0-3.31-2.69-6-6-6S6 5.69 6 9v3H4v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9h-2zm-2 0H8V9c0-2.21 1.79-4 4-4s4 1.79 4 4v3 z"/>';
-            closeModals(); filterAndRender();
+        const res = await AGPasscode.verify(entered);
+        if(res.ok) {
+            closeModals();
+            if (authContext === 'admin') {
+                isAdmin = true; 
+                document.getElementById('lock-icon-svg').innerHTML = '<path d="M12 13c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6-1V9c0-3.31-2.69-6-6-6S6 5.69 6 9v3H4v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9h-2zm-2 0H8V9c0-2.21 1.79-4 4-4s4 1.79 4 4v3 z"/>';
+                filterAndRender();
+            } else if (authContext === 'analytics') {
+                document.getElementById('analyticsModal').style.display = 'block';
+                renderAnalyticsModalData();
+            }
         }
     };
     
