@@ -150,7 +150,6 @@
     const AUDIT_MIRROR_KEY = AGUtils.uidKey("ag_cash_audit_mirror", currentUID);
     let currentFilter = 'today';
 
-    // Robust number parser
     function parseNum(val) {
         if (!val) return 0;
         if (typeof val === 'number') return val;
@@ -158,43 +157,77 @@
         return parseFloat(cleaned) || 0;
     }
 
-    // Robust date parser
     function parseDate(val) {
         if (!val) return new Date();
         const d = new Date(typeof val === 'number' ? val : String(val));
         return isNaN(d.getTime()) ? new Date() : d;
     }
 
-    // Load data strictly from the logged-in user's scoped storage keys (No fake mock data)
+    // Comprehensive multi-source scanner across all possible storage formats and keys
     function loadLedgerData() {
-        let data = AGUtils.readJSON(CACHE_KEY, {});
+        let combined = { sales: {}, expenses: {}, inventory: {} };
+
+        // 1. Scan primary and legacy cache keys
+        const possibleKeys = [
+            CACHE_KEY, 
+            "ag_ledger_cache", 
+            AGUtils.uidKey("ag_sales_cache", currentUID),
+            "ag_sales_cache"
+        ];
         
-        // If ledger cache is empty, check user's specific inventory and audit mirror caches
-        if (!data || Object.keys(data).length === 0) {
-            const mirror = AGUtils.readJSON(AUDIT_MIRROR_KEY, []);
-            const invCache = AGUtils.readJSON(INV_CACHE_KEY, {});
-            
-            data = { sales: {}, expenses: {}, inventory: invCache };
-            
-            if (mirror.length > 0) {
+        for (const key of possibleKeys) {
+            const data = AGUtils.readJSON(key, null);
+            if (data && typeof data === 'object') {
+                if (data.sales) Object.assign(combined.sales, data.sales);
+                if (data.transactions) Object.assign(combined.sales, data.transactions);
+                if (data.expenses) Object.assign(combined.expenses, data.expenses);
+                if (data.costs) Object.assign(combined.expenses, data.costs);
+                if (data.inventory) Object.assign(combined.inventory, data.inventory);
+                if (data.products) Object.assign(combined.inventory, data.products);
+                if (data.stock) Object.assign(combined.inventory, data.stock);
+            }
+        }
+
+        // 2. Scan Inventory Caches explicitly
+        const invKeys = [INV_CACHE_KEY, "ag_inv_cache", "ag_inventory", "inventory", "products"];
+        for (const iKey of invKeys) {
+            const invData = AGUtils.readJSON(iKey, null);
+            if (invData) {
+                if (Array.isArray(invData)) {
+                    invData.forEach((item, idx) => {
+                        const id = item.id || item.code || `item_${idx}`;
+                        combined.inventory[id] = item;
+                    });
+                } else if (typeof invData === 'object') {
+                    Object.assign(combined.inventory, invData);
+                }
+            }
+        }
+
+        // 3. Scan Audit Mirror Caches
+        const auditKeys = [AUDIT_MIRROR_KEY, "ag_cash_audit_mirror", "ag_audit_log"];
+        for (const aKey of auditKeys) {
+            const mirror = AGUtils.readJSON(aKey, []);
+            if (Array.isArray(mirror) && mirror.length > 0) {
                 mirror.forEach(m => {
                     const id = m.id || Math.random().toString();
-                    if (m.cat === 'SALE' || m.type === 'IN') {
-                        data.sales[id] = { timestamp: m.date, total: m.amt, customer: m.sub, payment: 'Cash', amountPaid: m.amt, items: m.rawItems || [] };
-                    } else if (m.cat === 'EXPENSE' || m.cat === 'PURCHASE') {
-                        data.expenses[id] = { expense_date: m.date, amount: m.amt, category: m.sub, description: m.notes };
+                    if (m.cat === 'SALE' || m.type === 'IN' || m.type === 'sale') {
+                        if (!combined.sales[id]) combined.sales[id] = { timestamp: m.date || m.timestamp, total: m.amt || m.total, customer: m.sub || m.customer, payment: 'Cash', amountPaid: m.amt || m.total, items: m.rawItems || [] };
+                    } else if (m.cat === 'EXPENSE' || m.cat === 'PURCHASE' || m.type === 'OUT') {
+                        if (!combined.expenses[id]) combined.expenses[id] = { expense_date: m.date || m.timestamp, amount: m.amt || m.total, category: m.sub || m.category, description: m.notes || m.description };
                     }
                 });
             }
         }
-        return data;
+
+        return combined;
     }
 
     let rawData = loadLedgerData();
 
     const handleDataUpdate = (newData) => {
         if (!newData) return;
-        rawData = (typeof newData === 'string') ? JSON.parse(newData) : newData;
+        rawData = loadLedgerData();
         window.renderBI();
     };
 
@@ -210,19 +243,16 @@
     } catch (e) { console.log("BI: Offline mode active."); }
 
     setInterval(() => {
-        const storedData = localStorage.getItem(CACHE_KEY);
-        if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            if (JSON.stringify(parsedData) !== JSON.stringify(rawData)) {
-                handleDataUpdate(parsedData);
-            }
+        const fresh = loadLedgerData();
+        if (JSON.stringify(fresh) !== JSON.stringify(rawData)) {
+            rawData = fresh;
+            window.renderBI();
         }
     }, 2000);
 
-    window.addEventListener('storage', (e) => {
-        if (e.key === CACHE_KEY && e.newValue) {
-            handleDataUpdate(e.newValue);
-        }
+    window.addEventListener('storage', () => {
+        rawData = loadLedgerData();
+        window.renderBI();
     });
 
     const pnlChart = new Chart(document.getElementById('pnlChart'), {
@@ -254,14 +284,13 @@
             rawData = loadLedgerData();
         }
         
-        const salesObj = rawData.sales || rawData.transactions || (Array.isArray(rawData) ? rawData : {});
+        const salesObj = rawData.sales || {};
         const sales = Object.values(salesObj); 
         
-        const expObj = rawData.expenses || rawData.costs || {};
+        const expObj = rawData.expenses || {};
         const exps = Object.values(expObj);
         
-        // Also ensure inventory checks direct user inventory cache if missing in main object
-        const invObj = rawData.inventory || rawData.products || rawData.stock || AGUtils.readJSON(INV_CACHE_KEY, {});
+        const invObj = rawData.inventory || {};
         const inventory = Object.values(invObj);
 
         const now = new Date();
@@ -278,7 +307,7 @@
             const diffDays = (now - sDate) / 864e5;
             
             const total = s.items ? s.items.reduce((acc, i) => acc + parseNum(i.total || (parseNum(i.qty || i.quantity || 1) * parseNum(i.price || i.salePrice || 0))), 0) : parseNum(s.total || s.amount || 0);
-            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + parseNum(p.amount || 0), 0) : parseNum(s.amountPaid || 0);
+            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + parseNum(p.amount || 0), 0) : parseNum(s.amountPaid || total);
             const balance = total - paid;
 
             let inRange = false;
@@ -318,11 +347,11 @@
             if (inRange) metrics.exp += parseNum(e.amount || e.total || 0);
         });
 
-        // 3. Process Inventory Stock Value (using cost or wholesale/selling price accurately)
+        // 3. Process Inventory Stock Value (checking all standard quantity and price property variations)
         inventory.forEach(i => {
-            const qty = parseNum(i.qty || i.stock || i.quantity || 0);
-            const unitCost = parseNum(i.cost || i.unitCost || i.buyingPrice || i.salePrice || i.price || 0);
-            metrics.stock += (qty * unitCost);
+            const qty = parseNum(i.qty || i.stock || i.quantity || i.q || 0);
+            const unitPrice = parseNum(i.cost || i.unitCost || i.buyingPrice || i.salePrice || i.price || i.sellingPrice || 0);
+            metrics.stock += (qty * unitPrice);
         });
 
         document.getElementById('profit').innerText = AGUtils.formatAmount(metrics.rev);
