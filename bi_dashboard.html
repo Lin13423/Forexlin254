@@ -50,7 +50,14 @@
     .history-item:last-child { border-bottom: none; }
     .item-tag { font-size: 9px; color: var(--muted); margin-top: 2px; display: block; font-weight: 500; }
 
-    /* --- DESKTOP SCALING (Matching Sales Terminal Layout) --- */
+    /* Stock Management Row */
+    .stock-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; background: #f8fafc; font-size: 11px; border: 1px solid #e2e8f0; }
+    .stock-controls { display: flex; align-items: center; gap: 6px; }
+    .stock-btn { background: var(--primary); color: white; border: none; width: 26px; height: 26px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .stock-btn:active { opacity: 0.8; }
+    .stock-input { width: 55px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; font-weight: 700; background: #fff; color: var(--dark); }
+
+    /* --- DESKTOP SCALING --- */
     @media (min-width: 768px) {
         body { font-size: 1.5rem; padding: 20px; }
         .container { max-width: 1200px !important; padding: 35px !important; border-radius: 20px; }
@@ -72,6 +79,9 @@
         .debt-row { padding: 14px 16px; border-radius: 14px; font-size: 13px; margin-bottom: 10px; border-left-width: 5px; }
         .history-item { padding: 14px 0; }
         .item-tag { font-size: 11px; }
+        .stock-row { padding: 14px 16px; border-radius: 14px; font-size: 13px; margin-bottom: 10px; }
+        .stock-btn { width: 34px; height: 34px; border-radius: 8px; font-size: 14px; }
+        .stock-input { width: 75px; padding: 6px; font-size: 13px; border-radius: 8px; }
     }
 
     /* Modals */
@@ -118,7 +128,7 @@
 
     <div class="desktop-bi-grid">
         <div class="card full-width">
-            <div class="section-title"> Revenue vs. Outflow Performance</div>
+            <div class="section-title">📊 Revenue vs. Outflow Performance</div>
             <div class="chart-wrap"><canvas id="pnlChart"></canvas></div>
         </div>
 
@@ -130,6 +140,11 @@
         <div class="card">
             <div class="section-title">🕒 Recent Transaction Activity</div>
             <div id="history-list" style="max-height: 350px; overflow-y: auto;"></div>
+        </div>
+
+        <div class="card full-width">
+            <div class="section-title">📦 Stock Inventory & Quantity Adjustment</div>
+            <div id="stock-manage-list" style="max-height: 350px; overflow-y: auto;"></div>
         </div>
     </div>
 </div>
@@ -206,16 +221,58 @@
         window.renderBI();
     };
 
+    window.updateStockQty = (itemId, delta) => {
+        if (!rawData.inventory || !rawData.inventory[itemId]) return;
+        const item = rawData.inventory[itemId];
+        let currentQty = parseFloat(item.qty || item.stock || 0);
+        let newQty = Math.max(0, currentQty + delta);
+        
+        item.qty = newQty;
+        
+        // Sync to Firebase & Local Storage
+        try {
+            firebase.database().ref(`${AGUtils.userPath(currentUID)}/inventory/${itemId}`).update({ qty: newQty })
+                .then(() => {
+                    AGUtils.writeJSON(CACHE_KEY, rawData);
+                    window.renderBI();
+                });
+        } catch(e) {
+            // Fallback for offline mode
+            AGUtils.writeJSON(CACHE_KEY, rawData);
+            window.renderBI();
+        }
+    };
+
+    window.setStockQtyDirect = (itemId, val) => {
+        const qty = parseFloat(val);
+        if (isNaN(qty) || qty < 0) return;
+        if (!rawData.inventory || !rawData.inventory[itemId]) return;
+        
+        rawData.inventory[itemId].qty = qty;
+
+        try {
+            firebase.database().ref(`${AGUtils.userPath(currentUID)}/inventory/${itemId}`).update({ qty: qty })
+                .then(() => {
+                    AGUtils.writeJSON(CACHE_KEY, rawData);
+                    window.renderBI();
+                });
+        } catch(e) {
+            AGUtils.writeJSON(CACHE_KEY, rawData);
+            window.renderBI();
+        }
+    };
+
     window.renderBI = () => {
         if(!rawData || Object.keys(rawData).length === 0) return;
         
         const sales = Object.values(rawData.sales || rawData || {}); 
         const exps = Object.values(rawData.expenses || {});
-        const inventory = Object.values(rawData.inventory || {});
+        const inventoryEntries = Object.entries(rawData.inventory || {});
         const now = new Date();
 
         let metrics = { rev: 0, exp: 0, totalDebt: 0, vat: 0, stock: 0 };
         let debtHtml = "";
+        let stockHtml = "";
         let history = [];
 
         sales.forEach(s => {
@@ -261,10 +318,23 @@
             if (inRange) metrics.exp += (parseFloat(e.amount) || 0);
         });
 
-        inventory.forEach(i => {
+        inventoryEntries.forEach(([k, i]) => {
             const qty = parseFloat(i.qty || i.stock || 0);
             const price = parseFloat(i.salePrice || i.price || 0);
             metrics.stock += (qty * price);
+
+            stockHtml += `
+                <div class="stock-row">
+                    <div>
+                        <b style="color:var(--dark); text-transform:uppercase;">${i.name || k}</b><br>
+                        <small style="color:var(--muted);">${i.liters || 0}L • ${AGUtils.formatCurrency(price)}</small>
+                    </div>
+                    <div class="stock-controls">
+                        <button class="stock-btn" onclick="updateStockQty('${k}', -1)">-</button>
+                        <input type="number" class="stock-input" value="${qty}" onchange="setStockQtyDirect('${k}', this.value)" min="0">
+                        <button class="stock-btn" onclick="updateStockQty('${k}', 1)">+</button>
+                    </div>
+                </div>`;
         });
 
         document.getElementById('profit').innerText = AGUtils.formatAmount(metrics.rev);
@@ -297,7 +367,8 @@
                 </div>`;
         }).join('') || '<p style="text-align:center; color:var(--muted); padding:15px;">No recent records found for this period.</p>';
 
-        document.getElementById('debt-list').innerHTML = debtHtml || '<p style="text-align:center; color:var(--success); padding:15px;"> Zero outstanding debt balances.</p>';
+        document.getElementById('debt-list').innerHTML = debtHtml || '<p style="text-align:center; color:var(--success); padding:15px;">Zero outstanding debt balances.</p>';
+        document.getElementById('stock-manage-list').innerHTML = stockHtml || '<p style="text-align:center; color:var(--muted); padding:15px;">No inventory items available.</p>';
     }
 
     window.openSaleDetails = (s) => {
