@@ -17,7 +17,6 @@
     :root { --primary: #0072CE; --dark: #001A35; --accent: #ff6b00; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --bg: #f4f6f9; --muted: #64748b; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
     
-    /* --- MOBILE FIRST --- */
     body { font-family: 'Poppins', sans-serif; margin: 0; padding: 8px; background: var(--bg); color: #1f2937; font-size: 12px; line-height: 1.4; }
     .container { width: 100%; max-width: 500px; margin: 0 auto; background: #fff; padding: 14px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #f0f2f5; }
 
@@ -50,14 +49,12 @@
     .history-item:last-child { border-bottom: none; }
     .item-tag { font-size: 9px; color: var(--muted); margin-top: 2px; display: block; font-weight: 500; }
 
-    /* --- DESKTOP SCALING --- */
     @media (min-width: 768px) {
         body { font-size: 1.5rem; padding: 20px; }
         .container { max-width: 1200px !important; padding: 35px !important; border-radius: 20px; }
         .header-nav { padding: 16px 24px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
         .brand { font-size: 2rem !important; }
         .clock-badge { font-size: 14px; padding: 8px 16px; }
-        h2 { font-size: 2.5rem !important; }
         .kpi-card div { font-size: 2.5rem !important; }
         .kpi-card span { font-size: 1rem !important; }
         .chart-wrap { height: 360px !important; }
@@ -74,7 +71,6 @@
         .item-tag { font-size: 11px; }
     }
 
-    /* Modals */
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 4000; align-items: center; justify-content: center; padding: 20px; }
     .modal-card { background: white; width: 100%; max-width: 480px; padding: 30px; border-radius: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
     .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
@@ -146,10 +142,27 @@
 <script>
     const currentUID = AGUtils.resolveActiveUID();
     const CACHE_KEY = AGUtils.uidKey("ag_ledger_cache", currentUID);
-    let rawData = AGUtils.readJSON(CACHE_KEY, {});
+
+    // Load data with fallback to modular storage keys if main cache is empty
+    function loadAggregatedData() {
+        let data = AGUtils.readJSON(CACHE_KEY, {});
+        
+        if (!data.sales && !data.transactions) {
+            data.sales = AGUtils.readJSON(AGUtils.uidKey("ag_sales_queue", currentUID), {}) || 
+                         AGUtils.readJSON(AGUtils.uidKey("ag_sales", currentUID), {}) || {};
+        }
+        if (!data.expenses) {
+            data.expenses = AGUtils.readJSON(AGUtils.uidKey("ag_expenses", currentUID), {}) || {};
+        }
+        if (!data.inventory) {
+            data.inventory = AGUtils.readJSON(AGUtils.uidKey("ag_inventory", currentUID), {}) || {};
+        }
+        return data;
+    }
+
+    let rawData = loadAggregatedData();
     let currentFilter = 'today';
 
-    // Robust number parser (strips commas, currency symbols, and handles strings safely)
     function parseNum(val) {
         if (!val) return 0;
         if (typeof val === 'number') return val;
@@ -157,16 +170,24 @@
         return parseFloat(cleaned) || 0;
     }
 
-    // Robust date parser
     function parseDate(val) {
         if (!val) return new Date();
-        const d = new Date(typeof val === 'number' ? val : String(val));
+        if (typeof val === 'number') {
+            return new Date(val < 10000000000 ? val * 1000 : val);
+        }
+        const d = new Date(String(val));
         return isNaN(d.getTime()) ? new Date() : d;
     }
 
     const handleDataUpdate = (newData) => {
         if (!newData) return;
         rawData = (typeof newData === 'string') ? JSON.parse(newData) : newData;
+        // Ensure modular fallback keys are preserved if primary cache is partial
+        const fallback = loadAggregatedData();
+        if (!rawData.sales && fallback.sales) rawData.sales = fallback.sales;
+        if (!rawData.expenses && fallback.expenses) rawData.expenses = fallback.expenses;
+        if (!rawData.inventory && fallback.inventory) rawData.inventory = fallback.inventory;
+        
         window.renderBI();
     };
 
@@ -182,18 +203,16 @@
     } catch (e) { console.log("BI: Offline mode active."); }
 
     setInterval(() => {
-        const storedData = localStorage.getItem(CACHE_KEY);
-        if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            if (JSON.stringify(parsedData) !== JSON.stringify(rawData)) {
-                handleDataUpdate(parsedData);
-            }
+        const fresh = loadAggregatedData();
+        if (JSON.stringify(fresh) !== JSON.stringify(rawData)) {
+            rawData = fresh;
+            window.renderBI();
         }
     }, 2000);
 
     window.addEventListener('storage', (e) => {
-        if (e.key === CACHE_KEY && e.newValue) {
-            handleDataUpdate(e.newValue);
+        if (e.key && e.key.includes(currentUID)) {
+            handleDataUpdate(loadAggregatedData());
         }
     });
 
@@ -222,38 +241,35 @@
     };
 
     window.renderBI = () => {
-        if(!rawData || Object.keys(rawData).length === 0) return;
+        if(!rawData) rawData = {};
         
-        // Flexible key resolution for Sales, Expenses, and Inventory/Stock
-        const salesObj = rawData.sales || rawData.transactions || (Array.isArray(rawData) ? rawData : {});
+        const salesObj = rawData.sales || rawData.transactions || rawData.ag_sales || (Array.isArray(rawData) ? rawData : {});
         const sales = Object.values(salesObj); 
         
-        const expObj = rawData.expenses || rawData.costs || {};
+        const expObj = rawData.expenses || rawData.costs || rawData.ag_expenses || {};
         const exps = Object.values(expObj);
         
-        const invObj = rawData.inventory || rawData.products || rawData.stock || {};
+        const invObj = rawData.inventory || rawData.products || rawData.stock || rawData.ag_inventory || {};
         const inventory = Object.values(invObj);
 
         const now = new Date();
-
         let metrics = { rev: 0, exp: 0, totalDebt: 0, vat: 0, stock: 0 };
         let debtHtml = "";
         let history = [];
 
         sales.forEach(s => {
             const timestamp = s.timestamp || s.date || s.created_at;
-            if (!timestamp) return;
             const sDate = parseDate(timestamp);
             const diffDays = (now - sDate) / 864e5;
             
-            const total = s.items ? s.items.reduce((acc, i) => acc + parseNum(i.total || (parseNum(i.qty || i.quantity || 1) * parseNum(i.price || i.salePrice || 0))), 0) : parseNum(s.total || s.amount || 0);
-            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + parseNum(p.amount || 0), 0) : parseNum(s.amountPaid || 0);
+            const total = s.items ? s.items.reduce((acc, i) => acc + parseNum(i.total || (parseNum(i.qty || i.quantity || 1) * parseNum(i.price || i.salePrice || 0))), 0) : parseNum(s.total || s.amount || s.grandTotal || 0);
+            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + parseNum(p.amount || 0), 0) : parseNum(s.amountPaid || s.paid || total);
             const balance = total - paid;
 
             let inRange = false;
             if (currentFilter === 'today' && sDate.toDateString() === now.toDateString()) inRange = true;
-            else if (currentFilter === '7days' && diffDays <= 7 && diffDays >= 0) inRange = true;
-            else if (currentFilter === '30days' && diffDays <= 30 && diffDays >= 0) inRange = true;
+            else if (currentFilter === '7days' && diffDays <= 7 && diffDays >= -1) inRange = true;
+            else if (currentFilter === '30days' && diffDays <= 30 && diffDays >= -1) inRange = true;
             else if (currentFilter === 'all') inRange = true;
 
             if (inRange) {
@@ -262,8 +278,7 @@
                 history.push(s);
             }
 
-            const payType = (s.payment || s.paymentType || s.type || '').toLowerCase();
-            if ((payType === 'credit' || balance > 0) && payType !== 'cash' && balance > 0) {
+            if (balance > 0) {
                 metrics.totalDebt += balance;
                 const encodedSale = encodeURIComponent(JSON.stringify(s));
                 debtHtml += `
@@ -279,15 +294,15 @@
             const diffDays = (now - eDate) / 864e5;
             let inRange = false;
             if (currentFilter === 'today' && eDate.toDateString() === now.toDateString()) inRange = true;
-            else if (currentFilter === '7days' && diffDays <= 7 && diffDays >= 0) inRange = true;
-            else if (currentFilter === '30days' && diffDays <= 30 && diffDays >= 0) inRange = true;
+            else if (currentFilter === '7days' && diffDays <= 7 && diffDays >= -1) inRange = true;
+            else if (currentFilter === '30days' && diffDays <= 30 && diffDays >= -1) inRange = true;
             else if (currentFilter === 'all') inRange = true;
 
-            if (inRange) metrics.exp += parseNum(e.amount || e.total || 0);
+            if (inRange) metrics.exp += parseNum(e.amount || e.total || e.cost || 0);
         });
 
         inventory.forEach(i => {
-            const qty = parseNum(i.qty || i.stock || i.quantity || 0);
+            const qty = parseNum(i.qty || i.stock || i.quantity || i.units || 0);
             const price = parseNum(i.salePrice || i.price || i.cost || i.unitPrice || 0);
             metrics.stock += (qty * price);
         });
@@ -308,7 +323,7 @@
         const sorted = history.sort((a,b) => parseDate(b.timestamp || b.date) - parseDate(a.timestamp || a.date)).slice(0, 5);
         document.getElementById('history-list').innerHTML = sorted.map(s => {
             const encodedSale = encodeURIComponent(JSON.stringify(s));
-            const totalAmt = s.items ? s.items.reduce((acc, i) => acc + parseNum(i.total || (parseNum(i.qty || 1) * parseNum(i.price || 0))), 0) : parseNum(s.total || s.amount || 0);
+            const totalAmt = s.items ? s.items.reduce((acc, i) => acc + parseNum(i.total || (parseNum(i.qty || 1) * parseNum(i.price || 0))), 0) : parseNum(s.total || s.amount || s.grandTotal || 0);
             return `
                 <div class="history-item" onclick='openSaleDetails("${encodedSale}")'>
                     <div>
@@ -327,8 +342,8 @@
 
     window.openSaleDetails = (encodedStr) => {
         const s = JSON.parse(decodeURIComponent(encodedStr));
-        const total = s.items ? s.items.reduce((acc, i) => acc + parseNum(i.total || (parseNum(i.qty || 1) * parseNum(i.price || 0))), 0) : parseNum(s.total || s.amount || 0);
-        const itemsList = s.items ? s.items.map(i => `${i.name || 'Item'} (x${parseNum(i.qty || 1)}) - ${AGUtils.formatCurrency(parseNum(i.total || 0))}`).join('<br>') : 'Standard Sale Record';
+        const total = s.items ? s.items.reduce((acc, i) => acc + parseNum(i.total || (parseNum(i.qty || 1) * parseNum(i.price || 0))), 0) : parseNum(s.total || s.amount || s.grandTotal || 0);
+        const itemsList = s.items ? s.items.map(i => `${i.name || 'Item'} (x${parseNum(i.qty || 1)}) - ${AGUtils.formatCurrency(parseNum(i.total || (parseNum(i.qty || 1) * parseNum(i.price || 0))))}`).join('<br>') : 'Standard Sale Record';
         
         const rows = [
             { label: "Customer", val: s.customer || s.client || 'Walk-in' },
