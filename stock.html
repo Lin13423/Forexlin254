@@ -136,7 +136,10 @@
                 <input type="number" id="itemQty" class="modern-input" placeholder="Quantity">
                 <input type="number" id="itemLiters" class="modern-input" placeholder="Volume (Liters)">
             </div>
-            <input type="number" id="salePrice" class="modern-input" placeholder="Price (KES)" step="0.01">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <input type="number" id="salePrice" class="modern-input" placeholder="Selling Price (KES)" step="0.01">
+                <input type="number" id="productionCost" class="modern-input" placeholder="Production Cost (KES)" step="0.01">
+            </div>
             <button class="btn-main" onclick="handleSave()">Save Product</button>
         </div>
         <div id="adminManageList"></div>
@@ -176,12 +179,13 @@
         const name = document.getElementById('itemName').value.trim();
         const qty = parseInt(document.getElementById('itemQty').value) || 0;
         const price = parseFloat(document.getElementById('salePrice').value) || 0;
+        const cost = parseFloat(document.getElementById('productionCost').value) || 0;
         const liters = parseFloat(document.getElementById('itemLiters').value) || 0;
 
         if(!name) return notify("Product name required", "error");
         const key = name.replace(/\s+/g, '_').toLowerCase();
 
-        const updatedItem = { id: key, name, qty, liters, salePrice: price };
+        const updatedItem = { id: key, name, qty, liters, salePrice: price, productionCost: cost };
         inventoryCache[key] = updatedItem;
         syncQueue.push(updatedItem);
 
@@ -287,12 +291,13 @@
         document.getElementById('itemName').value = i.name; 
         document.getElementById('itemLiters').value = i.liters; 
         document.getElementById('salePrice').value = i.salePrice; 
+        document.getElementById('productionCost').value = i.productionCost || ''; 
         document.getElementById('itemQty').value = i.qty; 
         switchView('view-admin'); 
     };
     window.closeModal = () => document.getElementById('modalOverlay').style.display = 'none';
     window.notify = (m) => AGUtils.showToast(m, { duration: 2000 });
-    function resetForm() { ['itemName', 'itemQty', 'itemLiters', 'salePrice'].forEach(id => document.getElementById(id).value = ''); }
+    function resetForm() { ['itemName', 'itemQty', 'itemLiters', 'salePrice', 'productionCost'].forEach(id => document.getElementById(id).value = ''); }
     window.addEventListener('online', attemptSync);
     renderDashboard();
     renderAdminList();
