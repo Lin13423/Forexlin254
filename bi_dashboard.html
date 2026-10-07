@@ -146,10 +146,10 @@
 <script>
     const currentUID = AGUtils.resolveActiveUID();
     const CACHE_KEY = AGUtils.uidKey("ag_ledger_cache", currentUID);
-    const INV_CACHE_KEY = AGUtils.uidKey("ag_inv_cache", currentUID);
-    const AUDIT_MIRROR_KEY = AGUtils.uidKey("ag_cash_audit_mirror", currentUID);
+    let rawData = AGUtils.readJSON(CACHE_KEY, {});
     let currentFilter = 'today';
 
+    // Robust number parser (strips commas, currency symbols, and handles strings safely)
     function parseNum(val) {
         if (!val) return 0;
         if (typeof val === 'number') return val;
@@ -157,77 +157,16 @@
         return parseFloat(cleaned) || 0;
     }
 
+    // Robust date parser
     function parseDate(val) {
         if (!val) return new Date();
         const d = new Date(typeof val === 'number' ? val : String(val));
         return isNaN(d.getTime()) ? new Date() : d;
     }
 
-    // Comprehensive multi-source scanner across all possible storage formats and keys
-    function loadLedgerData() {
-        let combined = { sales: {}, expenses: {}, inventory: {} };
-
-        // 1. Scan primary and legacy cache keys
-        const possibleKeys = [
-            CACHE_KEY, 
-            "ag_ledger_cache", 
-            AGUtils.uidKey("ag_sales_cache", currentUID),
-            "ag_sales_cache"
-        ];
-        
-        for (const key of possibleKeys) {
-            const data = AGUtils.readJSON(key, null);
-            if (data && typeof data === 'object') {
-                if (data.sales) Object.assign(combined.sales, data.sales);
-                if (data.transactions) Object.assign(combined.sales, data.transactions);
-                if (data.expenses) Object.assign(combined.expenses, data.expenses);
-                if (data.costs) Object.assign(combined.expenses, data.costs);
-                if (data.inventory) Object.assign(combined.inventory, data.inventory);
-                if (data.products) Object.assign(combined.inventory, data.products);
-                if (data.stock) Object.assign(combined.inventory, data.stock);
-            }
-        }
-
-        // 2. Scan Inventory Caches explicitly
-        const invKeys = [INV_CACHE_KEY, "ag_inv_cache", "ag_inventory", "inventory", "products"];
-        for (const iKey of invKeys) {
-            const invData = AGUtils.readJSON(iKey, null);
-            if (invData) {
-                if (Array.isArray(invData)) {
-                    invData.forEach((item, idx) => {
-                        const id = item.id || item.code || `item_${idx}`;
-                        combined.inventory[id] = item;
-                    });
-                } else if (typeof invData === 'object') {
-                    Object.assign(combined.inventory, invData);
-                }
-            }
-        }
-
-        // 3. Scan Audit Mirror Caches
-        const auditKeys = [AUDIT_MIRROR_KEY, "ag_cash_audit_mirror", "ag_audit_log"];
-        for (const aKey of auditKeys) {
-            const mirror = AGUtils.readJSON(aKey, []);
-            if (Array.isArray(mirror) && mirror.length > 0) {
-                mirror.forEach(m => {
-                    const id = m.id || Math.random().toString();
-                    if (m.cat === 'SALE' || m.type === 'IN' || m.type === 'sale') {
-                        if (!combined.sales[id]) combined.sales[id] = { timestamp: m.date || m.timestamp, total: m.amt || m.total, customer: m.sub || m.customer, payment: 'Cash', amountPaid: m.amt || m.total, items: m.rawItems || [] };
-                    } else if (m.cat === 'EXPENSE' || m.cat === 'PURCHASE' || m.type === 'OUT') {
-                        if (!combined.expenses[id]) combined.expenses[id] = { expense_date: m.date || m.timestamp, amount: m.amt || m.total, category: m.sub || m.category, description: m.notes || m.description };
-                    }
-                });
-            }
-        }
-
-        return combined;
-    }
-
-    let rawData = loadLedgerData();
-
     const handleDataUpdate = (newData) => {
         if (!newData) return;
-        rawData = loadLedgerData();
+        rawData = (typeof newData === 'string') ? JSON.parse(newData) : newData;
         window.renderBI();
     };
 
@@ -243,16 +182,19 @@
     } catch (e) { console.log("BI: Offline mode active."); }
 
     setInterval(() => {
-        const fresh = loadLedgerData();
-        if (JSON.stringify(fresh) !== JSON.stringify(rawData)) {
-            rawData = fresh;
-            window.renderBI();
+        const storedData = localStorage.getItem(CACHE_KEY);
+        if (storedData) {
+            const parsedData = JSON.parse(storedData);
+            if (JSON.stringify(parsedData) !== JSON.stringify(rawData)) {
+                handleDataUpdate(parsedData);
+            }
         }
     }, 2000);
 
-    window.addEventListener('storage', () => {
-        rawData = loadLedgerData();
-        window.renderBI();
+    window.addEventListener('storage', (e) => {
+        if (e.key === CACHE_KEY && e.newValue) {
+            handleDataUpdate(e.newValue);
+        }
     });
 
     const pnlChart = new Chart(document.getElementById('pnlChart'), {
@@ -280,17 +222,16 @@
     };
 
     window.renderBI = () => {
-        if(!rawData || Object.keys(rawData).length === 0) {
-            rawData = loadLedgerData();
-        }
+        if(!rawData || Object.keys(rawData).length === 0) return;
         
-        const salesObj = rawData.sales || {};
+        // Flexible key resolution for Sales, Expenses, and Inventory/Stock
+        const salesObj = rawData.sales || rawData.transactions || (Array.isArray(rawData) ? rawData : {});
         const sales = Object.values(salesObj); 
         
-        const expObj = rawData.expenses || {};
+        const expObj = rawData.expenses || rawData.costs || {};
         const exps = Object.values(expObj);
         
-        const invObj = rawData.inventory || {};
+        const invObj = rawData.inventory || rawData.products || rawData.stock || {};
         const inventory = Object.values(invObj);
 
         const now = new Date();
@@ -299,7 +240,6 @@
         let debtHtml = "";
         let history = [];
 
-        // 1. Process Sales & Revenue
         sales.forEach(s => {
             const timestamp = s.timestamp || s.date || s.created_at;
             if (!timestamp) return;
@@ -307,7 +247,7 @@
             const diffDays = (now - sDate) / 864e5;
             
             const total = s.items ? s.items.reduce((acc, i) => acc + parseNum(i.total || (parseNum(i.qty || i.quantity || 1) * parseNum(i.price || i.salePrice || 0))), 0) : parseNum(s.total || s.amount || 0);
-            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + parseNum(p.amount || 0), 0) : parseNum(s.amountPaid || total);
+            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + parseNum(p.amount || 0), 0) : parseNum(s.amountPaid || 0);
             const balance = total - paid;
 
             let inRange = false;
@@ -323,7 +263,7 @@
             }
 
             const payType = (s.payment || s.paymentType || s.type || '').toLowerCase();
-            if (balance > 0 && (payType === 'credit' || payType.includes('credit') || balance > 0)) {
+            if ((payType === 'credit' || balance > 0) && payType !== 'cash' && balance > 0) {
                 metrics.totalDebt += balance;
                 const encodedSale = encodeURIComponent(JSON.stringify(s));
                 debtHtml += `
@@ -334,7 +274,6 @@
             }
         });
 
-        // 2. Process Expenses
         exps.forEach(e => {
             const eDate = parseDate(e.expense_date || e.date || e.timestamp);
             const diffDays = (now - eDate) / 864e5;
@@ -347,11 +286,10 @@
             if (inRange) metrics.exp += parseNum(e.amount || e.total || 0);
         });
 
-        // 3. Process Inventory Stock Value (checking all standard quantity and price property variations)
         inventory.forEach(i => {
-            const qty = parseNum(i.qty || i.stock || i.quantity || i.q || 0);
-            const unitPrice = parseNum(i.cost || i.unitCost || i.buyingPrice || i.salePrice || i.price || i.sellingPrice || 0);
-            metrics.stock += (qty * unitPrice);
+            const qty = parseNum(i.qty || i.stock || i.quantity || 0);
+            const price = parseNum(i.salePrice || i.price || i.cost || i.unitPrice || 0);
+            metrics.stock += (qty * price);
         });
 
         document.getElementById('profit').innerText = AGUtils.formatAmount(metrics.rev);
