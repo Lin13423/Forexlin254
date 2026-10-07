@@ -161,6 +161,8 @@
 <script>
     const currentUID = AGUtils.resolveActiveUID();
     const CACHE_KEY = AGUtils.uidKey("ag_ledger_cache", currentUID);
+    const INV_CACHE_KEY = AGUtils.uidKey("ag_inv_cache", currentUID);
+
     let rawData = AGUtils.readJSON(CACHE_KEY, {});
     let currentFilter = 'today';
 
@@ -192,8 +194,8 @@
     }, 2000);
 
     window.addEventListener('storage', (e) => {
-        if (e.key === CACHE_KEY && e.newValue) {
-            handleDataUpdate(e.newValue);
+        if ((e.key === CACHE_KEY || e.key === INV_CACHE_KEY) && e.newValue) {
+            window.renderBI();
         }
     });
 
@@ -222,23 +224,27 @@
     };
 
     window.updateStockQty = (itemId, delta) => {
-        if (!rawData.inventory || !rawData.inventory[itemId]) return;
-        const item = rawData.inventory[itemId];
-        let currentQty = parseFloat(item.qty || item.stock || 0);
+        let localInv = AGUtils.readJSON(INV_CACHE_KEY, {});
+        const targetItem = (rawData.inventory && rawData.inventory[itemId]) || localInv[itemId];
+        if (!targetItem) return;
+
+        let currentQty = parseFloat(targetItem.qty || targetItem.stock || 0);
         let newQty = Math.max(0, currentQty + delta);
         
-        item.qty = newQty;
-        
-        // Sync to Firebase & Local Storage
-        try {
-            firebase.database().ref(`${AGUtils.userPath(currentUID)}/inventory/${itemId}`).update({ qty: newQty })
-                .then(() => {
-                    AGUtils.writeJSON(CACHE_KEY, rawData);
-                    window.renderBI();
-                });
-        } catch(e) {
-            // Fallback for offline mode
+        targetItem.qty = newQty;
+        if (localInv[itemId]) {
+            localInv[itemId].qty = newQty;
+            AGUtils.writeJSON(INV_CACHE_KEY, localInv);
+        }
+        if (rawData.inventory && rawData.inventory[itemId]) {
+            rawData.inventory[itemId].qty = newQty;
             AGUtils.writeJSON(CACHE_KEY, rawData);
+        }
+        
+        try {
+            firebase.database().ref(`${AGUtils.userPath(currentUID, "inventory")}/${itemId}`).update({ qty: newQty })
+                .then(() => window.renderBI());
+        } catch(e) {
             window.renderBI();
         }
     };
@@ -246,28 +252,38 @@
     window.setStockQtyDirect = (itemId, val) => {
         const qty = parseFloat(val);
         if (isNaN(qty) || qty < 0) return;
-        if (!rawData.inventory || !rawData.inventory[itemId]) return;
         
-        rawData.inventory[itemId].qty = qty;
+        let localInv = AGUtils.readJSON(INV_CACHE_KEY, {});
+        const targetItem = (rawData.inventory && rawData.inventory[itemId]) || localInv[itemId];
+        if (!targetItem) return;
+
+        targetItem.qty = qty;
+        if (localInv[itemId]) {
+            localInv[itemId].qty = qty;
+            AGUtils.writeJSON(INV_CACHE_KEY, localInv);
+        }
+        if (rawData.inventory && rawData.inventory[itemId]) {
+            rawData.inventory[itemId].qty = qty;
+            AGUtils.writeJSON(CACHE_KEY, rawData);
+        }
 
         try {
-            firebase.database().ref(`${AGUtils.userPath(currentUID)}/inventory/${itemId}`).update({ qty: qty })
-                .then(() => {
-                    AGUtils.writeJSON(CACHE_KEY, rawData);
-                    window.renderBI();
-                });
+            firebase.database().ref(`${AGUtils.userPath(currentUID, "inventory")}/${itemId}`).update({ qty: qty })
+                .then(() => window.renderBI());
         } catch(e) {
-            AGUtils.writeJSON(CACHE_KEY, rawData);
             window.renderBI();
         }
     };
 
     window.renderBI = () => {
-        if(!rawData || Object.keys(rawData).length === 0) return;
-        
         const sales = Object.values(rawData.sales || rawData || {}); 
         const exps = Object.values(rawData.expenses || {});
-        const inventoryEntries = Object.entries(rawData.inventory || {});
+        
+        // Pull inventory from ledger or fallback directly to local inventory cache
+        const localInvCache = AGUtils.readJSON(INV_CACHE_KEY, {});
+        const activeInventory = rawData.inventory || localInvCache;
+        const inventoryEntries = Object.entries(activeInventory);
+        
         const now = new Date();
 
         let metrics = { rev: 0, exp: 0, totalDebt: 0, vat: 0, stock: 0 };
