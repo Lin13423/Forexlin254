@@ -416,7 +416,7 @@
                 cat: 'SALE',
                 type: 'IN',
                 sub: (q.customer || "Walk-in") + " (PENDING)",
-                amt: q.items ? q.items.reduce((sum, i) => sum + parseFloat(i.total || 0), 0) : parseFloat(q.total || 0),
+                amt: q.items ? q.items.reduce((sum, i) => sum + parseFloat(i.total || i.amount || 0), 0) : parseFloat(q.total || 0),
                 isPending: true,
                 rawItems: q.items || []
             }));
@@ -438,7 +438,7 @@
                     if(cat === 'SALE' && d.payment !== 'Cash') continue;
                     
                     let val = parseFloat(d.total || d.amount || 0);
-                    if (!val && d.items) val = d.items.reduce((sum, i) => sum + parseFloat(i.total || 0), 0);
+                    if (!val && d.items) val = d.items.reduce((sum, i) => sum + parseFloat(i.total || i.amount || 0), 0);
 
                     temp.push({ 
                         id, date: d.timestamp || d.expense_date, cat, type, 
@@ -504,14 +504,14 @@
             const dt = new Date(r.date);
             if(dt.getMonth().toString() !== m || dt.getFullYear().toString() !== y) continue;
             
-            // Collect Product Performance Data for Sales matching filter period
+            // Robust Product Line Performance Breakdown
             if(r.cat === 'SALE' && r.rawItems && Array.isArray(r.rawItems)) {
                 r.rawItems.forEach(item => {
-                    const itemName = item.name || 'Unnamed Product';
-                    const qty = parseFloat(item.quantity || item.qty || 0);
-                    const price = parseFloat(item.price || 0);
-                    const cost = parseFloat(item.cost || 0);
-                    const rev = qty * price;
+                    const itemName = (item.name || item.productName || item.title || item.item || 'Unnamed Product').trim();
+                    const qty = parseFloat(item.quantity || item.qty || item.count || 1);
+                    const price = parseFloat(item.price || item.unitPrice || item.sellingPrice || 0);
+                    const cost = parseFloat(item.cost || item.unitCost || item.buyPrice || 0);
+                    const rev = parseFloat(item.total || item.subtotal || (qty * price));
                     const totCost = qty * cost;
                     const profit = rev - totCost;
 
@@ -622,8 +622,8 @@
             itemsWrap.style.display = 'block';
             itemsList.innerHTML = item.rawItems.map(i => `
                 <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; padding-bottom:4px; border-bottom:1px dashed #e2e8f0;">
-                    <span>${i.name || 'Item'} (x${i.qty || i.quantity || 1})</span>
-                    <strong style="color:var(--primary)">Ksh ${AGUtils.formatAmount(i.total || 0)}</strong>
+                    <span>${i.name || i.productName || i.title || i.item || 'Item'} (x${i.quantity || i.qty || i.count || 1})</span>
+                    <strong style="color:var(--primary)">Ksh ${AGUtils.formatAmount(i.total || i.amount || 0)}</strong>
                 </div>
             `).join('');
         } else if(item.notes) {
