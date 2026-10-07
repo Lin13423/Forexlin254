@@ -504,10 +504,20 @@
             const dt = new Date(r.date);
             if(dt.getMonth().toString() !== m || dt.getFullYear().toString() !== y) continue;
             
-            // Robust Product Line Performance Breakdown
+            // Robust Product Line Performance Breakdown with expanded property fallbacks
             if(r.cat === 'SALE' && r.rawItems && Array.isArray(r.rawItems)) {
                 r.rawItems.forEach(item => {
-                    const itemName = (item.name || item.productName || item.title || item.item || 'Unnamed Product').trim();
+                    const itemName = (
+                        item.name || 
+                        item.productName || 
+                        item.product || 
+                        item.item_name || 
+                        item.title || 
+                        item.item || 
+                        item.description || 
+                        (typeof item === 'string' ? item : 'Unnamed Product')
+                    ).trim();
+
                     const qty = parseFloat(item.quantity || item.qty || item.count || 1);
                     const price = parseFloat(item.price || item.unitPrice || item.sellingPrice || 0);
                     const cost = parseFloat(item.cost || item.unitCost || item.buyPrice || 0);
@@ -622,7 +632,7 @@
             itemsWrap.style.display = 'block';
             itemsList.innerHTML = item.rawItems.map(i => `
                 <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; padding-bottom:4px; border-bottom:1px dashed #e2e8f0;">
-                    <span>${i.name || i.productName || i.title || i.item || 'Item'} (x${i.quantity || i.qty || i.count || 1})</span>
+                    <span>${i.name || i.productName || i.product || i.item_name || i.title || i.item || i.description || 'Item'} (x${i.quantity || i.qty || i.count || 1})</span>
                     <strong style="color:var(--primary)">Ksh ${AGUtils.formatAmount(i.total || i.amount || 0)}</strong>
                 </div>
             `).join('');
