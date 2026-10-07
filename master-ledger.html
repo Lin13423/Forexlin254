@@ -49,7 +49,7 @@
             .desktop-audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; width: 100%; }
             .full-width { grid-column: span 2; width: 100%; }
             .chart-card { padding: 20px 24px !important; border-radius: 20px !important; }
-            .chart-wrap { height: 200px !important; }
+            .chart-wrap { height: 180px !important; }
             .entry-card { padding: 20px 24px !important; border-radius: 18px !important; margin-bottom: 14px !important; }
             .entry-name { font-size: 16px !important; }
             .val-amt { font-size: 20px !important; }
@@ -143,7 +143,16 @@
 
         .chart-card { background: white; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.01); margin-bottom: 12px; }
         .chart-card h4 { margin: 0 0 10px 0; font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .chart-wrap { position: relative; height: 160px; width: 100%; }
+        .chart-wrap { position: relative; height: 140px; width: 100%; }
+
+        /* Analytics Financial Summary Cards Grid */
+        .analytics-metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .analytics-stat-pill { background: #fff; padding: 12px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; }
+        .analytics-stat-pill label { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .analytics-stat-pill span { font-size: 14px; font-weight: 800; color: var(--primary); }
+        .analytics-stat-pill.highlight { background: linear-gradient(135deg, #001A35 0%, #002d5c 100%); border: none; }
+        .analytics-stat-pill.highlight label { color: rgba(255,255,255,0.6); }
+        .analytics-stat-pill.highlight span { color: #ffffff; }
 
         /* Product Market Table Styling */
         .product-table-wrapper { overflow-x: auto; margin-top: 10px; }
@@ -286,7 +295,7 @@
         <div class="analytics-header">
             <div>
                 <h2 style="margin:0; font-size:16px; color:var(--primary);">Advanced Analytics & Profit Intelligence Suite</h2>
-                <p style="margin:2px 0 0 0; font-size:11px; color:var(--text-muted);">Real-time production cost tracking, product margins, and cash flow proportions</p>
+                <p style="margin:2px 0 0 0; font-size:11px; color:var(--text-muted);">Real-time production cost tracking, product margins, and net profit calculations</p>
             </div>
             <button class="close-analytics" onclick="document.getElementById('analyticsModal').style.display='none'">✕</button>
         </div>
@@ -312,18 +321,27 @@
             </div>
         </div>
 
-        <div class="desktop-audit-grid">
-            <div class="chart-card">
-                <h4>Cash Flow Proportions</h4>
-                <div class="chart-wrap">
-                    <canvas id="flowChart"></canvas>
-                </div>
+        <!-- Analytics Financial Summary Cards (Product Profit, Expenses, Net Profit/Loss) -->
+        <div class="analytics-metrics-grid">
+            <div class="analytics-stat-pill">
+                <label>Total Product Profit</label>
+                <span id="stat-total-product-profit" style="color:var(--success);">0</span>
             </div>
-            <div class="chart-card">
-                <h4>Operational Allocations</h4>
-                <div class="chart-wrap">
-                    <canvas id="categoryChart"></canvas>
-                </div>
+            <div class="analytics-stat-pill">
+                <label>Expenses Incurred</label>
+                <span id="stat-total-expenses" style="color:var(--danger);">0</span>
+            </div>
+            <div class="analytics-stat-pill highlight">
+                <label>Net Period Profit / Loss</label>
+                <span id="stat-net-period-profit">0</span>
+            </div>
+        </div>
+
+        <!-- Operational Allocations Chart -->
+        <div class="chart-card">
+            <h4>Operational Allocations</h4>
+            <div class="chart-wrap">
+                <canvas id="categoryChart"></canvas>
             </div>
         </div>
 
@@ -413,7 +431,6 @@
     let activeCategoryFilter = 'ALL';
     let inventoryData = AGUtils.readJSON(invCacheKey, {});
     
-    let flowChartInstance = null;
     let categoryChartInstance = null;
     let debounceTimer = null;
     let isDataLoaded = false;
@@ -582,9 +599,10 @@
         const targetMonth = document.getElementById('analyticsMonthVal').value;
         const targetYear = document.getElementById('analyticsYearVal').value;
 
-        let tin = 0, tout = 0;
         let catTotals = { 'SALE': 0, 'EXPENSE': 0, 'PURCHASE': 0 };
         let productMap = {};
+        let totalProductProfit = 0;
+        let totalExpenses = 0;
 
         for (let i = 0; i < combinedRecords.length; i++) {
             const r = combinedRecords[i];
@@ -635,14 +653,28 @@
                     productMap[itemName].revenue += rev;
                     productMap[itemName].cost += totCost;
                     productMap[itemName].profit += profit;
+                    totalProductProfit += profit;
                 });
             }
 
-            if(r.type === 'IN') { tin += r.amt; } else { tout += r.amt; }
+            if(r.cat === 'EXPENSE') {
+                totalExpenses += r.amt;
+            }
+
             if(catTotals[r.cat] !== undefined) { catTotals[r.cat] += r.amt; }
         }
 
-        renderCharts(tin, tout, catTotals);
+        const netPeriodProfit = totalProductProfit - totalExpenses;
+
+        // Update DOM stats
+        document.getElementById('stat-total-product-profit').innerText = 'Ksh ' + AGUtils.formatAmount(totalProductProfit);
+        document.getElementById('stat-total-expenses').innerText = 'Ksh ' + AGUtils.formatAmount(totalExpenses);
+        
+        const netEl = document.getElementById('stat-net-period-profit');
+        netEl.innerText = (netPeriodProfit >= 0 ? '+Ksh ' : '-Ksh ') + AGUtils.formatAmount(Math.abs(netPeriodProfit));
+        netEl.style.color = netPeriodProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+
+        renderChart(catTotals);
         renderProductTable(productMap);
     };
 
@@ -720,38 +752,12 @@
         document.getElementById('detailsModal').style.display = 'none';
     };
 
-    const renderCharts = (income, outflow, catTotals) => {
-        const flowCanvas = document.getElementById('flowChart');
+    const renderChart = (catTotals) => {
         const catCanvas = document.getElementById('categoryChart');
-        if(!flowCanvas || !catCanvas) return;
+        if(!catCanvas) return;
 
-        const ctxFlow = flowCanvas.getContext('2d');
         const ctxCat = catCanvas.getContext('2d');
-
-        if(flowChartInstance) flowChartInstance.destroy();
         if(categoryChartInstance) categoryChartInstance.destroy();
-
-        flowChartInstance = new Chart(ctxFlow, {
-            type: 'doughnut',
-            data: {
-                labels: ['Gross Inflow', 'Gross Outflow'],
-                datasets: [{
-                    data: [income, outflow],
-                    backgroundColor: ['#22c55e', '#ef4444'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                cutout: '72%',
-                plugins: { 
-                    tooltip: { backgroundColor: '#001A35', padding: 8, cornerRadius: 6 },
-                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, padding: 8, font: { family: 'Poppins', size: 9, weight: 600 } } } 
-                } 
-            }
-        });
 
         categoryChartInstance = new Chart(ctxCat, {
             type: 'bar',
@@ -761,7 +767,7 @@
                     data: [catTotals['SALE'], catTotals['EXPENSE'], catTotals['PURCHASE']],
                     backgroundColor: ['#0072CE', '#f59e0b', '#64748b'],
                     borderRadius: 6,
-                    barThickness: 24
+                    barThickness: 22
                 }]
             },
             options: { 
