@@ -279,16 +279,16 @@
 
     window.renderBI = () => {
         const localSalesCache = AGUtils.readJSON(SALES_CACHE_KEY, {});
-        const activeSalesObj = rawData.sales || rawData || localSalesCache;
-        const sales = Object.values(activeSalesObj);
+        const activeSalesObj = rawData.sales || rawData.sales_cache || localSalesCache;
+        const sales = Object.values(activeSalesObj || {});
 
         const localExpCache = AGUtils.readJSON(EXP_CACHE_KEY, {});
-        const activeExpObj = rawData.expenses || localExpCache;
-        const exps = Object.values(activeExpObj);
+        const activeExpObj = rawData.expenses || rawData.exp || localExpCache;
+        const exps = Object.values(activeExpObj || {});
 
         const localInvCache = AGUtils.readJSON(INV_CACHE_KEY, {});
         const activeInventory = rawData.inventory || localInvCache;
-        const inventoryEntries = Object.entries(activeInventory);
+        const inventoryEntries = Object.entries(activeInventory || {});
         
         const now = new Date();
 
@@ -321,7 +321,7 @@
             }
 
             const paymentStr = String(s.payment || s.paymentType || s.status || '').toLowerCase();
-            const isCredit = paymentStr.includes('credit') || paymentStr.includes('debt') || balance > 0;
+            const isCredit = paymentStr.includes('credit') || paymentStr.includes('debt') || s.isDebt === true;
 
             if (isCredit && balance > 0) {
                 metrics.totalDebt += balance;
@@ -348,7 +348,7 @@
             else if (currentFilter === 'all') inRange = true;
 
             if (inRange) {
-                metrics.exp += (parseFloat(e.amount || e.total || e.cost || 0));
+                metrics.exp += (parseFloat(e.amount || e.total || e.cost || e.value || 0));
             }
         });
 
