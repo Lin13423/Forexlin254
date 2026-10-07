@@ -26,8 +26,8 @@
     .brand span { color: var(--primary); }
     .clock-badge { background: #f1f5f9; padding: 4px 8px; border-radius: 16px; font-size: 10px; font-weight: 700; color: var(--muted); }
 
-    .filter-bar { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
-    .f-btn { background: #fff; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 10px; font-size: 10px; font-weight: 700; color: var(--muted); white-space: nowrap; cursor: pointer; transition: 0.2s; }
+    .filter-bar { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; position: relative; z-index: 5; }
+    .f-btn { background: #fff; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 10px; font-size: 10px; font-weight: 700; color: var(--muted); white-space: nowrap; cursor: pointer; transition: 0.2s; pointer-events: auto; }
     .f-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(0, 114, 206, 0.2); }
 
     .banner { background: #fff; padding: 10px 14px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
@@ -102,10 +102,10 @@
 
 <div class="container">
     <div class="filter-bar">
-        <div class="f-btn active" onclick="window.setFilter('today', this)">TODAY</div>
-        <div class="f-btn" onclick="window.setFilter('7days', this)">7 DAYS</div>
-        <div class="f-btn" onclick="window.setFilter('30days', this)">30 DAYS</div>
-        <div class="f-btn" onclick="window.setFilter('all', this)">ALL TIME</div>
+        <button type="button" class="f-btn active" onclick="window.setFilter('today', this)">TODAY</button>
+        <button type="button" class="f-btn" onclick="window.setFilter('7days', this)">7 DAYS</button>
+        <button type="button" class="f-btn" onclick="window.setFilter('30days', this)">30 DAYS</button>
+        <button type="button" class="f-btn" onclick="window.setFilter('all', this)">ALL TIME</button>
     </div>
 
     <div class="banner tax-banner full-width">
@@ -162,6 +162,8 @@
     const currentUID = AGUtils.resolveActiveUID();
     const CACHE_KEY = AGUtils.uidKey("ag_ledger_cache", currentUID);
     const INV_CACHE_KEY = AGUtils.uidKey("ag_inv_cache", currentUID);
+    const EXP_CACHE_KEY = AGUtils.uidKey("ag_expenses_cache", currentUID);
+    const SALES_CACHE_KEY = AGUtils.uidKey("ag_sales_cache", currentUID);
 
     let rawData = AGUtils.readJSON(CACHE_KEY, {});
     let currentFilter = 'today';
@@ -194,7 +196,7 @@
     }, 2000);
 
     window.addEventListener('storage', (e) => {
-        if ((e.key === CACHE_KEY || e.key === INV_CACHE_KEY) && e.newValue) {
+        if ([CACHE_KEY, INV_CACHE_KEY, EXP_CACHE_KEY, SALES_CACHE_KEY].includes(e.key) && e.newValue) {
             window.renderBI();
         }
     });
@@ -276,10 +278,14 @@
     };
 
     window.renderBI = () => {
-        const sales = Object.values(rawData.sales || rawData || {}); 
-        const exps = Object.values(rawData.expenses || {});
-        
-        // Pull inventory from ledger or fallback directly to local inventory cache
+        const localSalesCache = AGUtils.readJSON(SALES_CACHE_KEY, {});
+        const activeSalesObj = rawData.sales || rawData || localSalesCache;
+        const sales = Object.values(activeSalesObj);
+
+        const localExpCache = AGUtils.readJSON(EXP_CACHE_KEY, {});
+        const activeExpObj = rawData.expenses || localExpCache;
+        const exps = Object.values(activeExpObj);
+
         const localInvCache = AGUtils.readJSON(INV_CACHE_KEY, {});
         const activeInventory = rawData.inventory || localInvCache;
         const inventoryEntries = Object.entries(activeInventory);
@@ -292,11 +298,14 @@
         let history = [];
 
         sales.forEach(s => {
-            if (!s.timestamp) return;
-            const sDate = new Date(s.timestamp);
+            const dateVal = s.timestamp || s.date || s.created_at;
+            if (!dateVal) return;
+            const sDate = new Date(dateVal);
+            if (isNaN(sDate.getTime())) return;
+            
             const diffDays = (now - sDate) / 864e5;
-            const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total) || 0), 0) : (parseFloat(s.total) || 0);
-            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0) : 0;
+            const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total || (i.price * i.qty) || 0)), 0) : (parseFloat(s.total || s.amount || 0));
+            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + (parseFloat(p.amount || 0)), 0) : (parseFloat(s.paid || s.amountPaid || 0));
             const balance = total - paid;
 
             let inRange = false;
@@ -311,19 +320,26 @@
                 history.push(s);
             }
 
-            if (s.payment === 'Credit' && balance > 0) {
+            const paymentStr = String(s.payment || s.paymentType || s.status || '').toLowerCase();
+            const isCredit = paymentStr.includes('credit') || paymentStr.includes('debt') || balance > 0;
+
+            if (isCredit && balance > 0) {
                 metrics.totalDebt += balance;
                 const encodedSale = encodeURIComponent(JSON.stringify(s));
                 debtHtml += `
-                    <div class="debt-row" onclick='openSaleDetails(${encodedSale})'>
-                        <div><b>${s.customer || 'Customer'}</b><br><small style="color:var(--muted);">${sDate.toLocaleDateString()}</small></div>
+                    <div class="debt-row" onclick='openSaleDetails("${encodedSale}")'>
+                        <div><b>${s.customer || s.customerName || 'Customer'}</b><br><small style="color:var(--muted);">${sDate.toLocaleDateString()}</small></div>
                         <div style="text-align:right"><b style="color:var(--warning);">${AGUtils.formatCurrency(balance)}</b><br><small style="font-size:10px; color:var(--muted);">Tap for details</small></div>
                     </div>`;
             }
         });
 
         exps.forEach(e => {
-            const eDate = new Date(e.expense_date);
+            const dateVal = e.expense_date || e.date || e.timestamp || e.created_at;
+            if (!dateVal) return;
+            const eDate = new Date(dateVal);
+            if (isNaN(eDate.getTime())) return;
+
             const diffDays = (now - eDate) / 864e5;
             let inRange = false;
             if (currentFilter === 'today' && eDate.toLocaleDateString() === now.toLocaleDateString()) inRange = true;
@@ -331,7 +347,9 @@
             else if (currentFilter === '30days' && diffDays <= 30) inRange = true;
             else if (currentFilter === 'all') inRange = true;
 
-            if (inRange) metrics.exp += (parseFloat(e.amount) || 0);
+            if (inRange) {
+                metrics.exp += (parseFloat(e.amount || e.total || e.cost || 0));
+            }
         });
 
         inventoryEntries.forEach(([k, i]) => {
@@ -366,15 +384,15 @@
         pnlChart.data.datasets[0].data = [metrics.rev, metrics.exp];
         pnlChart.update();
 
-        const sorted = history.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
+        const sorted = history.sort((a,b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date)).slice(0, 5);
         document.getElementById('history-list').innerHTML = sorted.map(s => {
             const encodedSale = encodeURIComponent(JSON.stringify(s));
-            const totalAmt = s.items ? s.items.reduce((acc, i) => acc + parseFloat(i.total || 0), 0) : parseFloat(s.total || 0);
+            const totalAmt = s.items ? s.items.reduce((acc, i) => acc + parseFloat(i.total || 0), 0) : parseFloat(s.total || s.amount || 0);
             return `
-                <div class="history-item" onclick='openSaleDetails(${encodedSale})'>
+                <div class="history-item" onclick='openSaleDetails("${encodedSale}")'>
                     <div>
-                        <b style="color:var(--dark);">${s.customer || 'Walk-in Customer'}</b>
-                        <span class="item-tag">${s.payment || 'Cash'} Sale • ${new Date(s.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                        <b style="color:var(--dark);">${s.customer || s.customerName || 'Walk-in Customer'}</b>
+                        <span class="item-tag">${s.payment || s.paymentType || 'Cash'} Sale • ${new Date(s.timestamp || s.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                     </div>
                     <div style="text-align:right;">
                         <span style="color:var(--success); font-weight:800;">+${AGUtils.formatAmount(totalAmt)}</span>
@@ -387,14 +405,25 @@
         document.getElementById('stock-manage-list').innerHTML = stockHtml || '<p style="text-align:center; color:var(--muted); padding:15px;">No inventory items available.</p>';
     }
 
-    window.openSaleDetails = (s) => {
-        const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total) || 0), 0) : (parseFloat(s.total) || 0);
-        const itemsList = s.items ? s.items.map(i => `${i.name || 'Item'} (x${i.qty || 1}) - ${AGUtils.formatCurrency(i.total || 0)}`).join('<br>') : 'Standard Sale Record';
+    window.openSaleDetails = (input) => {
+        let s = input;
+        if (typeof s === 'string') {
+            try {
+                s = JSON.parse(decodeURIComponent(s));
+            } catch (e) {
+                console.error("Failed to parse transaction breakdown:", e);
+                return;
+            }
+        }
+        if (!s) return;
+
+        const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total || (i.price * i.qty)) || 0), 0) : (parseFloat(s.total || s.amount) || 0);
+        const itemsList = s.items && Array.isArray(s.items) ? s.items.map(i => `${i.name || 'Item'} (x${i.qty || 1}) - ${AGUtils.formatCurrency(i.total || (i.price * i.qty) || 0)}`).join('<br>') : 'Standard Sale Record';
         
         const rows = [
-            { label: "Customer", val: s.customer || 'Walk-in' },
-            { label: "Payment Type", val: s.payment || 'Cash' },
-            { label: "Timestamp", val: AGUtils.formatDateTime(s.timestamp) },
+            { label: "Customer", val: s.customer || s.customerName || 'Walk-in' },
+            { label: "Payment Type", val: s.payment || s.paymentType || 'Cash' },
+            { label: "Timestamp", val: AGUtils.formatDateTime(s.timestamp || s.date) },
             { label: "Items Purchased", val: itemsList },
             { label: "Total Amount", val: AGUtils.formatCurrency(total) }
         ];
