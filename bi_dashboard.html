@@ -176,7 +176,6 @@
 
     try {
         if (!firebase.apps.length) firebase.initializeApp(AG_FIREBASE_CONFIG);
-        // Listen to root database or user path
         firebase.database().ref('/').on('value', (snap) => {
             if(snap.exists()) {
                 const dbData = snap.val();
@@ -228,7 +227,7 @@
 
     window.updateStockQty = (itemId, delta) => {
         let localInv = AGUtils.readJSON(INV_CACHE_KEY, {});
-        const targetItem = (rawData.inventory && rawData.inventory[itemId]) || (rawData.products && rawData.products[itemId]) || localInv[itemId];
+        const targetItem = (rawData.products && rawData.products[itemId]) || (rawData.inventory && rawData.inventory[itemId]) || (rawData.users && rawData.users[currentUID] && rawData.users[currentUID].products && rawData.users[currentUID].products[itemId]) || localInv[itemId];
         if (!targetItem) return;
 
         let currentQty = parseFloat(targetItem.qty || targetItem.stock || 0);
@@ -239,11 +238,11 @@
             localInv[itemId].qty = newQty;
             AGUtils.writeJSON(INV_CACHE_KEY, localInv);
         }
-        if (rawData.inventory && rawData.inventory[itemId]) {
-            rawData.inventory[itemId].qty = newQty;
-            AGUtils.writeJSON(CACHE_KEY, rawData);
-        } else if (rawData.products && rawData.products[itemId]) {
+        if (rawData.products && rawData.products[itemId]) {
             rawData.products[itemId].qty = newQty;
+            AGUtils.writeJSON(CACHE_KEY, rawData);
+        } else if (rawData.inventory && rawData.inventory[itemId]) {
+            rawData.inventory[itemId].qty = newQty;
             AGUtils.writeJSON(CACHE_KEY, rawData);
         }
         
@@ -261,7 +260,7 @@
         if (isNaN(qty) || qty < 0) return;
         
         let localInv = AGUtils.readJSON(INV_CACHE_KEY, {});
-        const targetItem = (rawData.inventory && rawData.inventory[itemId]) || (rawData.products && rawData.products[itemId]) || localInv[itemId];
+        const targetItem = (rawData.products && rawData.products[itemId]) || (rawData.inventory && rawData.inventory[itemId]) || (rawData.users && rawData.users[currentUID] && rawData.users[currentUID].products && rawData.users[currentUID].products[itemId]) || localInv[itemId];
         if (!targetItem) return;
 
         targetItem.qty = qty;
@@ -269,11 +268,11 @@
             localInv[itemId].qty = qty;
             AGUtils.writeJSON(INV_CACHE_KEY, localInv);
         }
-        if (rawData.inventory && rawData.inventory[itemId]) {
-            rawData.inventory[itemId].qty = qty;
-            AGUtils.writeJSON(CACHE_KEY, rawData);
-        } else if (rawData.products && rawData.products[itemId]) {
+        if (rawData.products && rawData.products[itemId]) {
             rawData.products[itemId].qty = qty;
+            AGUtils.writeJSON(CACHE_KEY, rawData);
+        } else if (rawData.inventory && rawData.inventory[itemId]) {
+            rawData.inventory[itemId].qty = qty;
             AGUtils.writeJSON(CACHE_KEY, rawData);
         }
 
@@ -288,15 +287,15 @@
 
     window.renderBI = () => {
         const localSalesCache = AGUtils.readJSON(SALES_CACHE_KEY, {});
-        const activeSalesObj = rawData.sales || rawData.sales_cache || rawData.history || localSalesCache;
+        const activeSalesObj = rawData.sales || rawData.sales_cache || rawData.history || rawData.purchases || (rawData.users && rawData.users[currentUID] && (rawData.users[currentUID].sales || rawData.users[currentUID].history || rawData.users[currentUID].purchases)) || localSalesCache;
         const sales = Object.values(activeSalesObj || {});
 
         const localExpCache = AGUtils.readJSON(EXP_CACHE_KEY, {});
-        const activeExpObj = rawData.expenses || rawData.exp || localExpCache;
+        const activeExpObj = rawData.expenses || rawData.exp || (rawData.users && rawData.users[currentUID] && (rawData.users[currentUID].expenses || rawData.users[currentUID].exp)) || localExpCache;
         const exps = Object.values(activeExpObj || {});
 
         const localInvCache = AGUtils.readJSON(INV_CACHE_KEY, {});
-        const activeInventory = rawData.inventory || rawData.products || localInvCache;
+        const activeInventory = rawData.products || rawData.inventory || (rawData.users && rawData.users[currentUID] && (rawData.users[currentUID].products || rawData.users[currentUID].inventory)) || localInvCache;
         const inventoryEntries = Object.entries(activeInventory || {});
         
         const now = new Date();
@@ -314,7 +313,7 @@
             
             const diffDays = (now - sDate) / 864e5;
             const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total || (i.price * i.qty) || 0)), 0) : (parseFloat(s.total || s.amount || 0));
-            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + (parseFloat(p.amount || 0)), 0) : (parseFloat(s.paid || s.amountPaid || 0));
+            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + (parseFloat(p.amount || 0)), 0) : (parseFloat(s.paid || s.amountPaid || total));
             const balance = total - paid;
 
             let inRange = false;
