@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssetGuard Pro - Product Market & Sales Analytics</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg-main); color: var(--text-main); padding: 12px; font-size: 13px; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--card-bg); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); }
+        .header h1 { font-size: 16px; font-weight: 700; color: var(--primary); }
+
+        /* Navigation Tabs */
+        .nav-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+        .tab-btn { flex: 1; padding: 10px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; font-weight: 600; cursor: pointer; text-align: center; color: var(--muted); }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        @media(min-width: 600px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+        .stat-card { background: var(--card-bg); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); }
+        .stat-card span { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+        .stat-card h2 { font-size: 15px; font-weight: 700; margin-top: 2px; }
+
+        .search-box { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px; font-size: 13px; outline: none; }
+        .search-box:focus { border-color: var(--primary); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .ledger-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 70px; }
+        .sale-card, .product-perf-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; padding: 12px; }
+        
+        .sale-summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .sale-info h3 { font-size: 13px; font-weight: 600; }
+        .sale-info span { font-size: 11px; color: var(--muted); }
+        .sale-total { font-size: 13px; font-weight: 700; color: var(--text-main); }
+        
+        .sale-body { display: none; padding-top: 10px; margin-top: 10px; border-top: 1px solid var(--border); background: #fdfdfd; font-size: 12px; }
+        .item-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #f1f5f9; }
+
+        .credit-tag { font-size: 9px; background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+        .profit-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        .profit-pos { background: #dcfce7; color: #15803d; }
+        .profit-neg { background: #fee2e2; color: #b91c1c; }
+
+        /* Product Market Table */
+        .product-table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); font-size: 12px; }
+        .product-table th, .product-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        .product-table th { background: #f1f5f9; font-weight: 700; color: var(--text-main); font-size: 11px; text-transform: uppercase; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--card-bg); width: 95%; max-width: 500px; border-radius: 8px; padding: 16px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .modal-header h3 { font-size: 14px; font-weight: 700; }
+        .btn-close { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--muted); }
+
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+        .form-control { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; }
+
+        .btn { padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-edit { background: #e2e8f0; color: var(--text-main); }
+
+        .footer-summary { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); border-top: 1px solid var(--border); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 12px; z-index: 99; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>AssetGuard Pro (Market P&L)</h1>
+        <span id="sync-status" style="font-size:11px; color:var(--success);">● Synced</span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('sales')">Sales Ledger</button>
+        <button class="tab-btn" onclick="switchTab('products')">Product Market Analytics</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span>Gross Revenue</span>
+            <h2 id="stat-gross">KSh 0.00</h2>
+        </div>
+        <div class="stat-card">
+            <span>Total Cost (COGS)</span>
+            <h2 id="stat-cost">KSh 0.00</h2>
+        </div>
+        <div class="stat-card">
+            <span>Net Profit / Loss</span>
+            <h2 id="stat-profit">KSh 0.00</h2>
+        </div>
+        <div class="stat-card">
+            <span>Total VAT</span>
+            <h2 id="stat-tax">KSh 0.00</h2>
+        </div>
+    </div>
+
+    <!-- TAB 1: SALES LEDGER -->
+    <div id="tab-sales" class="tab-content active">
+        <input type="text" id="searchInput" class="search-box" placeholder="Search customer, item, or reference..." onkeyup="filterSales()">
+        <div class="ledger-container" id="sales-container">
+            <!-- Dynamic Sale Cards Render Here -->
+        </div>
+    </div>
+
+    <!-- TAB 2: PRODUCT MARKET ANALYTICS -->
+    <div id="tab-products" class="tab-content">
+        <div style="margin-bottom: 12px; font-size: 12px; color: var(--muted);">
+            Aggregated performance metrics across all market transactions. Track which products are driving profit and which are yielding losses.
+        </div>
+        <div style="overflow-x: auto; margin-bottom: 70px;">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Units Sold</th>
+                        <th>Revenue</th>
+                        <th>Total Cost</th>
+                        <th>Net Profit / Loss</th>
+                        <th>Margin %</th>
+                    </tr>
+                </thead>
+                <tbody id="product-perf-tbody">
+                    <!-- Dynamic Product Performance Rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer-summary">
+        <span>Items: <b id="grand-qty-ledger">0</b></span>
+        <span>Net Profit: <b id="footer-profit" style="color:var(--success);">KSh 0.00</b></span>
+        <span>Total: <b id="grand-total-ledger">KSh 0.00</b></span>
+    </div>
+
+    <!-- Management Modal -->
+    <div class="modal" id="manageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manage Sale & Product Costs</h3>
+                <button class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Customer Name</label>
+                <input type="text" id="edit-cust-name" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Payment Reference / Phone</label>
+                <input type="text" id="edit-pay-ref" class="form-control">
+            </div>
+            
+            <div id="items-edit-container"></div>
+
+            <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px;" id="credit-payment-section">
+                <label>Record Credit Payment</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="manual-pay-amt" class="form-control" placeholder="Amount">
+                    <button class="btn btn-primary" id="btn-add-payment">Add Pay</button>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+                <button class="btn btn-danger" id="btn-del-mode">Delete Record</button>
+                <button class="btn btn-primary" id="btn-save-changes">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const currentUID = "default_user";
+    let rawLedgerData = {};
+    let runtimeActiveLedgerSalesMap = new Map();
+    let syncQueue = [];
+    let currentActiveLedgerId = null;
+
+    const AGUtils = {
+        formatCurrency: (amount) => "KSh " + parseFloat(amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+        uidKey: (prefix, uid) => `${prefix}_${uid}`,
+        writeJSON: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+        readJSON: (key, fallback) => {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : fallback;
+        }
+    };
+
+    rawLedgerData = AGUtils.readJSON(AGUtils.uidKey("ag_ledger_cache", currentUID), {});
+    syncQueue = AGUtils.readJSON(AGUtils.uidKey("ag_sales_queue", currentUID), []);
+
+    window.switchTab = (tabName) => {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        if (tabName === 'sales') {
+            document.querySelector('.nav-tabs button:nth-child(1)').classList.add('active');
+            document.getElementById('tab-sales').classList.add('active');
+        } else {
+            document.querySelector('.nav-tabs button:nth-child(2)').classList.add('active');
+            document.getElementById('tab-products').classList.add('active');
+            renderProductPerformance();
+        }
+    };
+
+    window.renderSales = () => {
+        const container = document.getElementById('sales-container');
+        container.innerHTML = '';
+        runtimeActiveLedgerSalesMap.clear();
+
+        let gQty = 0, gGross = 0, gCost = 0, gTax = 0, gProfit = 0;
+        const salesKeys = Object.keys(rawLedgerData).sort((a, b) => new Date(rawLedgerData[b].date || 0) - new Date(rawLedgerData[a].date || 0));
+
+        if (salesKeys.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">No transaction records found.</div>';
+            updateStats(0, 0, 0, 0, 0);
+            return;
+        }
+
+        salesKeys.forEach(id => {
+            const s = rawLedgerData[id];
+            runtimeActiveLedgerSalesMap.set(id, s);
+
+            let sQty = 0, sGross = 0, sCost = 0, sTax = 0;
+            let rows = '';
+
+            (s.items || []).forEach(item => {
+                const qty = parseFloat(item.quantity || 0);
+                const price = parseFloat(item.price || 0);
+                const cost = parseFloat(item.cost || 0);
+                const sub = qty * price;
+                const totalCost = qty * cost;
+                const vat = parseFloat(item.vatAmount || 0);
+                const tot = sub + vat;
+                const itemProfit = sub - totalCost;
+
+                sQty += qty;
+                sGross += tot;
+                sCost += totalCost;
+                sTax += vat;
+
+                rows += `<div class="item-row">
+                    <div>
+                        <b>${item.name}</b><br>
+                        <span style="color:var(--muted); font-size:11px;">Qty: ${qty} &times; Price: ${AGUtils.formatCurrency(price)} (Cost: ${AGUtils.formatCurrency(cost)})</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <b>${AGUtils.formatCurrency(tot)}</b><br>
+                        <span class="profit-tag ${itemProfit >= 0 ? 'profit-pos' : 'profit-neg'}">Profit: ${AGUtils.formatCurrency(itemProfit)}</span>
+                    </div>
+                </div>`;
+            });
+
+            const sProfit = (s.items || []).reduce((acc, item) => {
+                const qty = parseFloat(item.quantity || 0);
+                const price = parseFloat(item.price || 0);
+                const cost = parseFloat(item.cost || 0);
+                return acc + ((qty * price) - (qty * cost));
+            }, 0);
+
+            gQty += sQty;
+            gGross += sGross;
+            gCost += sCost;
+            gTax += sTax;
+            gProfit += sProfit;
+
+            let paidSoFar = (s.payments || []).reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
+            let balance = sGross - paidSoFar;
+            let d = new Date(s.date || Date.now());
+
+            let badgeHtml = s.payment === 'M-Pesa' 
+                ? `<span style="font-size:9px; background:#e6f4ea; color:#137333; padding:2px 6px; border-radius:4px; font-weight:700;">M-Pesa</span>` 
+                : (s.payment === 'Credit' 
+                    ? `<span class="credit-tag">Credit (${balance <= 0 ? 'Settled' : 'Bal: ' + AGUtils.formatCurrency(balance)})</span>` 
+                    : `<span style="font-size:9px; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; font-weight:700;">${s.payment}</span>`);
+
+            container.innerHTML += `
+                <div class="sale-card">
+                    <div class="sale-summary" onclick="toggleSaleBody('${s.id || id}')">
+                        <div class="sale-info">
+                            <h3>${s.customer || 'Walk-in Customer'}</h3>
+                            <span>${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} &bull; ${badgeHtml}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="text-align:right;">
+                                <div class="sale-total">${AGUtils.formatCurrency(sGross)}</div>
+                                <span style="font-size:10px; color:${sProfit >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight:700;">P/L: ${AGUtils.formatCurrency(sProfit)}</span>
+                            </div>
+                            <button class="btn-edit" onclick="event.stopPropagation(); showPinModal('${s.id || id}')" style="padding:4px 8px; font-size:10px;">Manage</button>
+                            <button class="btn" style="background:#eef4ff; color:var(--primary); padding:4px 8px; font-size:10px; border-radius:6px; font-weight:600;" onclick="event.stopPropagation(); reprintReceipt('${s.id || id}')">Receipt</button>
+                        </div>
+                    </div>
+                    <div class="sale-body" id="body-${s.id || id}">
+                        ${rows}
+                        <div style="margin-top:8px; display:flex; justify-content:space-between; font-size:10px; color:var(--muted); border-top:1px dashed #e2e8f0; padding-top:6px;">
+                            <span>Total Cost: <b>${AGUtils.formatCurrency(sCost)}</b> | VAT: <b>${AGUtils.formatCurrency(sTax)}</b></span>
+                            <span>Profit: <b style="color:${sProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">${AGUtils.formatCurrency(sProfit)}</b></span>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        updateStats(gGross, gCost, gProfit, gTax, gQty);
+    };
+
+    window.renderProductPerformance = () => {
+        const tbody = document.getElementById('product-perf-tbody');
+        tbody.innerHTML = '';
+
+        const productMap = {};
+
+        // Aggregate across all transactions in the ledger
+        Object.values(rawLedgerData).forEach(sale => {
+            (sale.items || []).forEach(item => {
+                const name = item.name || 'Unnamed Product';
+                const qty = parseFloat(item.quantity || 0);
+                const price = parseFloat(item.price || 0);
+                const cost = parseFloat(item.cost || 0);
+                const rev = qty * price;
+                const totCost = qty * cost;
+                const profit = rev - totCost;
+
+                if (!productMap[name]) {
+                    productMap[name] = { qty: 0, revenue: 0, cost: 0, profit: 0 };
+                }
+                productMap[name].qty += qty;
+                productMap[name].revenue += rev;
+                productMap[name].cost += totCost;
+                productMap[name].profit += profit;
+            });
+        });
+
+        const keys = Object.keys(productMap);
+        if (keys.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:20px;">No product data available yet. Record some sales first.</td></tr>`;
+            return;
+        }
+
+        // Sort by net profit descending (best performing first)
+        keys.sort((a, b) => productMap[b].profit - productMap[a].profit);
+
+        keys.forEach(name => {
+            const p = productMap[name];
+            const margin = p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : '0.0';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${name}</b></td>
+                    <td>${p.qty}</td>
+                    <td>${AGUtils.formatCurrency(p.revenue)}</td>
+                    <td>${AGUtils.formatCurrency(p.cost)}</td>
+                    <td><b style="color:${p.profit >= 0 ? 'var(--success)' : 'var(--danger)'};">${AGUtils.formatCurrency(p.profit)}</b></td>
+                    <td><span class="profit-tag ${p.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${margin}%</span></td>
+                </tr>`;
+        });
+    };
+
+    function updateStats(gross, cost, profit, tax, qty) {
+        document.getElementById('stat-gross').innerText = AGUtils.formatCurrency(gross);
+        document.getElementById('stat-cost').innerText = AGUtils.formatCurrency(cost);
+        const profitEl = document.getElementById('stat-profit');
+        profitEl.innerText = AGUtils.formatCurrency(profit);
+        profitEl.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('stat-tax').innerText = AGUtils.formatCurrency(tax);
+
+        document.getElementById('grand-qty-ledger').innerText = qty;
+        document.getElementById('grand-total-ledger').innerText = AGUtils.formatCurrency(gross);
+        const footerProfit = document.getElementById('footer-profit');
+        footerProfit.innerText = AGUtils.formatCurrency(profit);
+        footerProfit.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+
+    window.toggleSaleBody = (id) => {
+        const el = document.getElementById(`body-${id}`);
+        if(el) {
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+    };
+
+    window.filterSales = () => {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.sale-card');
+        cards.forEach(card => {
+            const text = card.innerText.toLowerCase();
+            card.style.display = text.includes(query) ? 'block' : 'none';
+        });
+    };
+
+    window.showPinModal = (id) => {
+        currentActiveLedgerId = id;
+        const s = runtimeActiveLedgerSalesMap.get(id) || rawLedgerData[id];
+        if (!s) return;
+
+        document.getElementById('edit-cust-name').value = s.customer || '';
+        document.getElementById('edit-pay-ref').value = s.mpesaRef || s.mpesa || s.bank || '';
+        
+        const itemsContainer = document.getElementById('items-edit-container');
+        itemsContainer.innerHTML = '<label style="margin-top:8px; display:block;">Edit Item Qty, Price & Unit Cost</label>';
+        
+        (s.items || []).forEach((item, idx) => {
+            itemsContainer.innerHTML += `
+                <div class="edit-block" style="background:#f8fafc; padding:6px; border-radius:4px; margin-bottom:6px; border:1px solid var(--border);">
+                    <div style="font-weight:600; font-size:11px; margin-bottom:4px;">${item.name}</div>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px;">
+                        <div>
+                            <span style="font-size:9px; color:var(--muted);">Qty</span>
+                            <input type="number" class="form-control item-qty" value="${item.quantity}">
+                        </div>
+                        <div>
+                            <span style="font-size:9px; color:var(--muted);">Selling Price</span>
+                            <input type="number" class="form-control item-price" value="${item.price}">
+                        </div>
+                        <div>
+                            <span style="font-size:9px; color:var(--muted);">Unit Cost</span>
+                            <input type="number" class="form-control item-cost" value="${item.cost || 0}">
+                        </div>
+                    </div>
+                    <input type="hidden" class="item-vrate" value="${item.vatRate || 0}">
+                </div>`;
+        });
+
+        document.getElementById('credit-payment-section').style.display = (s.payment === 'Credit') ? 'block' : 'none';
+        document.getElementById('manageModal').style.display = 'flex';
+    };
+
+    window.reprintReceipt = (id) => {
+        alert("Preparing receipt printout for transaction: " + id);
+    };
+
+    window.openManager = (id) => {
+        showPinModal(id);
+    };
+
+    document.getElementById('btn-save-changes').onclick = async () => {
+        if (!currentActiveLedgerId) return;
+        let s = runtimeActiveLedgerSalesMap.get(currentActiveLedgerId) || rawLedgerData[currentActiveLedgerId];
+        if (!s) return;
+
+        const newCust = document.getElementById('edit-cust-name').value.trim();
+        const newRef = document.getElementById('edit-pay-ref').value.trim();
+
+        if (newCust) s.customer = newCust;
+        if (newRef) {
+            if (s.payment === 'M-Pesa') {
+                if (/^(07|01)\d{8}$/.test(newRef) \vert{}\vert{} /^\+254\d{9}$/.test(newRef)) {
+                    s.mpesa = newRef;
+                    s.mpesaRef = "";
+                } else {
+                    s.mpesaRef = newRef;
+                    s.mpesa = "";
+                }
+            } else if (s.payment === 'Bank Transfer') {
+                s.bank = newRef;
+            }
+        }
+
+        const blocks = document.querySelectorAll('.edit-block');
+        blocks.forEach((block, idx) => {
+            if (s.items[idx]) {
+                const qty = parseFloat(block.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(block.querySelector('.item-price').value) || 0;
+                const cost = parseFloat(block.querySelector('.item-cost').value) || 0;
+                const vRate = parseFloat(block.querySelector('.item-vrate').value) || 0;
+                const sub = price * qty;
+                const vAmt = sub * (vRate / 100);
+
+                s.items[idx].quantity = qty;
+                s.items[idx].price = price;
+                s.items[idx].cost = cost;
+                s.items[idx].vatRate = vRate;
+                s.items[idx].vatAmount = vAmt.toFixed(2);
+                s.items[idx].total = (sub + vAmt).toFixed(2);
+            }
+        });
+
+        s.isUpdateOnly = true;
+        syncQueue.push(s);
+        AGUtils.writeJSON(AGUtils.uidKey("ag_sales_queue", currentUID), syncQueue);
+
+        rawLedgerData[currentActiveLedgerId] = s;
+        AGUtils.writeJSON(AGUtils.uidKey("ag_ledger_cache", currentUID), rawLedgerData);
+
+        renderSales();
+        closeModal();
+    };
+
+    document.getElementById('btn-del-mode').onclick = async () => {
+        if (!currentActiveLedgerId) return;
+        if (confirm("Are you sure you want to delete this transaction record?")) {
+            const s = runtimeActiveLedgerSalesMap.get(currentActiveLedgerId) || rawLedgerData[currentActiveLedgerId];
+            if (s) {
+                s.isDeleteOnly = true;
+                syncQueue.push(s);
+                AGUtils.writeJSON(AGUtils.uidKey("ag_sales_queue", currentUID), syncQueue);
+                delete rawLedgerData[currentActiveLedgerId];
+                AGUtils.writeJSON(AGUtils.uidKey("ag_ledger_cache", currentUID), rawLedgerData);
+                renderSales();
+                closeModal();
+            }
+        }
+    };
+
+    document.getElementById('btn-add-payment').onclick = () => {
+        if (!currentActiveLedgerId) return;
+        let s = runtimeActiveLedgerSalesMap.get(currentActiveLedgerId) || rawLedgerData[currentActiveLedgerId];
+        if (!s) return;
+
+        const amtInput = document.getElementById('manual-pay-amt');
+        const amt = parseFloat(amtInput.value);
+        if (isNaN(amt) || amt <= 0) {
+            alert("Please enter a valid payment amount.");
+            return;
+        }
+
+        if (!s.payments) s.payments = [];
+        s.payments.push({
+            amount: amt,
+            date: new Date().toISOString()
+        });
+
+        amtInput.value = '';
+        s.isUpdateOnly = true;
+        syncQueue.push(s);
+        AGUtils.writeJSON(AGUtils.uidKey("ag_sales_queue", currentUID), syncQueue);
+
+        rawLedgerData[currentActiveLedgerId] = s;
+        AGUtils.writeJSON(AGUtils.uidKey("ag_ledger_cache", currentUID), rawLedgerData);
+
+        renderSales();
+        openManager(currentActiveLedgerId);
+    };
+
+    window.closeModal = () => {
+        document.getElementById('manageModal').style.display = 'none';
+    };
+
+    window.onload = () => {
+        renderSales();
+    };
+</script>
+</body>
+</html>
