@@ -26,7 +26,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Poppins', sans-serif; outline: none; }
         body { background: var(--bg); margin: 0; color: var(--text-main); line-height: 1.4; font-size: 12px; padding: 8px; }
 
-        /* --- DESKTOP CONTAINER SCALING (Matching Sales & BI Files) --- */
         .container { 
             width: 100%; max-width: 500px; margin: 0 auto; background: #fff; padding: 16px; 
             border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f0f2f5; 
@@ -58,7 +57,6 @@
             .val-amt { font-size: 20px !important; }
         }
 
-        /* Institutional Premium Header Styling */
         .sticky-nav {
             position: sticky; top: 0; z-index: 1000;
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -78,7 +76,6 @@
         .lock-wrapper:hover { background: #e2e8f0; }
         .lock-wrapper svg { width: 15px; height: 15px; fill: var(--text-muted); }
 
-        /* Fintech Metrics Cards Grid */
         .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
         .stat-pill { 
             background: #ffffff; padding: 12px; border-radius: 12px; 
@@ -91,7 +88,6 @@
         .stat-pill span { font-size: 14px; font-weight: 800; color: var(--primary); }
         .stat-pill.net-card span { color: #ffffff; }
 
-        /* Action Toolbar Row & Filters */
         .filter-controls { display: flex; flex-direction: column; gap: 8px; }
         .filter-row { display: flex; gap: 6px; align-items: center; width: 100%; }
         
@@ -115,7 +111,6 @@
         button.btn-print:hover { background: #002d5c; }
         button.btn-print svg { width: 13px; height: 13px; fill: currentColor; }
 
-        /* Search & Dropdown Additions */
         .search-wrapper { position: relative; flex: 2; display: flex; }
         .search-input { 
             width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); 
@@ -142,7 +137,6 @@
         .dropdown-content a:last-child { border-bottom: none; }
         .dropdown-content a:hover { background-color: #f8fafc; color: var(--accent); }
 
-        /* Navigation Tabs */
         .view-tabs { display: flex; margin: 12px 0; background: #e2e8f0; padding: 4px; border-radius: 12px; gap: 4px; }
         .tab-btn { flex: 1; background: transparent; border: none; padding: 8px; font-size: 11px; font-weight: 700; color: var(--text-muted); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -151,19 +145,24 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Analytics View styling */
-        .analytics-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 20px; }
-        .chart-card { background: white; padding: 18px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .chart-card { background: white; padding: 18px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.02); margin-bottom: 14px; }
         .chart-card h4 { margin: 0 0 14px 0; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
         .chart-wrap { position: relative; height: 180px; width: 100%; }
 
-        /* Financial Advice Block */
+        /* Product Market Table Styling */
+        .product-table-wrapper { overflow-x: auto; margin-top: 14px; }
+        .product-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 11px; text-align: left; }
+        .product-table th, .product-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+        .product-table th { background: #f8fafc; font-weight: 800; color: var(--primary); text-transform: uppercase; font-size: 10px; }
+        .profit-tag { font-weight: 700; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+        .profit-pos { background: #dcfce7; color: #15803d; }
+        .profit-neg { background: #fee2e2; color: #b91c1c; }
+
         .advice-card { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 1px solid #7dd3fc; border-radius: 16px; padding: 18px; margin-top: 14px; }
         .advice-card h4 { margin: 0 0 10px 0; color: #0369a1; font-size: 13px; display: flex; align-items: center; gap: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
         .advice-list { margin: 0; padding-left: 18px; font-size: 11px; color: #0c4a6e; font-weight: 600; }
         .advice-list li { margin-bottom: 6px; }
 
-        /* Entry Cards list */
         .entry-card {
             background: white; padding: 12px 14px; border-radius: 12px; margin-bottom: 10px;
             display: flex; justify-content: space-between; align-items: center;
@@ -188,21 +187,17 @@
 
         .admin-btn { background: #fee2e2; color: var(--danger); border: none; padding: 4px 10px; border-radius: 6px; font-size: 9px; font-weight: 800; margin-top: 6px; cursor: pointer; width: fit-content; }
         
-        /* Modals and Overlays */
         .overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
         .modal { background: white; padding: 24px; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .pin-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 12px; font-size: 22px; text-align: center; letter-spacing: 6px; margin-bottom: 14px; outline: none; }
         
-        /* Detail Modal specific styling */
         .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
         .detail-row span:first-child { color: var(--text-muted); font-weight: 600; }
         .detail-row span:last-child { color: var(--text-main); font-weight: 700; text-align: right; }
         .detail-items-box { background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 8px; text-align: left; max-height: 120px; overflow-y: auto; border: 1px solid var(--border); }
 
-        /* Print Report View styling Container */
         #print-report-header { display: none; }
 
-        /* Print Media Queries optimization */
         @media print {
             body { background: white; color: black; font-size: 11px; padding: 0; }
             .container { max-width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
@@ -300,7 +295,29 @@
                     </div>
                 </div>
 
-                <div class="advice-card full-width" style="margin-top: 14px;">
+                <!-- Product Line Performance Analytics Table -->
+                <div class="chart-card full-width">
+                    <h4>Product Line Market Analytics (Per Selected Period)</h4>
+                    <div class="product-table-wrapper">
+                        <table class="product-table">
+                            <thead>
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Qty Sold</th>
+                                    <th>Total Revenue</th>
+                                    <th>Total Cost</th>
+                                    <th>Net Profit</th>
+                                    <th>Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="product-analytics-tbody">
+                                <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No sales items recorded for this period.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="advice-card full-width">
                     <h4>Financial Intelligence Report</h4>
                     <ul id="advice-list" class="advice-list">
                         <li>Dynamic diagnostic reporting pending evaluation metrics loop.</li>
@@ -353,7 +370,6 @@
     import { ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
     import AGPasscode from "./ag-passcode.js";
 
-    // Setup Month and Year dropdown options instantly before anything else
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const now = new Date();
     document.getElementById('fMonth').innerHTML = months.map((m, i) => `<option value="${i}" ${i===now.getMonth()?'selected':''}>${m}</option>`).join('');
@@ -375,7 +391,6 @@
     let debounceTimer = null;
     let isDataLoaded = false;
 
-    // IMMEDIATE 1st LOAD: Pull cached mirror or Sales Queue instantly without waiting for network
     const cachedMirror = localStorage.getItem(mirrorKey) || localStorage.getItem(queueKey);
     if (cachedMirror) {
         try {
@@ -387,7 +402,6 @@
             AGErrors.report("master ledger cached mirror parsing", e);
         }
     } else {
-        // Render empty state immediately so UI doesn't delay or block
         isDataLoaded = true;
         queueMicrotask(() => window.filterAndRender());
     }
@@ -482,12 +496,35 @@
 
         let tin = 0, tout = 0;
         let catTotals = { 'SALE': 0, 'EXPENSE': 0, 'PURCHASE': 0 };
+        let productMap = {};
         const htmlChunks = [];
 
         for (let i = 0; i < combinedRecords.length; i++) {
             const r = combinedRecords[i];
             const dt = new Date(r.date);
             if(dt.getMonth().toString() !== m || dt.getFullYear().toString() !== y) continue;
+            
+            // Collect Product Performance Data for Sales matching filter period
+            if(r.cat === 'SALE' && r.rawItems && Array.isArray(r.rawItems)) {
+                r.rawItems.forEach(item => {
+                    const itemName = item.name || 'Unnamed Product';
+                    const qty = parseFloat(item.quantity || item.qty || 0);
+                    const price = parseFloat(item.price || 0);
+                    const cost = parseFloat(item.cost || 0);
+                    const rev = qty * price;
+                    const totCost = qty * cost;
+                    const profit = rev - totCost;
+
+                    if (!productMap[itemName]) {
+                        productMap[itemName] = { qty: 0, revenue: 0, cost: 0, profit: 0 };
+                    }
+                    productMap[itemName].qty += qty;
+                    productMap[itemName].revenue += rev;
+                    productMap[itemName].cost += totCost;
+                    productMap[itemName].profit += profit;
+                });
+            }
+
             if(activeCategoryFilter !== 'ALL' && r.cat !== activeCategoryFilter) continue;
             
             if(searchTerm) {
@@ -529,9 +566,38 @@
         if (currentActiveTab === 'analytics') {
             requestAnimationFrame(() => {
                 renderCharts(tin, tout, catTotals);
+                renderProductTable(productMap);
                 generateAlgorithmicAdvice(tin, tout, catTotals);
             });
         }
+    };
+
+    const renderProductTable = (productMap) => {
+        const tbody = document.getElementById('product-analytics-tbody');
+        if(!tbody) return;
+
+        const keys = Object.keys(productMap);
+        if (keys.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:16px;">No product sales recorded in this period.</td></tr>`;
+            return;
+        }
+
+        keys.sort((a, b) => productMap[b].profit - productMap[a].profit);
+
+        tbody.innerHTML = keys.map(name => {
+            const p = productMap[name];
+            const margin = p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : '0.0';
+            return `
+                <tr>
+                    <td><b>${name}</b></td>
+                    <td>${p.qty}</td>
+                    <td>Ksh ${AGUtils.formatAmount(p.revenue)}</td>
+                    <td>Ksh ${AGUtils.formatAmount(p.cost)}</td>
+                    <td><b style="color:${p.profit >= 0 ? 'var(--success)' : 'var(--danger)'};">Ksh ${AGUtils.formatAmount(p.profit)}</b></td>
+                    <td><span class="profit-tag ${p.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${margin}%</span></td>
+                </tr>
+            `;
+        }).join('');
     };
 
     window.viewDetails = (id) => {
@@ -556,7 +622,7 @@
             itemsWrap.style.display = 'block';
             itemsList.innerHTML = item.rawItems.map(i => `
                 <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; padding-bottom:4px; border-bottom:1px dashed #e2e8f0;">
-                    <span>${i.name || 'Item'} (x${i.qty || 1})</span>
+                    <span>${i.name || 'Item'} (x${i.qty || i.quantity || 1})</span>
                     <strong style="color:var(--primary)">Ksh ${AGUtils.formatAmount(i.total || 0)}</strong>
                 </div>
             `).join('');
@@ -606,7 +672,7 @@
                     legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, padding: 10, font: { family: 'Poppins', size: 10, weight: 600 } } } 
                 } 
             }
-        }, error => AGErrors.report("master ledger live data", error));
+        });
 
         categoryChartInstance = new Chart(ctxCat, {
             type: 'bar',
