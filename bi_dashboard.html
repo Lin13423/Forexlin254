@@ -17,7 +17,7 @@
     :root { --primary: #0072CE; --dark: #001A35; --accent: #ff6b00; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --bg: #f4f6f9; --muted: #64748b; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
     
-    /* --- MOBILE FIRST --- */
+    /* --- MOBILE FIRST (Compact & Clean Fonts) --- */
     body { font-family: 'Poppins', sans-serif; margin: 0; padding: 8px; background: var(--bg); color: #1f2937; font-size: 12px; line-height: 1.4; }
     .container { width: 100%; max-width: 500px; margin: 0 auto; background: #fff; padding: 14px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #f0f2f5; }
 
@@ -157,8 +157,7 @@
 
     try {
         if (!firebase.apps.length) firebase.initializeApp(AG_FIREBASE_CONFIG);
-        // Listen to the absolute root '/' to capture all explicit nodes like products, expenses, purchases[span_2](start_span)[span_2](end_span)
-        firebase.database().ref('/').on('value', (snap) => {
+        firebase.database().ref(AGUtils.userPath(currentUID)).on('value', (snap) => {
             if(snap.exists()) {
                 const dbData = snap.val();
                 AGUtils.writeJSON(CACHE_KEY, dbData);
@@ -210,10 +209,9 @@
     window.renderBI = () => {
         if(!rawData || Object.keys(rawData).length === 0) return;
         
-        // Exact root paths mapping based on database structure
-        const sales = Object.values(rawData.sales || rawData.purchases || {});[span_3](start_span)[span_3](end_span)
-        const exps = Object.values(rawData.expenses || {});[span_4](start_span)[span_4](end_span)
-        const inventory = Object.values(rawData.products || rawData.inventory || {});[span_5](start_span)[span_5](end_span)
+        const sales = Object.values(rawData.sales || rawData || {}); 
+        const exps = Object.values(rawData.expenses || {});
+        const inventory = Object.values(rawData.inventory || {});
         const now = new Date();
 
         let metrics = { rev: 0, exp: 0, totalDebt: 0, vat: 0, stock: 0 };
@@ -221,14 +219,11 @@
         let history = [];
 
         sales.forEach(s => {
-            const dateVal = s.timestamp || s.date || s.created_at;
-            if (!dateVal) return;
-            const sDate = new Date(dateVal);
-            if (isNaN(sDate.getTime())) return;
-
+            if (!s.timestamp) return;
+            const sDate = new Date(s.timestamp);
             const diffDays = (now - sDate) / 864e5;
-            const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total || (i.price * i.qty)) || 0), 0) : (parseFloat(s.total || s.amount) || 0);
-            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0) : (parseFloat(s.paid || total));
+            const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total) || 0), 0) : (parseFloat(s.total) || 0);
+            const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0) : 0;
             const balance = total - paid;
 
             let inRange = false;
@@ -243,26 +238,19 @@
                 history.push(s);
             }
 
-            const paymentStr = String(s.payment || s.paymentType || s.status || '').toLowerCase();
-            const isCredit = paymentStr.includes('credit') || paymentStr.includes('debt') || s.isDebt === true;
-
-            if (isCredit && balance > 0) {
+            if (s.payment === 'Credit' && balance > 0) {
                 metrics.totalDebt += balance;
                 const encodedSale = encodeURIComponent(JSON.stringify(s));
                 debtHtml += `
                     <div class="debt-row" onclick='openSaleDetails("${encodedSale}")'>
-                        <div><b>${s.customer || s.customerName || 'Customer'}</b><br><small style="color:var(--muted);">${sDate.toLocaleDateString()}</small></div>
+                        <div><b>${s.customer || 'Customer'}</b><br><small style="color:var(--muted);">${sDate.toLocaleDateString()}</small></div>
                         <div style="text-align:right"><b style="color:var(--warning);">${AGUtils.formatCurrency(balance)}</b><br><small style="font-size:10px; color:var(--muted);">Tap for details</small></div>
                     </div>`;
             }
         });
 
         exps.forEach(e => {
-            const dateVal = e.expense_date || e.date || e.timestamp || e.created_at;
-            if (!dateVal) return;
-            const eDate = new Date(dateVal);
-            if (isNaN(eDate.getTime())) return;
-
+            const eDate = new Date(e.expense_date);
             const diffDays = (now - eDate) / 864e5;
             let inRange = false;
             if (currentFilter === 'today' && eDate.toLocaleDateString() === now.toLocaleDateString()) inRange = true;
@@ -270,9 +258,7 @@
             else if (currentFilter === '30days' && diffDays <= 30) inRange = true;
             else if (currentFilter === 'all') inRange = true;
 
-            if (inRange) {
-                metrics.exp += (parseFloat(e.amount || e.total || e.cost || e.value || 0));
-            }
+            if (inRange) metrics.exp += (parseFloat(e.amount) || 0);
         });
 
         inventory.forEach(i => {
@@ -294,15 +280,15 @@
         pnlChart.data.datasets[0].data = [metrics.rev, metrics.exp];
         pnlChart.update();
 
-        const sorted = history.sort((a,b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date)).slice(0, 5);
+        const sorted = history.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
         document.getElementById('history-list').innerHTML = sorted.map(s => {
             const encodedSale = encodeURIComponent(JSON.stringify(s));
-            const totalAmt = s.items ? s.items.reduce((acc, i) => acc + parseFloat(i.total || 0), 0) : parseFloat(s.total || s.amount || 0);
+            const totalAmt = s.items ? s.items.reduce((acc, i) => acc + parseFloat(i.total || 0), 0) : parseFloat(s.total || 0);
             return `
                 <div class="history-item" onclick='openSaleDetails("${encodedSale}")'>
                     <div>
-                        <b style="color:var(--dark);">${s.customer || s.customerName || 'Walk-in Customer'}</b>
-                        <span class="item-tag">${s.payment || s.paymentType || 'Cash'} Sale • ${new Date(s.timestamp || s.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                        <b style="color:var(--dark);">${s.customer || 'Walk-in Customer'}</b>
+                        <span class="item-tag">${s.payment || 'Cash'} Sale • ${new Date(s.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                     </div>
                     <div style="text-align:right;">
                         <span style="color:var(--success); font-weight:800;">+${AGUtils.formatAmount(totalAmt)}</span>
@@ -314,25 +300,15 @@
         document.getElementById('debt-list').innerHTML = debtHtml || '<p style="text-align:center; color:var(--success); padding:15px;">Zero outstanding debt balances.</p>';
     }
 
-    window.openSaleDetails = (input) => {
-        let s = input;
-        if (typeof s === 'string') {
-            try {
-                s = JSON.parse(decodeURIComponent(s));
-            } catch (e) {
-                console.error("Failed to parse transaction breakdown:", e);
-                return;
-            }
-        }
-        if (!s) return;
-
-        const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total || (i.price * i.qty)) || 0), 0) : (parseFloat(s.total || s.amount) || 0);
-        const itemsList = s.items && Array.isArray(s.items) ? s.items.map(i => `${i.name || 'Item'} (x${i.qty || 1}) - ${AGUtils.formatCurrency(i.total || (i.price * i.qty) || 0)}`).join('<br>') : 'Standard Sale Record';
+    window.openSaleDetails = (encodedStr) => {
+        const s = JSON.parse(decodeURIComponent(encodedStr));
+        const total = s.items ? s.items.reduce((acc, i) => acc + (parseFloat(i.total) || 0), 0) : (parseFloat(s.total) || 0);
+        const itemsList = s.items ? s.items.map(i => `${i.name || 'Item'} (x${i.qty || 1}) - ${AGUtils.formatCurrency(i.total || 0)}`).join('<br>') : 'Standard Sale Record';
         
         const rows = [
-            { label: "Customer", val: s.customer || s.customerName || 'Walk-in' },
-            { label: "Payment Type", val: s.payment || s.paymentType || 'Cash' },
-            { label: "Timestamp", val: AGUtils.formatDateTime(s.timestamp || s.date) },
+            { label: "Customer", val: s.customer || 'Walk-in' },
+            { label: "Payment Type", val: s.payment || 'Cash' },
+            { label: "Timestamp", val: AGUtils.formatDateTime(s.timestamp) },
             { label: "Items Purchased", val: itemsList },
             { label: "Total Amount", val: AGUtils.formatCurrency(total) }
         ];
