@@ -148,7 +148,7 @@
     const CACHE_KEY = AGUtils.uidKey("ag_ledger_cache", currentUID);
     let currentFilter = 'today';
 
-    // Robust number parser (strips commas, currency symbols, and handles strings safely)
+    // Robust number parser
     function parseNum(val) {
         if (!val) return 0;
         if (typeof val === 'number') return val;
@@ -163,12 +163,29 @@
         return isNaN(d.getTime()) ? new Date() : d;
     }
 
-    // Intelligent multi-source ledger data loader with realistic fallback demo data
+    // Comprehensive fallback sample data ensuring expenses, inventory, and debts populate immediately
+    function getFallbackData() {
+        const nowISO = new Date().toISOString();
+        const pastISO = new Date(Date.now() - 86400000).toISOString();
+        return {
+            sales: {
+                "sale-01": { timestamp: nowISO, total: 48500, customer: "Nakuru Hardware Depot", payment: "Cash", amountPaid: 48500, items: [{name: "JCorp Weatherguard Exterior 20L", qty: 2, total: 48500}] },
+                "sale-02": { timestamp: pastISO, total: 18200, customer: "Subukia Builders Ltd", payment: "Credit", amountPaid: 0, items: [{name: "Solvent Wood Stain 5L", qty: 4, total: 18200}] }
+            },
+            expenses: {
+                "exp-01": { expense_date: nowISO, amount: 9500, category: "Logistics & Transport", description: "Delivery fuel Nakuru route" },
+                "exp-02": { expense_date: pastISO, amount: 12000, category: "Raw Materials", description: "Mineral turpentine restock" }
+            },
+            inventory: {
+                "jcorp_weatherguard_20l": { name: "JCorp Weatherguard Exterior 20L", qty: 120, salePrice: 24250 },
+                "solvent_wood_stain_5l": { name: "Solvent Wood Stain 5L", qty: 75, salePrice: 4550 }
+            }
+        };
+    }
+
     function loadLedgerData() {
         let data = AGUtils.readJSON(CACHE_KEY, {});
-        
-        if (!data || (Object.keys(data).length === 0)) {
-            // Check alternate local storage caches used across AssetGuard Pro
+        if (!data || Object.keys(data).length === 0 || (!data.sales && !data.expenses && !data.inventory)) {
             const mirror = AGUtils.readJSON(AGUtils.uidKey("ag_cash_audit_mirror", currentUID), []);
             const invCache = AGUtils.readJSON(AGUtils.uidKey("ag_inv_cache", currentUID), {});
             
@@ -177,39 +194,13 @@
                 mirror.forEach(m => {
                     const id = m.id || Math.random().toString();
                     if (m.cat === 'SALE' || m.type === 'IN') {
-                        data.sales[id] = {
-                            timestamp: m.date,
-                            total: m.amt,
-                            customer: m.sub,
-                            payment: 'Cash',
-                            items: m.rawItems || []
-                        };
+                        data.sales[id] = { timestamp: m.date, total: m.amt, customer: m.sub, payment: 'Cash', amountPaid: m.amt, items: m.rawItems || [] };
                     } else if (m.cat === 'EXPENSE' || m.cat === 'PURCHASE') {
-                        data.expenses[id] = {
-                            expense_date: m.date,
-                            amount: m.amt,
-                            category: m.sub,
-                            description: m.notes
-                        };
+                        data.expenses[id] = { expense_date: m.date, amount: m.amt, category: m.sub, description: m.notes };
                     }
                 });
             } else {
-                // Comprehensive fallback sample data to ensure non-zero initial rendering
-                const nowISO = new Date().toISOString();
-                const yesterdayISO = new Date(Date.now() - 86400000).toISOString();
-                data = {
-                    sales: {
-                        "sale-01": { timestamp: nowISO, total: 48500, customer: "Nakuru Hardware Depot", payment: "Cash", items: [{name: "JCorp Weatherguard Exterior 20L", qty: 2, total: 48500}] },
-                        "sale-02": { timestamp: yesterdayISO, total: 18200, customer: "Subukia Builders Ltd", payment: "Credit", items: [{name: "Solvent Wood Stain 5L", qty: 4, total: 18200}] }
-                    },
-                    expenses: {
-                        "exp-01": { expense_date: nowISO, amount: 9500, category: "Logistics & Transport", description: "Delivery fuel Nakuru route" }
-                    },
-                    inventory: {
-                        "jcorp_weatherguard_20l": { name: "JCorp Weatherguard Exterior 20L", qty: 120, salePrice: 24250 },
-                        "solvent_wood_stain_5l": { name: "Solvent Wood Stain 5L", qty: 75, salePrice: 4550 }
-                    }
-                };
+                data = getFallbackData();
             }
         }
         return data;
@@ -294,6 +285,7 @@
         let debtHtml = "";
         let history = [];
 
+        // 1. Process Sales, Revenue, VAT, History, and Debt Balances
         sales.forEach(s => {
             const timestamp = s.timestamp || s.date || s.created_at;
             if (!timestamp) return;
@@ -304,6 +296,7 @@
             const paid = s.payments ? Object.values(s.payments).reduce((acc, p) => acc + parseNum(p.amount || 0), 0) : parseNum(s.amountPaid || 0);
             const balance = total - paid;
 
+            // Date range filter for Revenue and Activity feed
             let inRange = false;
             if (currentFilter === 'today' && sDate.toDateString() === now.toDateString()) inRange = true;
             else if (currentFilter === '7days' && diffDays <= 7 && diffDays >= 0) inRange = true;
@@ -316,8 +309,9 @@
                 history.push(s);
             }
 
+            // Total Debt aggregates ALL unpaid credit balances (independent of date filter)
             const payType = (s.payment || s.paymentType || s.type || '').toLowerCase();
-            if ((payType === 'credit' || balance > 0) && payType !== 'cash' && balance > 0) {
+            if (balance > 0 && (payType === 'credit' || payType.includes('credit') || balance > 0)) {
                 metrics.totalDebt += balance;
                 const encodedSale = encodeURIComponent(JSON.stringify(s));
                 debtHtml += `
@@ -328,6 +322,7 @@
             }
         });
 
+        // 2. Process Expenses with date filter
         exps.forEach(e => {
             const eDate = parseDate(e.expense_date || e.date || e.timestamp);
             const diffDays = (now - eDate) / 864e5;
@@ -340,6 +335,7 @@
             if (inRange) metrics.exp += parseNum(e.amount || e.total || 0);
         });
 
+        // 3. Process Inventory Stock Value (independent of date filter)
         inventory.forEach(i => {
             const qty = parseNum(i.qty || i.stock || i.quantity || 0);
             const price = parseNum(i.salePrice || i.price || i.cost || i.unitPrice || 0);
