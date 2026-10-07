@@ -176,7 +176,8 @@
 
     try {
         if (!firebase.apps.length) firebase.initializeApp(AG_FIREBASE_CONFIG);
-        firebase.database().ref(AGUtils.userPath(currentUID)).on('value', (snap) => {
+        // Listen to root database or user path
+        firebase.database().ref('/').on('value', (snap) => {
             if(snap.exists()) {
                 const dbData = snap.val();
                 AGUtils.writeJSON(CACHE_KEY, dbData);
@@ -227,7 +228,7 @@
 
     window.updateStockQty = (itemId, delta) => {
         let localInv = AGUtils.readJSON(INV_CACHE_KEY, {});
-        const targetItem = (rawData.inventory && rawData.inventory[itemId]) || localInv[itemId];
+        const targetItem = (rawData.inventory && rawData.inventory[itemId]) || (rawData.products && rawData.products[itemId]) || localInv[itemId];
         if (!targetItem) return;
 
         let currentQty = parseFloat(targetItem.qty || targetItem.stock || 0);
@@ -241,10 +242,14 @@
         if (rawData.inventory && rawData.inventory[itemId]) {
             rawData.inventory[itemId].qty = newQty;
             AGUtils.writeJSON(CACHE_KEY, rawData);
+        } else if (rawData.products && rawData.products[itemId]) {
+            rawData.products[itemId].qty = newQty;
+            AGUtils.writeJSON(CACHE_KEY, rawData);
         }
         
+        const dbPath = rawData.products ? "products" : "inventory";
         try {
-            firebase.database().ref(`${AGUtils.userPath(currentUID, "inventory")}/${itemId}`).update({ qty: newQty })
+            firebase.database().ref(`${dbPath}/${itemId}`).update({ qty: newQty })
                 .then(() => window.renderBI());
         } catch(e) {
             window.renderBI();
@@ -256,7 +261,7 @@
         if (isNaN(qty) || qty < 0) return;
         
         let localInv = AGUtils.readJSON(INV_CACHE_KEY, {});
-        const targetItem = (rawData.inventory && rawData.inventory[itemId]) || localInv[itemId];
+        const targetItem = (rawData.inventory && rawData.inventory[itemId]) || (rawData.products && rawData.products[itemId]) || localInv[itemId];
         if (!targetItem) return;
 
         targetItem.qty = qty;
@@ -267,10 +272,14 @@
         if (rawData.inventory && rawData.inventory[itemId]) {
             rawData.inventory[itemId].qty = qty;
             AGUtils.writeJSON(CACHE_KEY, rawData);
+        } else if (rawData.products && rawData.products[itemId]) {
+            rawData.products[itemId].qty = qty;
+            AGUtils.writeJSON(CACHE_KEY, rawData);
         }
 
+        const dbPath = rawData.products ? "products" : "inventory";
         try {
-            firebase.database().ref(`${AGUtils.userPath(currentUID, "inventory")}/${itemId}`).update({ qty: qty })
+            firebase.database().ref(`${dbPath}/${itemId}`).update({ qty: qty })
                 .then(() => window.renderBI());
         } catch(e) {
             window.renderBI();
@@ -279,7 +288,7 @@
 
     window.renderBI = () => {
         const localSalesCache = AGUtils.readJSON(SALES_CACHE_KEY, {});
-        const activeSalesObj = rawData.sales || rawData.sales_cache || localSalesCache;
+        const activeSalesObj = rawData.sales || rawData.sales_cache || rawData.history || localSalesCache;
         const sales = Object.values(activeSalesObj || {});
 
         const localExpCache = AGUtils.readJSON(EXP_CACHE_KEY, {});
@@ -287,7 +296,7 @@
         const exps = Object.values(activeExpObj || {});
 
         const localInvCache = AGUtils.readJSON(INV_CACHE_KEY, {});
-        const activeInventory = rawData.inventory || localInvCache;
+        const activeInventory = rawData.inventory || rawData.products || localInvCache;
         const inventoryEntries = Object.entries(activeInventory || {});
         
         const now = new Date();
