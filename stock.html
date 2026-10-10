@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="error-utils.js"></script>
-<script src="ag-utils.js"></script>
-<script src="ag-context-guard.js"></script>
-<script type="module" src="auth-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AssetGuard Pro - Inventory List & Grid</title>
@@ -131,7 +127,7 @@
         </div>
         <div class="admin-form">
             <h4 id="formTitle" style="margin:0 0 15px 0; font-size: 15px; color: var(--primary);">Product Editor</h4>
-            <input type="text" id="itemName" class="modern-input" placeholder="Product Name">
+            <input type="text" id="itemName" class="modern-input" placeholder="Product Name (e.g., 0.5 mineral turpentine)">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
                 <input type="number" id="itemQty" class="modern-input" placeholder="Quantity">
                 <input type="number" id="itemLiters" class="modern-input" placeholder="Volume (Liters)">
@@ -147,32 +143,29 @@
 </div>
 
 <script type="module">
-    import { getDb } from "./ag-firebase.js";
-    import { ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-    import AGPasscode from "./ag-passcode.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    const db = getDb();
-    const currentUID = AGUtils.getActiveUID({ fallback: "global_user" });
-    const cloudPath = AGUtils.userPath(currentUID, "inventory");
+    const app = initializeApp({ databaseURL: "https://assetguard-c8c8c-default-rtdb.firebaseio.com" });
+    const db = getDatabase(app);
+    const currentUID = localStorage.getItem("ag_active_uid") || "global_user";
+    const cloudPath = `users/${currentUID}/inventory`;
 
-    let inventoryCache = AGUtils.readJSON(AGUtils.uidKey("ag_inv_cache", currentUID), {});
-    let syncQueue = AGUtils.readJSON(AGUtils.uidKey("ag_inv_queue", currentUID), []);
+    let inventoryCache = JSON.parse(localStorage.getItem(`ag_inv_cache_${currentUID}`)) || {};
+    let syncQueue = JSON.parse(localStorage.getItem(`ag_inv_queue_${currentUID}`)) || [];
 
     async function attemptSync() {
-        if (!navigator.onLine || syncQueue.length === 0) return false;
-        while (syncQueue.length > 0) {
-            const item = syncQueue[0];
+        if (!navigator.onLine || syncQueue.length === 0) return;
+        for (let i = 0; i < syncQueue.length; i++) {
+            const item = syncQueue[i];
             try {
                 if (item.isDelete) { await remove(ref(db, `${cloudPath}/${item.id}`)); }
                 else { await update(ref(db, `${cloudPath}/${item.id}`), item); }
-                syncQueue.shift();
-                AGUtils.writeJSON(AGUtils.uidKey("ag_inv_queue", currentUID), syncQueue);
-            } catch(e) {
-                AGErrors.report("inventory queue synchronization", e, message => notify(`Inventory sync failed: ${message}`));
-                break;
-            }
+                syncQueue.splice(i, 1);
+                localStorage.setItem(`ag_inv_queue_${currentUID}`, JSON.stringify(syncQueue));
+                i--;
+            } catch(e) { break; }
         }
-        return syncQueue.length === 0;
     }
 
     window.handleSave = async () => {
@@ -184,21 +177,21 @@
 
         if(!name) return notify("Product name required", "error");
         
-        // Sanitize product name into a safe Firebase database key (replacing / . # $ [ ] and whitespace)
+        // Sanitize database key to replace invalid Firebase characters (/ . # $ [ ] and whitespace) with underscores
         const key = name.toLowerCase().replace(/[\/\.#$\[\]]/g, '_').replace(/\s+/g, '_');
 
         const updatedItem = { id: key, name, qty, liters, salePrice: price, productionCost: cost };
         inventoryCache[key] = updatedItem;
         syncQueue.push(updatedItem);
 
-        AGUtils.writeJSON(AGUtils.uidKey("ag_inv_cache", currentUID), inventoryCache);
-        AGUtils.writeJSON(AGUtils.uidKey("ag_inv_queue", currentUID), syncQueue);
+        localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
+        localStorage.setItem(`ag_inv_queue_${currentUID}`, JSON.stringify(syncQueue));
         
         resetForm();
         renderDashboard();
         renderAdminList();
-        const synced = await attemptSync();
-        notify(synced ? "Saved and synced" : "Saved locally; sync pending");
+        notify("Saved successfully");
+        attemptSync();
     };
 
     window.popDelete = (k) => {
@@ -206,13 +199,13 @@
         document.getElementById('modalConfirmBtn').onclick = () => {
             delete inventoryCache[k];
             syncQueue.push({ id: k, isDelete: true });
-            AGUtils.writeJSON(AGUtils.uidKey("ag_inv_cache", currentUID), inventoryCache);
-            AGUtils.writeJSON(AGUtils.uidKey("ag_inv_queue", currentUID), syncQueue);
+            localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
+            localStorage.setItem(`ag_inv_queue_${currentUID}`, JSON.stringify(syncQueue));
             closeModal();
             renderDashboard();
             renderAdminList();
-            notify("Item deleted locally; sync pending");
-            attemptSync().catch(error => AGErrors.report("inventory deletion synchronization", error));
+            notify("Item deleted");
+            attemptSync();
         };
     };
 
@@ -235,7 +228,7 @@
                 <div class="stock-item ${status}">
                     <div class="item-info">
                         <h3>${item.name}</h3>
-                        <p>${item.liters || 0}L • ${AGUtils.formatCurrency(item.salePrice || 0)}</p>
+                        <p>${item.liters || 0}L • KES ${(item.salePrice || 0).toLocaleString()}</p>
                     </div>
                     <div class="qty-val">${item.qty}</div>
                 </div>`;
@@ -261,29 +254,17 @@
     onValue(ref(db, cloudPath), (snap) => {
         if(snap.exists()) {
             inventoryCache = snap.val();
-            AGUtils.writeJSON(AGUtils.uidKey("ag_inv_cache", currentUID), inventoryCache);
+            localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
             renderDashboard();
             renderAdminList();
         }
-    }, error => AGErrors.report("inventory live data", error, (message) => notify(`Live inventory data could not be loaded: ${message}`)));
+    });
 
     let pinBuffer = "";
-    const clearPinDots = () => document.querySelectorAll('.pin-dot').forEach(d => d.style.background = "transparent");
-
-    window.pressNum = async (n) => {
-        if(n === 'C') pinBuffer = ""; else if(n === '⌫') pinBuffer = pinBuffer.slice(0, -1); else if(pinBuffer.length < AGPasscode.MAX_LENGTH) pinBuffer += n;
+    window.pressNum = (n) => {
+        if(n === 'C') pinBuffer = ""; else if(n === '⌫') pinBuffer = pinBuffer.slice(0, -1); else if(pinBuffer.length < 4) pinBuffer += n;
         document.querySelectorAll('.pin-dot').forEach((d, i) => { d.style.background = i < pinBuffer.length ? "var(--accent)" : "transparent"; });
-        if(pinBuffer.length < AGPasscode.MIN_LENGTH) return;
-
-        const attempt = pinBuffer;
-        const result = await AGPasscode.verify(attempt);
-        if(attempt !== pinBuffer) return;
-        if(result.ok) { pinBuffer = ""; clearPinDots(); switchView('view-admin'); return; }
-        if(result.reason === 'not_set' || pinBuffer.length >= AGPasscode.MAX_LENGTH) {
-            notify(result.message, "error");
-            pinBuffer = "";
-            clearPinDots();
-        }
+        if(pinBuffer.length === 4) { if(pinBuffer === "1234") switchView('view-admin'); else { notify("Invalid PIN", "error"); pinBuffer = ""; document.querySelectorAll('.pin-dot').forEach(d => d.style.background = "transparent"); } }
     };
     
     window.switchView = (id) => { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); };
@@ -293,8 +274,22 @@
         document.getElementById('itemName').value = i.name; 
         document.getElementById('itemLiters').value = i.liters; 
         document.getElementById('salePrice').value = i.salePrice; 
-        document.getElementById('productionCost').value = i.productionCost || ''; 
+        document.getElementById('productionCost').value = i.productionCost || '';
         document.getElementById('itemQty').value = i.qty; 
         switchView('view-admin'); 
     };
-    window.closeModal = () => document.getElementById('modalOverlay').
+    window.closeModal = () => document.getElementById('modalOverlay').style.display = 'none';
+    window.notify = (m) => { 
+        const t = document.createElement('div'); 
+        t.className = 'toast'; 
+        t.innerText = m; 
+        document.getElementById('toastContainer').appendChild(t); 
+        setTimeout(() => t.remove(), 2000); 
+    };
+    function resetForm() { ['itemName', 'itemQty', 'itemLiters', 'salePrice', 'productionCost'].forEach(id => document.getElementById(id).value = ''); }
+    window.addEventListener('online', attemptSync);
+    renderDashboard();
+    renderAdminList();
+</script>
+</body>
+</html>
