@@ -96,6 +96,25 @@ globalThis.AGUtils = {
         return `${prefix} ${this.formatAmount(value, { minDecimals })}`;
     },
 
+    parseStockQuantity(value) {
+        const text = String(value ?? "").trim();
+        if (!text) return null;
+
+        const decimalPattern = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+        if (decimalPattern.test(text)) {
+            const amount = Number(text);
+            return Number.isFinite(amount) ? amount : null;
+        }
+
+        const fraction = text.match(/^([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*\/\s*(\d+(?:\.\d*)?|\.\d+)$/);
+        if (!fraction) return null;
+
+        const denominator = Number(fraction[2]);
+        if (denominator === 0) return null;
+        const amount = Number(fraction[1]) / denominator;
+        return Number.isFinite(amount) ? amount : null;
+    },
+
     formatDateTime(value, { fallback = "Unknown Time", locale, options } = {}) {
         if (value == null || value === "") return fallback;
         const date = new Date(value);

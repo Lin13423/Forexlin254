@@ -1375,7 +1375,10 @@ function finalizeSaleTransaction() {
     
     cart.forEach(itm => {
         if (firebaseInventory[itm.dbKey]) {
-            firebaseInventory[itm.dbKey].qty = Math.max(0, firebaseInventory[itm.dbKey].qty - itm.quantity);
+            const currentStock = AGUtils.parseStockQuantity(firebaseInventory[itm.dbKey].qty);
+            if (currentStock !== null) {
+                firebaseInventory[itm.dbKey].qty = Math.max(0, currentStock - itm.quantity);
+            }
         }
     });
     AGUtils.writeJSON(AGUtils.uidKey("ag_stock_cache", currentUID), firebaseInventory);
@@ -1428,14 +1431,19 @@ async function attemptSync() {
                     try {
                         await runTransaction(ref(db, `${inventoryPath}/${itm.dbKey}/qty`), q => {
                             if (q === null) return 0;
-                            return Math.max(0, q - itm.quantity);
+                            const currentStock = AGUtils.parseStockQuantity(q);
+                            if (currentStock === null) return q;
+                            return Math.max(0, currentStock - itm.quantity);
                         });
                     } catch (transErr) {
                         AGErrors.report("sales inventory transaction fallback", transErr);
                         try {
                             const snap = await fetch(`https://assetguard-c8c8c-default-rtdb.firebaseio.com/${inventoryPath}/${itm.dbKey}/qty.json`);
-                            const currentQty = await snap.json() || 0;
-                            await set(ref(db, `${inventoryPath}/${itm.dbKey}/qty`), Math.max(0, currentQty - itm.quantity));
+                            const storedQty = await snap.json();
+                            const currentQty = storedQty === null ? 0 : AGUtils.parseStockQuantity(storedQty);
+                            if (currentQty !== null) {
+                                await set(ref(db, `${inventoryPath}/${itm.dbKey}/qty`), Math.max(0, currentQty - itm.quantity));
+                            }
                         } catch (fallbackErr) {
                             AGErrors.report("sales inventory fallback write", fallbackErr);
                             throw fallbackErr;
