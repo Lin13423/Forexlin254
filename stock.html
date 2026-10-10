@@ -151,23 +151,27 @@
     const currentUID = localStorage.getItem("ag_active_uid") || "global_user";
     const cloudPath = `users/${currentUID}/inventory`;
 
-    // Helper to dual-sync cache to all possible legacy and current storage keys/formats so POS/Sales pages find it automatically
+    // Dual-sync to ALL possible LocalStorage cache keys used by inventory and sales files
     function persistAllCaches(cacheObj) {
         const jsonStr = JSON.stringify(cacheObj);
         const arrayStr = JSON.stringify(Object.values(cacheObj));
 
-        // Save to current UID-specific keys
+        // Save to current UID-specific inventory and sales stock cache keys
         localStorage.setItem(`ag_inv_cache_${currentUID}`, jsonStr);
+        localStorage.setItem(`ag_stock_cache_${currentUID}`, jsonStr);
         localStorage.setItem(`ag_inv_array_${currentUID}`, arrayStr);
 
-        // Save to potential legacy/global keys your sales page might look for
+        // Save to legacy/global keys
         localStorage.setItem(`ag_inv_cache`, jsonStr);
+        localStorage.setItem(`ag_stock_cache`, jsonStr);
         localStorage.setItem(`inventory`, arrayStr);
         localStorage.setItem(`products`, arrayStr);
     }
 
     let inventoryCache = JSON.parse(localStorage.getItem(`ag_inv_cache_${currentUID}`)) || 
-                         JSON.parse(localStorage.getItem(`ag_inv_cache`)) || {};
+                         JSON.parse(localStorage.getItem(`ag_stock_cache_${currentUID}`)) ||
+                         JSON.parse(localStorage.getItem(`ag_inv_cache`)) || 
+                         JSON.parse(localStorage.getItem(`ag_stock_cache`)) || {};
                          
     let syncQueue = JSON.parse(localStorage.getItem(`ag_inv_queue_${currentUID}`)) || [];
 
