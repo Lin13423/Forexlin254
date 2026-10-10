@@ -35,7 +35,6 @@
             .status-good::before { background: var(--success); }
             .status-low::before { background: var(--warning); }
             .status-out::before { background: var(--danger); }
-            .status-untracked::before { background: #94a3b8; }
             .item-info h3 { margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--primary); }
             .item-info p { margin: 2px 0 0; font-size: 11px; color: var(--text-sub); }
             .qty-val { font-size: 14px; font-weight: 700; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; color: var(--primary); }
@@ -51,7 +50,6 @@
             .status-good::before { background: var(--success); }
             .status-low::before { background: var(--warning); }
             .status-out::before { background: var(--danger); }
-            .status-untracked::before { background: #94a3b8; }
             .item-info h3 { margin: 0 0 10px 0; font-size: 15px; font-weight: 700; text-transform: uppercase; color: var(--primary); }
             .item-info p { margin: 0 0 10px 0; font-size: 12px; color: var(--text-sub); }
             .qty-val { font-size: 14px; font-weight: 800; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; align-self: flex-start; color: var(--primary); }
@@ -135,10 +133,9 @@
             <h4 id="formTitle" style="margin:0 0 15px 0; font-size: 15px; color: var(--primary);">Product Editor</h4>
             <input type="text" id="itemName" class="modern-input" placeholder="Product Name">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-                <input type="text" id="itemQty" class="modern-input" placeholder="Quantity (e.g. 0.5, 1/2, *#)" inputmode="text" autocomplete="off" spellcheck="false">
+                <input type="number" id="itemQty" class="modern-input" placeholder="Quantity">
                 <input type="number" id="itemLiters" class="modern-input" placeholder="Volume (Liters)">
             </div>
-            <small style="display:block; margin:-6px 0 12px; color:var(--text-sub); font-size:11px;">Decimals and fractions count down with sales; other text is saved as a label.</small>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
                 <input type="number" id="salePrice" class="modern-input" placeholder="Selling Price (KES)" step="0.01">
                 <input type="number" id="productionCost" class="modern-input" placeholder="Production Cost (KES)" step="0.01">
@@ -180,14 +177,15 @@
 
     window.handleSave = async () => {
         const name = document.getElementById('itemName').value.trim();
-        const qtyInput = document.getElementById('itemQty').value.trim();
-        const qty = qtyInput === "" ? 0 : qtyInput;
+        const qty = parseInt(document.getElementById('itemQty').value) || 0;
         const price = parseFloat(document.getElementById('salePrice').value) || 0;
         const cost = parseFloat(document.getElementById('productionCost').value) || 0;
         const liters = parseFloat(document.getElementById('itemLiters').value) || 0;
 
         if(!name) return notify("Product name required", "error");
-        const key = name.replace(/\s+/g, '_').toLowerCase();
+        
+        // Sanitize product name into a safe Firebase database key (replacing / . # $ [ ] and whitespace)
+        const key = name.toLowerCase().replace(/[\/\.#$\[\]]/g, '_').replace(/\s+/g, '_');
 
         const updatedItem = { id: key, name, qty, liters, salePrice: price, productionCost: cost };
         inventoryCache[key] = updatedItem;
@@ -232,15 +230,14 @@
         keys.forEach(k => {
             const item = inventoryCache[k];
             if(!item.name.toLowerCase().includes(search)) return;
-            const numericQty = AGUtils.parseStockQuantity(item.qty);
-            const status = numericQty === null ? 'status-untracked' : (numericQty > 5 ? 'status-good' : (numericQty > 0 ? 'status-low' : 'status-out'));
+            const status = item.qty > 5 ? 'status-good' : (item.qty > 0 ? 'status-low' : 'status-out');
             container.innerHTML += `
                 <div class="stock-item ${status}">
                     <div class="item-info">
-                        <h3>${AGUtils.escapeHtml(item.name)}</h3>
+                        <h3>${item.name}</h3>
                         <p>${item.liters || 0}L • ${AGUtils.formatCurrency(item.salePrice || 0)}</p>
                     </div>
-                    <div class="qty-val">${AGUtils.escapeHtml(item.qty)}</div>
+                    <div class="qty-val">${item.qty}</div>
                 </div>`;
         });
     };
@@ -252,7 +249,7 @@
             const item = inventoryCache[k];
             container.innerHTML += `
                 <div class="manage-item">
-                    <div style="font-size:13px; font-weight:700; color:var(--primary);">${AGUtils.escapeHtml(item.name)} <span style="font-weight:400; color:var(--text-sub);">(${AGUtils.escapeHtml(item.qty)} units)</span></div>
+                    <div style="font-size:13px; font-weight:700; color:var(--primary);">${item.name} <span style="font-weight:400; color:var(--text-sub);">(${item.qty} units)</span></div>
                     <div style="display:flex; gap:6px;">
                         <button class="btn-main" style="width:auto; padding:8px 14px; font-size:11px" onclick="fillForm('${k}')">Edit</button>
                         <button class="btn-main" style="width:auto; padding:8px 14px; font-size:11px; background:var(--danger)" onclick="popDelete('${k}')">Del</button>
@@ -300,12 +297,4 @@
         document.getElementById('itemQty').value = i.qty; 
         switchView('view-admin'); 
     };
-    window.closeModal = () => document.getElementById('modalOverlay').style.display = 'none';
-    window.notify = (m) => AGUtils.showToast(m, { duration: 2000 });
-    function resetForm() { ['itemName', 'itemQty', 'itemLiters', 'salePrice', 'productionCost'].forEach(id => document.getElementById(id).value = ''); }
-    window.addEventListener('online', attemptSync);
-    renderDashboard();
-    renderAdminList();
-</script>
-</body>
-</html>
+    window.closeModal = () => document.getElementById('modalOverlay').
