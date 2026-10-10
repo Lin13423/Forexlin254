@@ -151,7 +151,24 @@
     const currentUID = localStorage.getItem("ag_active_uid") || "global_user";
     const cloudPath = `users/${currentUID}/inventory`;
 
-    let inventoryCache = JSON.parse(localStorage.getItem(`ag_inv_cache_${currentUID}`)) || {};
+    // Helper to dual-sync cache to all possible legacy and current storage keys/formats so POS/Sales pages find it automatically
+    function persistAllCaches(cacheObj) {
+        const jsonStr = JSON.stringify(cacheObj);
+        const arrayStr = JSON.stringify(Object.values(cacheObj));
+
+        // Save to current UID-specific keys
+        localStorage.setItem(`ag_inv_cache_${currentUID}`, jsonStr);
+        localStorage.setItem(`ag_inv_array_${currentUID}`, arrayStr);
+
+        // Save to potential legacy/global keys your sales page might look for
+        localStorage.setItem(`ag_inv_cache`, jsonStr);
+        localStorage.setItem(`inventory`, arrayStr);
+        localStorage.setItem(`products`, arrayStr);
+    }
+
+    let inventoryCache = JSON.parse(localStorage.getItem(`ag_inv_cache_${currentUID}`)) || 
+                         JSON.parse(localStorage.getItem(`ag_inv_cache`)) || {};
+                         
     let syncQueue = JSON.parse(localStorage.getItem(`ag_inv_queue_${currentUID}`)) || [];
 
     async function attemptSync() {
@@ -184,7 +201,7 @@
         inventoryCache[key] = updatedItem;
         syncQueue.push(updatedItem);
 
-        localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
+        persistAllCaches(inventoryCache);
         localStorage.setItem(`ag_inv_queue_${currentUID}`, JSON.stringify(syncQueue));
         
         resetForm();
@@ -199,7 +216,7 @@
         document.getElementById('modalConfirmBtn').onclick = () => {
             delete inventoryCache[k];
             syncQueue.push({ id: k, isDelete: true });
-            localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
+            persistAllCaches(inventoryCache);
             localStorage.setItem(`ag_inv_queue_${currentUID}`, JSON.stringify(syncQueue));
             closeModal();
             renderDashboard();
@@ -254,7 +271,7 @@
     onValue(ref(db, cloudPath), (snap) => {
         if(snap.exists()) {
             inventoryCache = snap.val();
-            localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
+            persistAllCaches(inventoryCache);
             renderDashboard();
             renderAdminList();
         }
