@@ -127,12 +127,15 @@
         </div>
         <div class="admin-form">
             <h4 id="formTitle" style="margin:0 0 15px 0; font-size: 15px; color: var(--primary);">Product Editor</h4>
-            <input type="text" id="itemName" class="modern-input" placeholder="Product Name">
+            <input type="text" id="itemName" class="modern-input" placeholder="Product Name (e.g., 0.5 mineral turpentine)">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
                 <input type="number" id="itemQty" class="modern-input" placeholder="Quantity">
                 <input type="number" id="itemLiters" class="modern-input" placeholder="Volume (Liters)">
             </div>
-            <input type="number" id="salePrice" class="modern-input" placeholder="Price (KES)" step="0.01">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <input type="number" id="salePrice" class="modern-input" placeholder="Selling Price (KES)" step="0.01">
+                <input type="number" id="productionCost" class="modern-input" placeholder="Production Cost (KES)" step="0.01">
+            </div>
             <button class="btn-main" onclick="handleSave()">Save Product</button>
         </div>
         <div id="adminManageList"></div>
@@ -148,7 +151,28 @@
     const currentUID = localStorage.getItem("ag_active_uid") || "global_user";
     const cloudPath = `users/${currentUID}/inventory`;
 
-    let inventoryCache = JSON.parse(localStorage.getItem(`ag_inv_cache_${currentUID}`)) || {};
+    // Dual-sync to ALL possible LocalStorage cache keys used by inventory and sales files
+    function persistAllCaches(cacheObj) {
+        const jsonStr = JSON.stringify(cacheObj);
+        const arrayStr = JSON.stringify(Object.values(cacheObj));
+
+        // Save to current UID-specific inventory and sales stock cache keys
+        localStorage.setItem(`ag_inv_cache_${currentUID}`, jsonStr);
+        localStorage.setItem(`ag_stock_cache_${currentUID}`, jsonStr);
+        localStorage.setItem(`ag_inv_array_${currentUID}`, arrayStr);
+
+        // Save to legacy/global keys
+        localStorage.setItem(`ag_inv_cache`, jsonStr);
+        localStorage.setItem(`ag_stock_cache`, jsonStr);
+        localStorage.setItem(`inventory`, arrayStr);
+        localStorage.setItem(`products`, arrayStr);
+    }
+
+    let inventoryCache = JSON.parse(localStorage.getItem(`ag_inv_cache_${currentUID}`)) || 
+                         JSON.parse(localStorage.getItem(`ag_stock_cache_${currentUID}`)) ||
+                         JSON.parse(localStorage.getItem(`ag_inv_cache`)) || 
+                         JSON.parse(localStorage.getItem(`ag_stock_cache`)) || {};
+                         
     let syncQueue = JSON.parse(localStorage.getItem(`ag_inv_queue_${currentUID}`)) || [];
 
     async function attemptSync() {
@@ -169,16 +193,19 @@
         const name = document.getElementById('itemName').value.trim();
         const qty = parseInt(document.getElementById('itemQty').value) || 0;
         const price = parseFloat(document.getElementById('salePrice').value) || 0;
+        const cost = parseFloat(document.getElementById('productionCost').value) || 0;
         const liters = parseFloat(document.getElementById('itemLiters').value) || 0;
 
         if(!name) return notify("Product name required", "error");
-        const key = name.replace(/\s+/g, '_').toLowerCase();
+        
+        // Sanitize database key to replace invalid Firebase characters (/ . # $ [ ] and whitespace) with underscores
+        const key = name.toLowerCase().replace(/[\/\.#$\[\]]/g, '_').replace(/\s+/g, '_');
 
-        const updatedItem = { id: key, name, qty, liters, salePrice: price };
+        const updatedItem = { id: key, name, qty, liters, salePrice: price, productionCost: cost };
         inventoryCache[key] = updatedItem;
         syncQueue.push(updatedItem);
 
-        localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
+        persistAllCaches(inventoryCache);
         localStorage.setItem(`ag_inv_queue_${currentUID}`, JSON.stringify(syncQueue));
         
         resetForm();
@@ -193,7 +220,7 @@
         document.getElementById('modalConfirmBtn').onclick = () => {
             delete inventoryCache[k];
             syncQueue.push({ id: k, isDelete: true });
-            localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
+            persistAllCaches(inventoryCache);
             localStorage.setItem(`ag_inv_queue_${currentUID}`, JSON.stringify(syncQueue));
             closeModal();
             renderDashboard();
@@ -248,7 +275,7 @@
     onValue(ref(db, cloudPath), (snap) => {
         if(snap.exists()) {
             inventoryCache = snap.val();
-            localStorage.setItem(`ag_inv_cache_${currentUID}`, JSON.stringify(inventoryCache));
+            persistAllCaches(inventoryCache);
             renderDashboard();
             renderAdminList();
         }
@@ -268,6 +295,7 @@
         document.getElementById('itemName').value = i.name; 
         document.getElementById('itemLiters').value = i.liters; 
         document.getElementById('salePrice').value = i.salePrice; 
+        document.getElementById('productionCost').value = i.productionCost || '';
         document.getElementById('itemQty').value = i.qty; 
         switchView('view-admin'); 
     };
@@ -279,7 +307,7 @@
         document.getElementById('toastContainer').appendChild(t); 
         setTimeout(() => t.remove(), 2000); 
     };
-    function resetForm() { ['itemName', 'itemQty', 'itemLiters', 'salePrice'].forEach(id => document.getElementById(id).value = ''); }
+    function resetForm() { ['itemName', 'itemQty', 'itemLiters', 'salePrice', 'productionCost'].forEach(id => document.getElementById(id).value = ''); }
     window.addEventListener('online', attemptSync);
     renderDashboard();
     renderAdminList();
